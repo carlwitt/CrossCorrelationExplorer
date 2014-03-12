@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.net.*?>
+<?import java.util.*?>
+<?import javafx.collections.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.chart.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.*?>
+<?import javafx.scene.text.*?>
+
+<AnchorPane id="AnchorPane" prefHeight="326.9999000000025" prefWidth="1022.0" style="-fx-background-color: gainsboro;" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.TimeSeriesViewController">
+  <children>
+    <Text rotate="270.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Time Series View" translateX="0.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="-45.0" AnchorPane.topAnchor="50.0" />
+    <LineChart id="" fx:id="lineChart" alternativeRowFillVisible="true" animated="false" createSymbols="false" horizontalGridLinesVisible="true" horizontalZeroLineVisible="true" legendVisible="false" prefHeight="273.198974609375" prefWidth="770.0" style="-fx-background-color: white;" verticalGridLinesVisible="true" verticalZeroLineVisible="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+      <xAxis>
+        <NumberAxis fx:id="xAxis" animated="false" autoRanging="true" forceZeroInRange="false" label="Year" lowerBound="-500.0" side="BOTTOM" tickLabelRotation="0.0" tickMarkVisible="true" upperBound="50.0">
+          <tickLabelFont>
+            <Font size="11.0" />
+          </tickLabelFont>
+        </NumberAxis>
+      </xAxis>
+      <yAxis>
+        <NumberAxis fx:id="yAxis" animated="false" label="Degree ˚C" lowerBound="-123.0" side="LEFT" />
+      </yAxis>
+    </LineChart>
+  </children>
+  <stylesheets>
+    <URL value="@timeseriesview.css" />
+  </stylesheets>
+</AnchorPane>
