@@ -7,7 +7,7 @@
 package Data;
 
 import Data.FileModel;
-import Data.Separator;
+import Data.LineParser;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
@@ -34,10 +34,10 @@ public class FileModelTest {
         "./data/lianhua_modified_excerpt.txt",
     };
     
-    public Separator[] separators = new Separator[]{
-        new Separator(16),
-        new Separator(";"),
-        new Separator(16),
+    public LineParser[] separators = new LineParser[]{
+        new LineParser(16),
+        new LineParser(";"),
+        new LineParser(16),
     };
     
     ExecutorService taskExecutor;
@@ -117,7 +117,7 @@ public class FileModelTest {
     public void testSplitFixedColumnWidth() {
         System.out.println("splitFixedColumnWidth");
         String line = "  -4.9000000e+01             NaN";
-        Separator instance = new Separator(16);
+        LineParser instance = new LineParser(16);
         double[] expResult = new double[]{-49., Double.NaN};
         double[] result = instance.splitToDouble(line);
         assertArrayEquals(expResult, result, 1e-10);
@@ -132,7 +132,7 @@ public class FileModelTest {
         String line = "  -4.9000000e+01 ; -2 ; 0 ; 0.0 ; 2.e6 ; NaN";
         double[] expResult = new double[]{-49., -2., 0. , 0. , 2000000. ,  Double.NaN};
         
-        Separator instance = new Separator(";");
+        LineParser instance = new LineParser(";");
         double[] result = instance.splitToDouble(line);
         
         assertArrayEquals(expResult, result,1e-10);

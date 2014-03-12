@@ -6,27 +6,38 @@
 <?import javafx.collections.*?>
 <?import javafx.geometry.*?>
 <?import javafx.scene.*?>
+<?import javafx.scene.canvas.*?>
 <?import javafx.scene.chart.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.*?>
 <?import javafx.scene.text.*?>
 
-<AnchorPane id="AnchorPane" prefHeight="326.9999000000025" prefWidth="1022.0" style="-fx-background-color: gainsboro;" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.TimeSeriesViewController">
+<AnchorPane id="AnchorPane" fx:id="timeSeriesPane" prefHeight="326.9999000000025" prefWidth="1022.0" style="-fx-background-color: gainsboro;" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.TimeSeriesViewController">
   <children>
     <Text rotate="270.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Time Series View" translateX="0.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="-45.0" AnchorPane.topAnchor="50.0" />
-    <LineChart id="" fx:id="lineChart" alternativeRowFillVisible="true" animated="false" createSymbols="false" horizontalGridLinesVisible="true" horizontalZeroLineVisible="true" legendVisible="false" prefHeight="273.198974609375" prefWidth="770.0" style="-fx-background-color: white;" verticalGridLinesVisible="true" verticalZeroLineVisible="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-      <xAxis>
-        <NumberAxis fx:id="xAxis" animated="false" autoRanging="true" forceZeroInRange="false" label="Year" lowerBound="-500.0" side="BOTTOM" tickLabelRotation="0.0" tickMarkVisible="true" upperBound="50.0">
-          <tickLabelFont>
-            <Font size="11.0" />
-          </tickLabelFont>
-        </NumberAxis>
-      </xAxis>
-      <yAxis>
-        <NumberAxis fx:id="yAxis" animated="false" label="Degree ˚C" lowerBound="-123.0" side="LEFT" />
-      </yAxis>
-    </LineChart>
+    <StackPane id="StackPane" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+      <children>
+        <LineChart fx:id="lineChart" alternativeRowFillVisible="true" animated="false" cache="true" createSymbols="false" horizontalGridLinesVisible="true" horizontalZeroLineVisible="true" legendVisible="false" prefHeight="273.198974609375" prefWidth="770.0" style="-fx-background-color: white;" verticalGridLinesVisible="true" verticalZeroLineVisible="true">
+          <xAxis>
+            <NumberAxis fx:id="xAxis" animated="false" autoRanging="false" forceZeroInRange="false" label="Year as Geotime (x + 1950)" lowerBound="1900.0" minorTickCount="4" side="BOTTOM" tickLabelRotation="0.0" tickLength="8.0" tickMarkVisible="true" tickUnit="4.0" upperBound="2000.0">
+              <tickLabelFont>
+                <Font size="11.0" />
+              </tickLabelFont>
+            </NumberAxis>
+          </xAxis>
+          <yAxis>
+            <NumberAxis fx:id="yAxis" animated="false" autoRanging="false" label="Degree ˚C" lowerBound="-50.0" side="LEFT" upperBound="0.0" />
+          </yAxis>
+          <padding>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+          </padding>
+        </LineChart>
+        <Canvas fx:id="chartCanvas" cache="true" />
+      </children>
+    </StackPane>
+    <Slider fx:id="detailSlider" blockIncrement="1.0" majorTickUnit="100.0" max="100.0" min="1.0" prefHeight="27.9998779296875" prefWidth="205.99990000000253" showTickLabels="false" showTickMarks="false" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" />
+    <Label id="detailLevelLabel" fx:id="levelOfDetailLabel" text="detail" visible="true" AnchorPane.bottomAnchor="7.0" AnchorPane.rightAnchor="215.0" />
   </children>
   <stylesheets>
     <URL value="@timeseriesview.css" />

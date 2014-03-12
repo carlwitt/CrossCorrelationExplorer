@@ -24,6 +24,7 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.stage.FileChooser;
 import org.controlsfx.dialog.Dialogs;
@@ -88,7 +89,7 @@ public class FileInputController implements Initializable {
         this.sharedData = sharedData;
 
         // the list of loaded time series listens to changes in the data model
-        sharedData.timeSeries.addListener(new MapChangeListener<Integer, TimeSeries>() {
+        sharedData.dataModel.timeSeries.addListener(new MapChangeListener<Integer, TimeSeries>() {
             @Override public void onChanged(MapChangeListener.Change<? extends Integer, ? extends TimeSeries> change) {
 //                System.out.println(String.format("Map change: key %s value added %s value removed %s", change.getKey(), change.getValueAdded(),change.getValueRemoved()));
                 if(change.wasRemoved() && ! change.wasAdded()){
@@ -110,16 +111,28 @@ public class FileInputController implements Initializable {
         availableList.setItems(availableTimeSeries);
         loadedList.setItems(loadedTimeSeries);
         
-        // enable multi-select on list views
-        availableList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        loadedList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-
         // bind label text to currently selected filepath...
         selectedFileLabel.textProperty().bind(fileModel.filenameProperty());
         // ...and enable the load button whenever the path is not null
         fileModel.filenameProperty().addListener(new ChangeListener<String>() {
             @Override public void changed(ObservableValue<? extends String> ov, String oldFilepath, String newFilepath) {
                 loadButton.setDisable( newFilepath == null );
+            }
+        });
+        
+         // enable multi-select on list views
+        availableList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        loadedList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        // enable load on double click
+        final FileInputController instance = this; 
+        availableList.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            @Override public void handle(MouseEvent t) {
+                if( t.getClickCount() == 2){ instance.loadSelected(null); }
+            }
+        });
+        loadedList.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            @Override public void handle(MouseEvent t) {
+                if( t.getClickCount() == 2){ instance.unloadSelected(null); }
             }
         });
         
@@ -163,6 +176,10 @@ public class FileInputController implements Initializable {
                 fixedWidthSeparatorText.requestFocus();
             }
         });
+        
+        
+        fileModel.setFilename("/Users/macbookdata/inputDataTab.txt");
+        
     }
     
     // -------------------------------------------------------------------------
@@ -209,7 +226,7 @@ public class FileInputController implements Initializable {
                 progressPane.setVisible(false);
                 progressCancelButton.setDisable(false);
                 availableTimeSeries.clear();
-                sharedData.timeSeries.clear();
+                sharedData.dataModel.timeSeries.clear();
                 
                 // add representative list entries for the time series
                 for (int i = 1; i <= fileModel.getNumberOfTimeSeries(); i++) {
@@ -284,7 +301,7 @@ public class FileInputController implements Initializable {
             
             // create time series and append to data model
             TimeSeries timeSeries = new TimeSeries(tsIndex, fileModel.getXValues(tsIndex), fileModel.getYValues(tsIndex));
-            sharedData.timeSeries.put(tsIndex, timeSeries);
+            sharedData.dataModel.timeSeries.put(tsIndex, timeSeries);
             
             availableTimeSeries.remove(tsIndex);
         }
@@ -303,7 +320,7 @@ public class FileInputController implements Initializable {
         for (Object item : selectionCopy) {
             Integer tsIndex = (Integer) item;
             availableTimeSeries.add(tsIndex); // insert sorted
-            sharedData.timeSeries.remove(tsIndex);
+            sharedData.dataModel.timeSeries.remove(tsIndex);
         }
         availableTimeSeries.sort(null);
     }

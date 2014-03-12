@@ -67,8 +67,8 @@ public class ComplexSequence implements List<Double> {
         if(array.length == 0)
             return new double[]{Double.NaN, Double.NaN};
         
-        double min = array[0];
-        double max = array[0];
+        double min = Double.isNaN(array[0]) ? Double.POSITIVE_INFINITY : array[0];
+        double max = Double.isNaN(array[0]) ? Double.NEGATIVE_INFINITY : array[0];
         
         // the number of unchecked re is re.length - 1
         int pairs = (array.length - 1) / 2;    // rounds down, which is important
@@ -79,18 +79,18 @@ public class ComplexSequence implements List<Double> {
             double first = array[i*2-1];   // first pair: 1,2 next pair: 3,4
             double secnd = array[i*2];
             if(first < secnd){
-                min = first != Double.NaN ? Math.min(min, first) : min;
-                max = secnd != Double.NaN ? Math.max(max, secnd) : max;
+                min = Double.isNaN(first) ? min : Math.min(min, first);
+                max = Double.isNaN(secnd) ? max : Math.max(max, secnd);
             } else {
-                min = secnd != Double.NaN ? Math.min(min, secnd) : min;
-                max = first != Double.NaN ? Math.max(max, first) : max;
+                min = Double.isNaN(secnd) ? min : Math.min(min, secnd);
+                max = Double.isNaN(first) ? max : Math.max(max, first);
             }
         }
         
         // if there's one element trailing at the end of the sequence, check it
         if(2*pairs + 1 < array.length){
-            min = array[pairs*2+1] != Double.NaN ? Math.min(min, array[pairs*2+1]) : min;
-            max = array[pairs*2+1] != Double.NaN ? Math.max(max, array[pairs*2+1]) : max;
+            min = Double.isNaN(array[pairs*2+1]) ? min : Math.min(min, array[pairs*2+1]);
+            max = Double.isNaN(array[pairs*2+1]) ? max : Math.max(max, array[pairs*2+1]);
         }
         
         return new double[]{min, max};

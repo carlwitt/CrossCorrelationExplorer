@@ -31,14 +31,13 @@ public class FileModel extends Observable{
     public final StringProperty filenameProperty() { return filename; }
         
     /** The separator to split up lines of text into pieces before parsing them. */
-    public Separator separator;
+    public LineParser separator;
     
     public final LoadFileService loadFileService = new LoadFileService();
             
-    public FileModel(String filename, Separator separator){
+    public FileModel(String filename, LineParser lineParser){
         setFilename(filename);
-        this.separator = separator;
-        if(separator == null) System.err.println("Separator must not be null! In FileModel constructor.");
+        this.separator = lineParser;
     }
     
     // -------------------------------------------------------------------------
@@ -79,10 +78,10 @@ public class FileModel extends Observable{
 
     // define the input format of the file by specifying how to split lines into string representing numbers
     public void setSeparatorWidth(int fixedWidth){
-        separator = new Separator(fixedWidth);
+        separator = new LineParser(fixedWidth);
     }
     public void setSeparatorCharacter(String separatorCharacter) {
-        separator = new Separator(separatorCharacter);
+        separator = new LineParser(separatorCharacter);
     }
     public LoadFileService getLoadFileService() {
         return loadFileService;
@@ -131,7 +130,7 @@ public class FileModel extends Observable{
                     // cache first column
                     firstColumn = new double[getTimeSeriesLength()];
                     for (int i = 0; i < firstColumn.length; i++) {
-                        firstColumn[i] = rowValues[i][0];
+                        firstColumn[i] = rowValues[i][0] + 1950;
                     }
                     
                     return null;

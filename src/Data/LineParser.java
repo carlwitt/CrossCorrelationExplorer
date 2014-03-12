@@ -8,39 +8,45 @@ import java.util.StringTokenizer;
 /** Defines how the lines of the text file are to be separated into strings that are then parsed into numbers.
  * Provides a method to perform the parsing.
  */
-public class Separator {
+public class LineParser {
 
     public enum SplitMethod {
-
         BY_CHARACTER, BY_COLUMN_WIDTH
     }
-    Separator.SplitMethod splitMethod;
+    public enum NanStrategy{
+        REPLACE_WITH_ZERO, LEAVE
+    }
+    
+    private final LineParser.SplitMethod splitMethod;
+    private NanStrategy nanStrategy = NanStrategy.LEAVE;
+    
     public final int columnWidth;
     public final String separator;
     private final Splitter stringSplitter;
-
-    public Separator(int columnWidth) {
-        this.splitMethod = Separator.SplitMethod.BY_COLUMN_WIDTH;
+    
+    public LineParser(int columnWidth) {
+        this.splitMethod = LineParser.SplitMethod.BY_COLUMN_WIDTH;
         this.columnWidth = columnWidth;
         this.separator = null;
         stringSplitter = Splitter.fixedLength(columnWidth);
     }
-
-    public Separator(String separator) {
-        this.splitMethod = Separator.SplitMethod.BY_CHARACTER;
+    public LineParser(String separator) {
+        this.splitMethod = LineParser.SplitMethod.BY_CHARACTER;
         this.separator = separator;
         this.columnWidth = 0;
         stringSplitter = Splitter.on(separator);
     }
 
+    public void setNanStrategy(NanStrategy nanStrategy){
+        this.nanStrategy = nanStrategy;
+    }
+    
     /**
      * Splits a string according to a delimiter string.
      * @param line The string to split
      * @return Array of strings which give the original string if glued with the delimiter string.
      */
-    protected String[] splitString(String delimiter, String input) {
-        //deprecated
-        // String.split
+    private String[] splitString(String delimiter, String input) {
         StringTokenizer st = new StringTokenizer(input, delimiter);
         String[] parts = new String[st.countTokens()];
         for (int i = 0; i < parts.length; i++) {
@@ -50,13 +56,20 @@ public class Separator {
     }
 
     // splits a string (a line) into a sequence of double values
-    protected double[] splitToDouble(String line) {
+    public double[] splitToDouble(String line) {
         Iterable<String> pieces = stringSplitter.trimResults().split(line); // omitEmptyStrings() would leave gaps in the time series where there should be NaN
         ArrayList<Double> result = new ArrayList<>();
         for (Iterator<String> it = pieces.iterator(); it.hasNext();) {
             String trimmedNumber = it.next();
             try {
-                result.add(Double.parseDouble(trimmedNumber));
+                double parsed = Double.parseDouble(trimmedNumber);
+                switch(nanStrategy){
+                    case REPLACE_WITH_ZERO:
+                        result.add( Double.isNaN(parsed) ? 0 : parsed );
+                        break;
+                    case LEAVE:
+                        result.add(parsed);
+                } 
             } catch (NumberFormatException e) {
                 System.out.println(String.format("Couldn't parse double from '%s'\nin line %s", trimmedNumber, line));
             }

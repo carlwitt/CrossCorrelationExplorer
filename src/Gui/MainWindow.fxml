@@ -15,7 +15,7 @@
 
 <BorderPane minHeight="600.0" minWidth="800.0" prefHeight="768.0" prefWidth="1024.0" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.MainController">
   <center>
-    <SplitPane dividerPositions="0.2193211488250653, 0.7389033942558747" focusTraversable="true" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0">
+    <SplitPane dividerPositions="0.2193211488250653, 0.566579634464752" focusTraversable="true" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0">
       <items>
         <AnchorPane fx:id="inputPane" minHeight="165.0" prefHeight="165.0" prefWidth="1022.0" style="-fx-background-color: gainsboro;">
           <children>
@@ -25,8 +25,12 @@
                 <tabs>
                   <Tab closable="false" style="" text="Available in File">
                     <content>
-                      <!--The controller can be injected to the main window by adding the suffix "Controller" to the fx:id attribute, i.e. @FXML private FileInputTabController fileInputController; -->
-                      <fx:include fx:id="fileInput" source="FileInputTab.fxml" />
+                      <StackPane id="StackPane">
+                        <children>
+                          <!--The controller can be injected to the main window by adding the suffix "Controller" to the fx:id attribute, i.e. @FXML private FileInputTabController fileInputController; -->
+                          <fx:include fx:id="fileInput" source="FileInputTab.fxml" alignment="TOP_LEFT" />
+                        </children>
+                      </StackPane>
                     </content>
                   </Tab>
                   <Tab closable="false" text="Computation Input">
@@ -36,22 +40,19 @@
                   </Tab>
                 </tabs>
               </TabPane>
-              <AnchorPane fx:id="progressPane" disable="false" opacity="1.0" prefHeight="200.0" prefWidth="200.0" style="&#10;" visible="false">
-                <Rectangle arcHeight="0.0" arcWidth="0.0" fill="BLACK" height="305.0" opacity="0.64" stroke="TRANSPARENT" strokeType="INSIDE" strokeWidth="0.0" width="1230.0" AnchorPane.bottomAnchor="-75.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="-228.0" AnchorPane.topAnchor="0.0" />
-                <StackPane id="progressPane" prefHeight="40.0" prefWidth="446.0" visible="true" AnchorPane.bottomAnchor="110.43" AnchorPane.leftAnchor="278.0" AnchorPane.topAnchor="79.57">
+              <StackPane fx:id="progressPane" disable="false" opacity="1.0" prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: rgba(0,0,0,0.5);" visible="false">
+                <StackPane id="progressPane" prefHeight="40.0" prefWidth="446.0" visible="true" StackPane.alignment="CENTER">
                   <children>
                     <ProgressBar fx:id="progressBar" maxHeight="40.0" prefHeight="40.0" prefWidth="500.0" progress="0.0" />
                     <Label fx:id="progressLabel" alignment="CENTER" contentDisplay="RIGHT" prefHeight="40.000099999997474" prefWidth="500.0" text="Loading file contents...&#10;1 of 100" StackPane.alignment="CENTER" />
                   </children>
                 </StackPane>
-                <Button fx:id="progressCancelButton" layoutX="452.0" layoutY="126.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="99.0" text="Cancel" />
-              </AnchorPane>
+                <Button fx:id="progressCancelButton" mnemonicParsing="false" prefHeight="25.0" prefWidth="99.0" text="Cancel" translateY="40.0" StackPane.alignment="CENTER" />
+              </StackPane>
             </StackPane>
           </children>
         </AnchorPane>
-        
         <fx:include fx:id="timeSeriesView" source="TimeSeriesView.fxml" />
-        
         <AnchorPane fx:id="correlationView" prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: gainsboro;">
           <children>
             <Text layoutX="-44.0" layoutY="60.0" rotate="270.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Correlation View" translateX="0.0" />
