@@ -138,7 +138,7 @@ public class FileModel extends Observable{
                 
                 @Override protected void failed() {
                     super.failed();
-                    updateMessage("Loading File failed!");
+                    updateMessage(this.getException().getMessage());
                     System.err.println(this.getException());
                 }
                 

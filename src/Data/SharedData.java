@@ -20,6 +20,11 @@ public class SharedData extends Observable {
         
         public final ObservableMap<Integer, TimeSeries> timeSeries = FXCollections.observableMap(this);
         
+        public int getTimeSeriesLength(){
+            if(isEmpty()) return 0;
+            return firstEntry().getValue().getDataItems().re.length;
+        }
+        
         public double getMinX(){
             double min = Double.POSITIVE_INFINITY;
             for (TimeSeries ts : values()) {

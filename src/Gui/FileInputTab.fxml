@@ -87,14 +87,21 @@
                 <ToggleGroup fx:id="separatorSelection" />
               </toggleGroup>
               <tooltip>
-                <Tooltip style="-fx-background-color: white;" text="Use a fixed number of characters to separate text file rows into single numbers." />
+                <Tooltip autoHide="true" style="" text="Use a fixed number of characters to separate text file rows into single numbers." />
               </tooltip>
             </RadioButton>
-            <RadioButton fx:id="tabSeparatorRadio" font="$x2" mnemonicParsing="false" prefWidth="372.0" selected="false" text="Tab" toggleGroup="$separatorSelection" />
+            <RadioButton fx:id="tabSeparatorRadio" font="$x2" mnemonicParsing="false" prefWidth="372.0" selected="false" text="Tab" toggleGroup="$separatorSelection">
+              <tooltip>
+                <Tooltip text="Split lines into number strings along each tab character." />
+              </tooltip>
+            </RadioButton>
             <RadioButton fx:id="characterSeparatorRadio" contentDisplay="RIGHT" font="$x2" graphicTextGap="20.0" mnemonicParsing="false" prefWidth="307.0" selected="false" text="Character" toggleGroup="$separatorSelection" underline="false">
               <graphic>
                 <TextField fx:id="characterSeparatorText" editable="true" prefWidth="40.0" promptText="" />
               </graphic>
+              <tooltip>
+                <Tooltip text="Split lines into number strings along specified character." />
+              </tooltip>
             </RadioButton>
           </children>
           <padding>

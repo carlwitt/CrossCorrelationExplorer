@@ -1,23 +1,20 @@
 package Gui;
 
-import Data.ComplexSequence;
-import Data.DataModel;
-import Data.FileModel;
-import Data.SharedData;
-import Data.TimeSeries;
+import Data.*;
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.ResourceBundle;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import java.util.TreeMap;
+import java.util.function.Consumer;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableList;
-import javafx.collections.ObservableMap;
 import javafx.concurrent.*;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -67,8 +64,8 @@ public class FileInputController implements Initializable {
     @FXML private Label selectedFileLabel;
     
     // displayes the time series contained in the file and which one the user wants to work with
-    @FXML private ListView availableList;
-    @FXML private ListView loadedList;
+    @FXML private ListView<Integer> availableList;
+    @FXML private ListView<Integer> loadedList;
     
     // input file separator selection
     @FXML private ToggleGroup separatorSelection;
@@ -241,8 +238,16 @@ public class FileInputController implements Initializable {
                 progressPane.setVisible(false);
                 progressCancelButton.setDisable(false);
                 // at this point, no change to the data model should have been made
-//                availableTimeSeries.clear();
-//                loadedTimeSeries.clear();
+            }
+        });
+        fileModel.loadFileService.setOnFailed(new EventHandler<WorkerStateEvent>() {
+            @Override
+            public void handle(WorkerStateEvent t) {
+                progressPane.setVisible(false);
+                progressCancelButton.setDisable(false);
+
+                availableTimeSeries.clear();
+                loadedTimeSeries.clear();
             }
         });
         
@@ -294,6 +299,9 @@ public class FileInputController implements Initializable {
     public void loadSelected(ActionEvent e){
         // make a copy of the selection, because removing list items changes the selection
         Object[] selectionCopy = availableList.getSelectionModel().getSelectedItems().toArray();
+        
+        Map<Integer, TimeSeries> newSeries = new TreeMap<>();
+        
         for (Object item : selectionCopy) {
             
             // time series id and visible list elements are both 1-based indices
@@ -301,10 +309,12 @@ public class FileInputController implements Initializable {
             
             // create time series and append to data model
             TimeSeries timeSeries = new TimeSeries(tsIndex, fileModel.getXValues(tsIndex), fileModel.getYValues(tsIndex));
-            sharedData.dataModel.timeSeries.put(tsIndex, timeSeries);
+            newSeries.put(tsIndex, timeSeries);
             
             availableTimeSeries.remove(tsIndex);
         }
+        // by adding all time series in a single step, repeated updates of the observers are avoided
+        sharedData.dataModel.timeSeries.putAll(newSeries);
         loadedTimeSeries.sort(null);
     }
     

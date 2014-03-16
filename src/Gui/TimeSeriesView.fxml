@@ -33,11 +33,12 @@
             <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
           </padding>
         </LineChart>
-        <Canvas fx:id="chartCanvas" cache="true" />
+        <Canvas fx:id="chartCanvas" cache="true" onScroll="#scroll" onZoom="#zoom" />
       </children>
     </StackPane>
-    <Slider fx:id="detailSlider" blockIncrement="1.0" majorTickUnit="100.0" max="100.0" min="1.0" prefHeight="27.9998779296875" prefWidth="205.99990000000253" showTickLabels="false" showTickMarks="false" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" />
-    <Label id="detailLevelLabel" fx:id="levelOfDetailLabel" text="detail" visible="true" AnchorPane.bottomAnchor="7.0" AnchorPane.rightAnchor="215.0" />
+    <Slider fx:id="detailSlider" blockIncrement="1.0" majorTickUnit="1.0" max="20.0" min="1.0" prefHeight="15.99999988079071" prefWidth="206.0" showTickLabels="false" showTickMarks="false" snapToTicks="true" value="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" />
+    <Label id="detailLevelLabel" fx:id="levelOfDetailLabel" text="show every N-th point:" visible="true" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="215.0" />
+    <Button minHeight="15.999900000002526" mnemonicParsing="false" onAction="#resetView" prefHeight="-1.0" text="reset view" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="25.0" />
   </children>
   <stylesheets>
     <URL value="@timeseriesview.css" />
