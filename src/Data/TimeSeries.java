@@ -76,7 +76,8 @@ public class TimeSeries implements Comparable<TimeSeries>{
     
     @Override
     public String toString() {
-        return String.format("Time Series %d\n%s",id,values);
+//        return String.format("Time Series %d\n%s",id,values);
+        return String.format("Time Series %d",id);
 //        return "TimeSeries{" + "id=" + id + ", yValues=" + Arrays.toString(Arrays.copyOfRange(yValues, 0, 3)) + "... }";
     }
     

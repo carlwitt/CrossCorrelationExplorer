@@ -4,7 +4,7 @@ package Visualization.Color;
 import java.lang.Throwable;
 import java.lang.Float;
 
-import Visualization.Datatype.*;
+import Visualization.Color.Datatype.*;
 
 
 public class ColorTransformer {

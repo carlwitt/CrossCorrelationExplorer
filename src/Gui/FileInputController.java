@@ -4,16 +4,13 @@ import Data.*;
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.ResourceBundle;
 import java.util.TreeMap;
-import java.util.function.Consumer;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
-import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.*;
 import javafx.event.ActionEvent;
@@ -21,9 +18,11 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.stage.FileChooser;
+import javafx.util.Callback;
 import org.controlsfx.dialog.Dialogs;
 
 /**
@@ -43,7 +42,7 @@ public class FileInputController implements Initializable {
     
     // time series available in the loaded file. partitioned into available (in file) and loaded (in data model) time series.
     ObservableList<Integer> availableTimeSeries = FXCollections.observableArrayList();
-    ObservableList<Integer> loadedTimeSeries = FXCollections.observableArrayList();
+    ObservableList<TimeSeries> loadedTimeSeries;
     
     // data file input
     private File file = null;
@@ -64,8 +63,8 @@ public class FileInputController implements Initializable {
     @FXML private Label selectedFileLabel;
     
     // displayes the time series contained in the file and which one the user wants to work with
-    @FXML private ListView<Integer> availableList;
-    @FXML private ListView<Integer> loadedList;
+    @FXML protected ListView<Integer> availableList;
+    @FXML private ListView<TimeSeries> loadedList;
     
     // input file separator selection
     @FXML private ToggleGroup separatorSelection;
@@ -75,7 +74,8 @@ public class FileInputController implements Initializable {
     @FXML private RadioButton tabSeparatorRadio;
     @FXML private TextField characterSeparatorText;
     
-    @FXML private Button loadButton;
+    @FXML protected Button loadAllButton;           // adds all time series to the data model
+    @FXML protected Button loadButton;              // loads the file
     
     // -------------------------------------------------------------------------
     // initialization. register listeners
@@ -84,29 +84,21 @@ public class FileInputController implements Initializable {
     public void setSharedData(SharedData sharedData){
         
         this.sharedData = sharedData;
-
-        // the list of loaded time series listens to changes in the data model
-        sharedData.dataModel.timeSeries.addListener(new MapChangeListener<Integer, TimeSeries>() {
-            @Override public void onChanged(MapChangeListener.Change<? extends Integer, ? extends TimeSeries> change) {
-//                System.out.println(String.format("Map change: key %s value added %s value removed %s", change.getKey(), change.getValueAdded(),change.getValueRemoved()));
-                if(change.wasRemoved() && ! change.wasAdded()){
-                    loadedTimeSeries.remove(change.getKey());
-                } else if( ! change.wasRemoved() && change.wasAdded()){
-                    loadedTimeSeries.add(change.getKey());
-                }
-            }
-        });
-    
+        loadedTimeSeries = sharedData.dataModel.getObservableLoadedSeries();
+        loadedList.setItems(loadedTimeSeries);
     }
     /**
      * Initializes the controller class.
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        
         // bind list views to the available time series and loaded time series list models
+//        availableList.setCellFactory(new Callback<ListView<Integer>, ListCell<Integer>>() {
+//            @Override public ListCell<Integer> call(ListView<Integer> p) {
+//                
+//            }
+//        });
         availableList.setItems(availableTimeSeries);
-        loadedList.setItems(loadedTimeSeries);
         
         // bind label text to currently selected filepath...
         selectedFileLabel.textProperty().bind(fileModel.filenameProperty());
@@ -174,7 +166,6 @@ public class FileInputController implements Initializable {
             }
         });
         
-        
         fileModel.setFilename("/Users/macbookdata/inputDataTab.txt");
         
     }
@@ -210,25 +201,23 @@ public class FileInputController implements Initializable {
         fileModel.loadFileService.reset();
         
         progressCancelButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override public void handle(ActionEvent t) {
-                fileModel.loadFileService.cancel();
-            }
+            @Override public void handle(ActionEvent t) { fileModel.loadFileService.cancel(); }
         });
         
         fileModel.loadFileService.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
-            @Override
-            public void handle(WorkerStateEvent t) {
-                
+            @Override public void handle(WorkerStateEvent t) {
                 // TODO: should be encapsulated in a separate class that can be used to control the UI
                 progressPane.setVisible(false);
                 progressCancelButton.setDisable(false);
                 availableTimeSeries.clear();
                 sharedData.dataModel.timeSeries.clear();
                 
+                ArrayList<Integer> toAdd = new ArrayList<>(fileModel.getNumberOfTimeSeries());
                 // add representative list entries for the time series
                 for (int i = 1; i <= fileModel.getNumberOfTimeSeries(); i++) {
-                    availableTimeSeries.add(i);
+                    toAdd.add(i);
                 }
+                availableTimeSeries.addAll(toAdd);
             }
         });
         
@@ -246,8 +235,8 @@ public class FileInputController implements Initializable {
                 progressPane.setVisible(false);
                 progressCancelButton.setDisable(false);
 
+                sharedData.dataModel.clear();
                 availableTimeSeries.clear();
-                loadedTimeSeries.clear();
             }
         });
         
@@ -315,7 +304,6 @@ public class FileInputController implements Initializable {
         }
         // by adding all time series in a single step, repeated updates of the observers are avoided
         sharedData.dataModel.timeSeries.putAll(newSeries);
-        loadedTimeSeries.sort(null);
     }
     
     // removes all loaded time series from the data model
@@ -331,6 +319,9 @@ public class FileInputController implements Initializable {
             Integer tsIndex = (Integer) item;
             availableTimeSeries.add(tsIndex); // insert sorted
             sharedData.dataModel.timeSeries.remove(tsIndex);
+            sharedData.previewTimeSeries.remove(tsIndex);
+            sharedData.correlationSetA.remove(tsIndex);
+            sharedData.correlationSetB.remove(tsIndex);
         }
         availableTimeSeries.sort(null);
     }

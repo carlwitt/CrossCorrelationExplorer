@@ -34,24 +34,29 @@ public class CorrelationMatrixTest {
     public void testAggregateConstructor() {
         System.out.println("aggregateConstructor");
         
-        TimeSeries ts1 = new TimeSeries(ComplexSequence.create(new double[]{0,1,2}, new double[]{0,1,2}));
-        TimeSeries ts2 = new TimeSeries(ComplexSequence.create(new double[]{0,1,2}, new double[]{1,2,3}));
-        TimeSeries ts3 = new TimeSeries(ComplexSequence.create(new double[]{0,1,2}, new double[]{2,3,4}));
+        TimeSeries ts1 = new TimeSeries(1, new double[]{0,1,2}, new double[]{0,1,2});
+        TimeSeries ts2 = new TimeSeries(2, new double[]{0,1,2}, new double[]{1,2,3});
+        TimeSeries ts3 = new TimeSeries(3, new double[]{0,1,2}, new double[]{2,3,4});
         
-        dataModel.add(ts1)
-                 .add(ts2)
-                 .add(ts3);
+        dataModel.put(1, ts1);
+        dataModel.put(2, ts2);
+        dataModel.put(3, ts3);
         
-        CorrelationMatrix instance = new CorrelationMatrix(Arrays.asList(new TimeSeries[]{ts1,ts2,ts3}), 1);
+        List<TimeSeries> timeSeriesSet = Arrays.asList(new TimeSeries[]{ts1,ts2,ts3});
+        CorrelogramMetadata metadata = new CorrelogramMetadata(timeSeriesSet, timeSeriesSet, 1, DFT.NA_ACTION.LEAVE_UNCHANGED);
+        CorrelationMatrix instance = new CorrelationMatrix(metadata);
+        instance.compute();
 
-        assertEquals(instance.columns.get(0).mean[0], 2./3, 1e-5);
-        assertEquals(instance.columns.get(1).mean[0], 11./3, 1e-5);
-        assertEquals(instance.columns.get(2).mean[0], 26./3, 1e-5);
+        System.out.println(String.format("%s", instance));
+//        System.out.println(String.format("correlogram store\n%s", CorrelogramStore.correlationMatricesByMetadata.entrySet()));
+        assertEquals(1, instance.columns.get(0).mean[0], 1e-5);
+        assertEquals(4, instance.columns.get(1).mean[0], 1e-5);
+        assertEquals(9, instance.columns.get(2).mean[0], 1e-5);
 
         // from wolfram alpha
-        assertEquals(instance.columns.get(0).stdDev[0], 0.94281, 1e-4);
-        assertEquals(instance.columns.get(1).stdDev[0], 1.6997, 1e-4);
-        assertEquals(instance.columns.get(2).stdDev[0], 2.4944, 1e-4);
+        assertEquals(1.33333, instance.columns.get(0).stdDev[0], 1e-4);
+        assertEquals(2.40370, instance.columns.get(1).stdDev[0], 1e-4);
+        assertEquals(3.52766, instance.columns.get(2).stdDev[0], 1e-4);
     }
     
     
@@ -68,7 +73,7 @@ public class CorrelationMatrixTest {
         int expResult = 0;
         int result = instance.getSize();
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
+        
         fail("The test case is a prototype.");
     }
 
@@ -84,7 +89,7 @@ public class CorrelationMatrixTest {
         boolean expResult = false;
         boolean result = instance.contains(id);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
+        
         fail("The test case is a prototype.");
     }
 
@@ -99,7 +104,7 @@ public class CorrelationMatrixTest {
         boolean expResult = false;
         boolean result = instance.isEmpty();
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
+        
         fail("The test case is a prototype.");
     }
 
@@ -114,7 +119,7 @@ public class CorrelationMatrixTest {
         List expResult = null;
         List result = instance.getResultItems();
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
+        
         fail("The test case is a prototype.");
     }
 
@@ -128,7 +133,7 @@ public class CorrelationMatrixTest {
         CorrelationMatrix.Column c = null;
         CorrelationMatrix instance = null;
         instance.append(c);
-        // TODO review the generated test code and remove the default call to fail.
+        
         fail("The test case is a prototype.");
     }
 
@@ -143,7 +148,7 @@ public class CorrelationMatrixTest {
         CorrelogramMetadata expResult = null;
         CorrelogramMetadata result = instance.getMetadata();
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
+        
         fail("The test case is a prototype.");
     }
 
@@ -159,7 +164,7 @@ public class CorrelationMatrixTest {
         CorrelationMatrix.Column expResult = null;
         CorrelationMatrix.Column result = instance.getItembyID(id);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
+        
         fail("The test case is a prototype.");
     }
 
@@ -176,7 +181,7 @@ public class CorrelationMatrixTest {
         double expResult = 0.0;
         double result = instance.getMean(window, timeLag);
         assertEquals(expResult, result, 0.0);
-        // TODO review the generated test code and remove the default call to fail.
+        
         fail("The test case is a prototype.");
     }
 
@@ -193,7 +198,7 @@ public class CorrelationMatrixTest {
         double expResult = 0.0;
         double result = instance.getStdDev(window, timeLag);
         assertEquals(expResult, result, 0.0);
-        // TODO review the generated test code and remove the default call to fail.
+        
         fail("The test case is a prototype.");
     }
 
@@ -210,7 +215,7 @@ public class CorrelationMatrixTest {
         Number expResult = null;
         Number result = instance.getZ(window, timeLag);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
+        
         fail("The test case is a prototype.");
     }
 
@@ -227,7 +232,7 @@ public class CorrelationMatrixTest {
         double expResult = 0.0;
         double result = instance.getZValue(window, timeLag);
         assertEquals(expResult, result, 0.0);
-        // TODO review the generated test code and remove the default call to fail.
+        
         fail("The test case is a prototype.");
     }
 
@@ -243,7 +248,7 @@ public class CorrelationMatrixTest {
         int expResult = 0;
         int result = instance.getItemCount(window);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
+        
         fail("The test case is a prototype.");
     }
 
@@ -260,7 +265,7 @@ public class CorrelationMatrixTest {
         Number expResult = null;
         Number result = instance.getX(window, timeLag);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
+        
         fail("The test case is a prototype.");
     }
 
@@ -277,7 +282,7 @@ public class CorrelationMatrixTest {
         double expResult = 0.0;
         double result = instance.getXValue(window, timeLag);
         assertEquals(expResult, result, 0.0);
-        // TODO review the generated test code and remove the default call to fail.
+        
         fail("The test case is a prototype.");
     }
 
@@ -294,7 +299,7 @@ public class CorrelationMatrixTest {
         Number expResult = null;
         Number result = instance.getY(window, timeLag);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
+        
         fail("The test case is a prototype.");
     }
 
@@ -311,7 +316,7 @@ public class CorrelationMatrixTest {
         double expResult = 0.0;
         double result = instance.getYValue(window, timeLag);
         assertEquals(expResult, result, 0.0);
-        // TODO review the generated test code and remove the default call to fail.
+        
         fail("The test case is a prototype.");
     }
 
@@ -326,7 +331,7 @@ public class CorrelationMatrixTest {
         int expResult = 0;
         int result = instance.getSeriesCount();
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
+        
         fail("The test case is a prototype.");
     }
 
@@ -343,7 +348,7 @@ public class CorrelationMatrixTest {
         Comparable expResult = null;
         Comparable result = instance.getSeriesKey(window);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
+        
         fail("The test case is a prototype.");
     }
 
@@ -359,7 +364,7 @@ public class CorrelationMatrixTest {
         int expResult = 0;
         int result = instance.indexOf(windowKey);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
+        
         fail("The test case is a prototype.");
     }
 
@@ -374,7 +379,7 @@ public class CorrelationMatrixTest {
         double expResult = 0.0;
         double result = instance.getMeanMinValue();
         assertEquals(expResult, result, 0.0);
-        // TODO review the generated test code and remove the default call to fail.
+        
         fail("The test case is a prototype.");
     }
 
@@ -389,7 +394,7 @@ public class CorrelationMatrixTest {
         double expResult = 0.0;
         double result = instance.getMeanMaxValue();
         assertEquals(expResult, result, 0.0);
-        // TODO review the generated test code and remove the default call to fail.
+        
         fail("The test case is a prototype.");
     }
 
@@ -404,7 +409,7 @@ public class CorrelationMatrixTest {
         double expResult = 0.0;
         double result = instance.getStdDevMinValue();
         assertEquals(expResult, result, 0.0);
-        // TODO review the generated test code and remove the default call to fail.
+        
         fail("The test case is a prototype.");
     }
 
@@ -419,7 +424,7 @@ public class CorrelationMatrixTest {
         double expResult = 0.0;
         double result = instance.getStdDevMaxValue();
         assertEquals(expResult, result, 0.0);
-        // TODO review the generated test code and remove the default call to fail.
+        
         fail("The test case is a prototype.");
     }
 
@@ -434,7 +439,7 @@ public class CorrelationMatrixTest {
         int expResult = 0;
         int result = instance.hashCode();
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
+        
         fail("The test case is a prototype.");
     }
 
@@ -450,7 +455,7 @@ public class CorrelationMatrixTest {
         boolean expResult = false;
         boolean result = instance.equals(obj);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
+        
         fail("The test case is a prototype.");
     }
 }

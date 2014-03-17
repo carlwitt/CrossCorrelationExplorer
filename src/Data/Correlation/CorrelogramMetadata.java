@@ -1,10 +1,11 @@
 package Data.Correlation;
 
 import Data.TimeSeries;
-import javax.validation.constraints.NotNull;
+import com.google.common.base.Joiner;
 import java.util.ArrayList;
-import java.util.Collections;
+import javax.validation.constraints.NotNull;
 import java.util.List;
+import java.util.Objects;
 
 /**
  *
@@ -14,40 +15,35 @@ public class CorrelogramMetadata {
 
     public final int windowSize;
     /** The list of all time series for which the correlogram was computed. Invariant: the list must be sorted. */
-    public List<TimeSeries> timeSeries;
+    public List<TimeSeries> setA, setB;
     
-    public CorrelogramMetadata(@NotNull TimeSeries timeSeriesA, @NotNull TimeSeries timeSeriesB, int windowSize) {
+    DFT.NA_ACTION naAction;
+    
+    public CorrelogramMetadata(@NotNull TimeSeries seriesA, @NotNull TimeSeries seriesB, int windowSize, DFT.NA_ACTION naAction){
+        setA = new ArrayList<>(1);
+        setA.add(seriesA);
+        setB = new ArrayList<>(1);
+        setB.add(seriesB);
+        this.naAction = naAction;
         this.windowSize = windowSize;
-        ArrayList<TimeSeries> timeSeries = new ArrayList<TimeSeries>(2);
-        timeSeries.add(timeSeriesA);
-        timeSeries.add(timeSeriesB);
-        this.setTimeSeries(timeSeries);
     }
-    
-    public CorrelogramMetadata(@NotNull List<TimeSeries> timeSeries, int windowSize) {
+    public CorrelogramMetadata(@NotNull List<TimeSeries> setA, @NotNull List<TimeSeries> setB, int windowSize, DFT.NA_ACTION naAction) {
+        this.setA = setA;
+        this.setB = setB;
+        this.naAction = naAction;
         this.windowSize = windowSize;
-        this.timeSeries = timeSeries;
-        this.setTimeSeries(timeSeries);
     }
 
     public String toString() {
-        String result = "Metadata. Window size = "+windowSize+" for time series: ";
-        for(TimeSeries t : timeSeries){
-            result += t.id + ", ";
-        }
-        return result; //String.format("Metadata for time series: %s windowSize: %d", Joiner.on(",").join(timeSeries), windowSize);
-    }
-
-    private void setTimeSeries(List<TimeSeries> timeSeries) {
-        Collections.sort(timeSeries);
-        this.timeSeries = timeSeries;
+        return String.format("Metadata{windowSize: %d setA: %s setB: %s}", windowSize, Joiner.on(",").join(setA), Joiner.on(",").join(setB));
     }
     
     @Override
     public int hashCode() {
         int hash = 5;
-        hash = 79 * hash + this.windowSize;
-        hash = 79 * hash + (this.timeSeries != null ? this.timeSeries.hashCode() : 0);
+        hash = 17 * hash + this.windowSize;
+        hash = 17 * hash + Objects.hashCode(this.setA);
+        hash = 17 * hash + Objects.hashCode(this.setB);
         return hash;
     }
 
@@ -63,17 +59,13 @@ public class CorrelogramMetadata {
         if (this.windowSize != other.windowSize) {
             return false;
         }
-        
-        // compares the time series ids 
-        // assumes that the list of time series is sorted by time series id.
-        // this is a fast way to deal with permutations
-        for (int i = 0; i < this.timeSeries.size(); i++) {
-            if(this.timeSeries.get(i).id != other.timeSeries.get(i).id){
-                return false;
-            }
+        if (!Objects.equals(this.setA, other.setA)) {
+            return false;
+        }
+        if (!Objects.equals(this.setB, other.setB)) {
+            return false;
         }
         return true;
     }
-
 
 }

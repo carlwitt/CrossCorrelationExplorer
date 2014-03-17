@@ -6,9 +6,8 @@ import java.lang.Throwable;
 import Visualization.Color.ColorGenerator;
 import Visualization.Color.ColorManager;
 import Visualization.Color.ColorTransformer;
-import Visualization.Datatype;
-import Visualization.Datatype.Color;
-import Visualization.Datatype.ColorType;
+import Visualization.Color.Datatype.Color;
+import Visualization.Color.Datatype.ColorType;
 
 
 public class Color_manager extends ColorManager{ 

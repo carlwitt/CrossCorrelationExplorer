@@ -53,7 +53,8 @@ public class DataModelTest {
     public void tearDown() {
     }
 
-    @Test
+    @Test @Ignore
+    // can one retrieve the key set once and observe changes via changes to the reference? No.
     public void testObserveMapViaKeySet(){
         
         final ObservableMap<Integer, TimeSeries> index = FXCollections.observableHashMap();
@@ -86,79 +87,6 @@ public class DataModelTest {
         
         System.out.println(String.format("Final keyset: %s", Arrays.toString(keys.toArray())));
         
-    }
-    
-    /**
-     * Test of getSize method, of class DataModel.
-     */
-    @Test @Ignore
-    public void testGetSize() {
-        System.out.println("getSize");
-        DataModel instance = new DataModel();
-        int expResult = 0;
-        int result = instance.getSize();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of contains method, of class DataModel.
-     */
-    @Test @Ignore
-    public void testContains() {
-        System.out.println("contains");
-        int id = 0;
-        DataModel instance = new DataModel();
-        boolean expResult = false;
-        boolean result = instance.contains(id);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getAll method, of class DataModel.
-     */
-    @Test @Ignore
-    public void testGetAllContainers() {
-        System.out.println("getAllContainers");
-        DataModel instance = new DataModel();
-        Collection<TimeSeries> expResult = null;
-        Collection<TimeSeries> result = instance.getAll();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of get method, of class DataModel.
-     */
-    @Test @Ignore
-    public void testGetContainerById() {
-        System.out.println("getContainerById");
-        int id = 0;
-        DataModel instance = new DataModel();
-        TimeSeries expResult = null;
-        TimeSeries result = instance.get(id);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of add method, of class DataModel.
-     */
-    @Test @Ignore
-    public void testAppend() {
-        System.out.println("append");
-        TimeSeries ts = null;
-        DataModel instance = new DataModel();
-        DataModel expResult = null;
-        DataModel result = instance.add(ts);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
     
 }

@@ -90,7 +90,7 @@ public class ComplexSequenceTest {
 //        ComplexSequence expResult = null;
 //        ComplexSequence result = ComplexSequence.create(values);
 //        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
+//        
 //        fail("The test case is a prototype.");
 //    }
 //
@@ -103,7 +103,7 @@ public class ComplexSequenceTest {
 //        ComplexSequence expResult = null;
 //        ComplexSequence result = ComplexSequence.create(realValues, imaginaryValues);
 //        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
+//        
 //        fail("The test case is a prototype.");
 //    }
 //
@@ -169,7 +169,7 @@ public class ComplexSequenceTest {
 //        int expResult = 0;
 //        int result = instance.size();
 //        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
+//        
 //        fail("The test case is a prototype.");
 //    }
 //
@@ -183,7 +183,7 @@ public class ComplexSequenceTest {
 //        boolean expResult = false;
 //        boolean result = instance.isEmpty();
 //        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
+//        
 //        fail("The test case is a prototype.");
 //    }
 //
@@ -198,7 +198,7 @@ public class ComplexSequenceTest {
 //        Double expResult = null;
 //        Double result = instance.get(i);
 //        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
+//        
 //        fail("The test case is a prototype.");
 //    }
 //
@@ -212,7 +212,7 @@ public class ComplexSequenceTest {
 //        String expResult = "";
 //        String result = instance.toString();
 //        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
+//        
 //        fail("The test case is a prototype.");
 //    }
 //
@@ -227,7 +227,7 @@ public class ComplexSequenceTest {
 //        boolean expResult = false;
 //        boolean result = instance.contains(o);
 //        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
+//        
 //        fail("The test case is a prototype.");
 //    }
 //
@@ -241,7 +241,7 @@ public class ComplexSequenceTest {
 //        Iterator expResult = null;
 //        Iterator result = instance.iterator();
 //        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
+//        
 //        fail("The test case is a prototype.");
 //    }
 //
@@ -255,7 +255,7 @@ public class ComplexSequenceTest {
 //        Object[] expResult = null;
 //        Object[] result = instance.toArray();
 //        assertArrayEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
+//        
 //        fail("The test case is a prototype.");
 //    }
 //
@@ -271,7 +271,7 @@ public class ComplexSequenceTest {
 //        boolean expResult = false;
 //        boolean result = instance.add(e);
 //        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
+//        
 //        fail("The test case is a prototype.");
 //    }
 //
@@ -286,7 +286,7 @@ public class ComplexSequenceTest {
 //        boolean expResult = false;
 //        boolean result = instance.remove(o);
 //        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
+//        
 //        fail("The test case is a prototype.");
 //    }
 //
@@ -301,7 +301,7 @@ public class ComplexSequenceTest {
 //        boolean expResult = false;
 //        boolean result = instance.containsAll(clctn);
 //        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
+//        
 //        fail("The test case is a prototype.");
 //    }
 //
@@ -316,7 +316,7 @@ public class ComplexSequenceTest {
 //        boolean expResult = false;
 //        boolean result = instance.addAll(clctn);
 //        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
+//        
 //        fail("The test case is a prototype.");
 //    }
 //
@@ -332,7 +332,7 @@ public class ComplexSequenceTest {
 //        boolean expResult = false;
 //        boolean result = instance.addAll(i, clctn);
 //        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
+//        
 //        fail("The test case is a prototype.");
 //    }
 //
@@ -347,7 +347,7 @@ public class ComplexSequenceTest {
 //        boolean expResult = false;
 //        boolean result = instance.removeAll(clctn);
 //        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
+//        
 //        fail("The test case is a prototype.");
 //    }
 //
@@ -362,7 +362,7 @@ public class ComplexSequenceTest {
 //        boolean expResult = false;
 //        boolean result = instance.retainAll(clctn);
 //        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
+//        
 //        fail("The test case is a prototype.");
 //    }
 //
@@ -374,7 +374,7 @@ public class ComplexSequenceTest {
 //        System.out.println("clear");
 //        ComplexSequence instance = null;
 //        instance.clear();
-//        // TODO review the generated test code and remove the default call to fail.
+//        
 //        fail("The test case is a prototype.");
 //    }
 //
@@ -390,7 +390,7 @@ public class ComplexSequenceTest {
 //        Double expResult = null;
 //        Double result = instance.set(i, e);
 //        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
+//        
 //        fail("The test case is a prototype.");
 //    }
 //
@@ -404,7 +404,7 @@ public class ComplexSequenceTest {
 //        Double e = null;
 //        ComplexSequence instance = null;
 //        instance.add(i, e);
-//        // TODO review the generated test code and remove the default call to fail.
+//        
 //        fail("The test case is a prototype.");
 //    }
 //
@@ -419,7 +419,7 @@ public class ComplexSequenceTest {
 //        Double expResult = null;
 //        Double result = instance.remove(i);
 //        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
+//        
 //        fail("The test case is a prototype.");
 //    }
 //
@@ -434,7 +434,7 @@ public class ComplexSequenceTest {
 //        int expResult = 0;
 //        int result = instance.indexOf(o);
 //        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
+//        
 //        fail("The test case is a prototype.");
 //    }
 //
@@ -449,7 +449,7 @@ public class ComplexSequenceTest {
 //        int expResult = 0;
 //        int result = instance.lastIndexOf(o);
 //        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
+//        
 //        fail("The test case is a prototype.");
 //    }
 //
@@ -463,7 +463,7 @@ public class ComplexSequenceTest {
 //        ListIterator expResult = null;
 //        ListIterator result = instance.listIterator();
 //        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
+//        
 //        fail("The test case is a prototype.");
 //    }
 //
@@ -478,7 +478,7 @@ public class ComplexSequenceTest {
 //        ListIterator expResult = null;
 //        ListIterator result = instance.listIterator(i);
 //        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
+//        
 //        fail("The test case is a prototype.");
 //    }
 //
@@ -494,7 +494,7 @@ public class ComplexSequenceTest {
 //        List expResult = null;
 //        List result = instance.subList(i, i1);
 //        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
+//        
 //        fail("The test case is a prototype.");
 //    }
 }

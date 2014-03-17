@@ -4,7 +4,7 @@
 package Visualization.Color;
 import java.util.Vector;
 
-import Visualization.Datatype.Color;
+import Visualization.Color.Datatype.Color;
 
 /**
  * @author juanzi

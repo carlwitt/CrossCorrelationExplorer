@@ -18,15 +18,17 @@ public class DFT {
     public static int CC_BRUTEFORCE_LENGTH = 0;
 
     /** Behaviors to deal with not available (NA) values in the data. 
+     * REPLACE_WITH_ZERO will treat NA values as zero
+     * LEAVE_UNCHANGED will perform all computations without further treatment
      * NA_FAIL will raise an error if NA values exist in the input.
-     * NA_REPLACE_WITH_ZERO will treat NA values as zero
      */
     public static enum NA_ACTION{
 //        NA_FAIL,                
-        NA_REPLACE_WITH_ZERO
+        REPLACE_WITH_ZERO,
+        LEAVE_UNCHANGED
     };
     
-    public static NA_ACTION naAction = NA_ACTION.NA_REPLACE_WITH_ZERO;
+    public static NA_ACTION naAction = NA_ACTION.REPLACE_WITH_ZERO;
     
     /* FORWARD denotes the standard Discrete Fourier Transform (DFT) and INVERSE denotes the inverse DFT. */
     public static enum DIRECTION{FORWARD, INVERSE};
@@ -35,8 +37,6 @@ public class DFT {
     public static TimeSeries crossCorrelation(@NotNull TimeSeries tsA, @NotNull TimeSeries tsB){
         
         assert(tsA.getSize() == tsB.getSize());
-        
-        int paddedSize = intLog2(tsA.getSize());
         
         // use the time series values (function values) as real coefficients in a sequence of complex numbers
         ComplexSequence f = ComplexSequence.create(tsA.getDataItems().im);
@@ -54,8 +54,11 @@ public class DFT {
     }
     
     /** Computes the windowed cross correlation of two time series.
-     * That is, partitions both time series into time series of windowSize items and performs the cross correlation on the first windows, second windows, etc.
+     * I.e. partitions both time series into time series of windowSize items and performs the cross correlation on the first windows, second windows, etc.
+     * @param t1 The reference time series
+     * @param t2 The time series that is being shifted (or, more exactly, which windows are shifted)
      * @param windowSize If windowSize is zero, a single window containing all entries is used.
+     * @return A matrix containg the results of the cross correlations of the single windows as columns.
      */
     public static CorrelationMatrix crossCorrelation(@NotNull TimeSeries t1, @NotNull TimeSeries t2, int windowSize){
         
@@ -73,7 +76,7 @@ public class DFT {
         if( f.size() != g.size() ) 
             System.err.println("Input sequences to windowed cross correlation have to have the same length. ");
         
-        CorrelationMatrix result = new CorrelationMatrix(new CorrelogramMetadata(t1, t2, windowSize)); //result = ComplexSequence.create(new double[f.size()], new double[f.size()]);
+        CorrelationMatrix result = new CorrelationMatrix(new CorrelogramMetadata(t1, t2, windowSize, DFT.NA_ACTION.LEAVE_UNCHANGED)); //result = ComplexSequence.create(new double[f.size()], new double[f.size()]);
         
         // iterate over all windows. Integer division N/windowSize automatically rounds up.
         for (int w = 0; w < f.length; w+=windowSize) {
@@ -95,10 +98,10 @@ public class DFT {
             }
 
             int numInputValues = right - left + 1;
-            int numOutputValues = resultWindow.getSize();
-            int zerosToRemove = numOutputValues - numInputValues;
+//            int numOutputValues = resultWindow.getSize();
+//            int zerosToRemove = numOutputValues - numInputValues;
             ComplexSequence useValues = ComplexSequence.create(resultWindow.getDataItems(),0,numInputValues-1);
-            result.append(new Column(ComplexSequence.create(useValues.im)));
+            result.append(new Column(ComplexSequence.create(useValues.im), f.re[w]));
         }
         return result;
     }
@@ -240,8 +243,10 @@ public class DFT {
         for(ComplexSequence cs : sequences){
             for (int i = 0; i < cs.im.length; i++) {
                 switch(naAction){
-                    case NA_REPLACE_WITH_ZERO:
-                        cs.im[i] = 0.;
+                    case REPLACE_WITH_ZERO:
+                        if(Double.isNaN(cs.im[i])) {
+                            cs.im[i] = 0.;
+                        }
                         break;
 //                    case NA_FAIL:
 //                        if(Double.isNaN(d))

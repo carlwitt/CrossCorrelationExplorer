@@ -12,6 +12,7 @@ import java.util.Iterator;
 import java.util.List;
 /**
  * 
+ * TODO: clean up methods that have been introduced to fit the JFreeChart interfaces
  * @author Carl Witt
  */
 public class CorrelationMatrix implements ResultContainer<Column> {
@@ -27,45 +28,33 @@ public class CorrelationMatrix implements ResultContainer<Column> {
     
     public CorrelationMatrix(CorrelogramMetadata metadata) {
         this.id = ++instanceCount;
-        this.columns = new ArrayList<Column>();
+        this.columns = new ArrayList<>();
         this.metadata = metadata;
-        CorrelogramStore.append(this);
     }
     
-    /** Creates a correlation matrix from a list of other time series 
-     *  by first computing the cross correlation for all of them
-     *  and then computing the average and standard deviation. */
-    public CorrelationMatrix(List<TimeSeries> timeSeries, int windowSize){
+    /** Creates a correlation matrix from a list of other time series by first computing the cross correlation for all of them and then computing the average and standard deviation. */
+    public void compute(){
         
-        this.id = ++instanceCount;
-        this.metadata = new CorrelogramMetadata(timeSeries, windowSize);
+        // check that all time series have the same length?
         
-        // check that all time series have the same length.
-        
-        int n = timeSeries.size();
-        // the pairwise windowed cross correlation matrices
-        CorrelationMatrix[] partialResults = new CorrelationMatrix[(n*(n-1))/2];
+        // get/compute all the elementary (one-by-one) cross correlations
+        CorrelationMatrix[] partialResults = new CorrelationMatrix[metadata.setA.size()*metadata.setB.size()];
         int freeSlot = 0; // where to put the next partial result in the array
-        
         long before = System.currentTimeMillis();
-        for(int i = 0; i < timeSeries.size(); i++){
-            for (int j = i+1; j < timeSeries.size(); j++) {
-                partialResults[freeSlot++] =
-                    CorrelogramStore.getResult(new CorrelogramMetadata(timeSeries.get(i), timeSeries.get(j), windowSize));
-                if(!RuntimeConfiguration.VERBOSE){} else {
-                    System.out.println(String.format("%d/%d: %s",freeSlot,partialResults.length,partialResults[freeSlot-1]));
-                }
+        for(TimeSeries tsA : metadata.setA){
+            for (TimeSeries tsB : metadata.setB) {
+                partialResults[freeSlot++] = CorrelogramStore.getResult(new CorrelogramMetadata(tsA, tsB, metadata.windowSize, DFT.NA_ACTION.LEAVE_UNCHANGED));
+                if(RuntimeConfiguration.VERBOSE) System.out.println(String.format("%d/%d ",freeSlot,partialResults.length));//,partialResults[freeSlot-1]
             }
         }
         
-        if(true || RuntimeConfiguration.VERBOSE){
+        if(RuntimeConfiguration.VERBOSE){
             System.out.println("Needed time for correlation: "+(System.currentTimeMillis()-before)+" ms");
         }
         
-        
         before = System.currentTimeMillis();
         
-        this.columns = new ArrayList<Column>();
+        this.columns = new ArrayList<>();
         // create the result column by column
         for (int windowIdx = 0; windowIdx < partialResults[0].columns.size(); windowIdx++) {
             Column window = partialResults[0].columns.get(windowIdx);
@@ -86,28 +75,30 @@ public class CorrelationMatrix implements ResultContainer<Column> {
                 // std dev computation: iterate over partial results 
                 double stdDev = 0;
                 for (int ccPairIdx = 0; ccPairIdx < partialResults.length; ccPairIdx++) {
+                    // ∑ (x - µ)^2
                     stdDev += Math.pow(partialResults[ccPairIdx].columns.get(windowIdx).mean[timeLag] - mean, 2);
                 }
                 stdDev = Math.sqrt(stdDev / partialResults.length);
-                
                 
                 means[timeLag] = mean;
                 stdDevs[timeLag] = stdDev;
             }
             
             ComplexSequence windowValues = ComplexSequence.create(means,stdDevs);
-            this.columns.add(new Column(windowValues));
+            this.columns.add(new Column(windowValues, window.windowXOffset));
             
         }
-        if(true || RuntimeConfiguration.VERBOSE){
+        if(RuntimeConfiguration.VERBOSE){
             System.out.println("Needed time for aggregation: "+(System.currentTimeMillis()-before)+" ms");
         }
+        
+        CorrelogramStore.append(this);
         
 //        System.out.println("Aggregated correlation matrix (constructor):\n"+this);
     }
     
     public String toString(){
-        return Joiner.on("\n").join(columns);
+        return "Correlation Matrix "+Joiner.on("\n").join(columns);
     }
     
     @Override
@@ -202,46 +193,6 @@ public class CorrelationMatrix implements ResultContainer<Column> {
     }
     
     
-    public Number getX(int time, int timeLag) {
-        return new Double(getXValue(time, timeLag));
-    }
-    
-    public double getXValue(int time, int timeLag) {
-        return time;
-    }
-    
-    
-    public Number getY(int time, int timeLag) {
-        return new Double(getYValue(time, timeLag));
-    }
-    
-    public double getYValue(int time, int timeLag) {
-        // returns a negative y (time lag) value for the last half of the correlation values
-        return splitLag(timeLag);
-    }
-    
-    public Number getZ(int time, int timeLag) {
-        return new Double(getZValue(time, timeLag));
-    }
-    
-    public double getZValue(int time, int timeLag) {
-        return getMean(time, timeLag);
-    }
-    public Number getZ2(int time, int timeLag) {
-        return new Double(getZ2Value(time, timeLag));
-    }
-    public double getZ2Value(int time, int timeLag) {
-        return getStdDev(time, timeLag);
-    }
-    
-    public Comparable getSeriesKey(int window) {
-        return String.format("Correlogram matrix %d", id);
-    }
-    
-    public int indexOf(Comparable windowKey) {
-        return 0;
-    }
-    
     /** @return the minimum correlation value across all columns. */
     public double getMeanMinValue() {
         if(minMean != null)
@@ -285,7 +236,7 @@ public class CorrelationMatrix implements ResultContainer<Column> {
         return maxStdDev;
     }
     
-    /** Sort of result item although not comparable (no getMinItem/getMaxItem sensible) */
+    /** Represents one aggregated cross-correlation result within a time window */
     public static class Column  {
 
         /** Holds the data for this column as sequence of complex numbers. 
@@ -298,15 +249,20 @@ public class CorrelationMatrix implements ResultContainer<Column> {
         public double[] mean;
         public double[] stdDev;
         
-        public Column(double[] mean, double[] stdDev) {
+        /** The original min x value of the time window processed. */
+        public final double windowXOffset;
+        
+        public Column(double[] mean, double[] stdDev, double windowXOffset) {
             this.values = ComplexSequence.create(mean, stdDev);
             this.mean = values.re;
             this.stdDev = values.im;
+            this.windowXOffset = windowXOffset;
         }
-        public Column(ComplexSequence cs){
+        public Column(ComplexSequence cs, double windowXOffset){
             this.values = cs;
             this.mean = cs.re;
             this.stdDev = cs.im;
+            this.windowXOffset = windowXOffset;
         }
         
         public double getMeanMin(){ return values.getMin(ComplexSequence.Part.REAL);}
@@ -370,5 +326,46 @@ public class CorrelationMatrix implements ResultContainer<Column> {
             return false;
         }
         return true;
+    }
+    
+    
+    public Number getX(int time, int timeLag) {
+        return new Double(getXValue(time, timeLag));
+    }
+    
+    public double getXValue(int time, int timeLag) {
+        return time;
+    }
+    
+    
+    public Number getY(int time, int timeLag) {
+        return new Double(getYValue(time, timeLag));
+    }
+    
+    public double getYValue(int time, int timeLag) {
+        // returns a negative y (time lag) value for the last half of the correlation values
+        return splitLag(timeLag);
+    }
+    
+    public Number getZ(int time, int timeLag) {
+        return new Double(getZValue(time, timeLag));
+    }
+    
+    public double getZValue(int time, int timeLag) {
+        return getMean(time, timeLag);
+    }
+    public Number getZ2(int time, int timeLag) {
+        return new Double(getZ2Value(time, timeLag));
+    }
+    public double getZ2Value(int time, int timeLag) {
+        return getStdDev(time, timeLag);
+    }
+    
+    public Comparable getSeriesKey(int window) {
+        return String.format("Correlogram matrix %d", id);
+    }
+    
+    public int indexOf(Comparable windowKey) {
+        return 0;
     }
 }

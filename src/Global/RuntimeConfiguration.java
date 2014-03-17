@@ -6,6 +6,6 @@ package Global;
  */
 public class RuntimeConfiguration {
     /** controls the verbosity of the console output (progress feedback, cache behavior, etc.) */
-    public static boolean VERBOSE = false;
+    public static boolean VERBOSE = true;
     
 }

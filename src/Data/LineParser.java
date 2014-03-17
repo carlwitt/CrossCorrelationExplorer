@@ -13,12 +13,8 @@ public class LineParser {
     public enum SplitMethod {
         BY_CHARACTER, BY_COLUMN_WIDTH
     }
-    public enum NanStrategy{
-        REPLACE_WITH_ZERO, LEAVE
-    }
     
     private final LineParser.SplitMethod splitMethod;
-    private NanStrategy nanStrategy = NanStrategy.LEAVE;
     
     public final int columnWidth;
     public final String separator;
@@ -37,10 +33,6 @@ public class LineParser {
         stringSplitter = Splitter.on(separator);
     }
 
-    public void setNanStrategy(NanStrategy nanStrategy){
-        this.nanStrategy = nanStrategy;
-    }
-    
     /**
      * Splits a string according to a delimiter string.
      * @param line The string to split
@@ -63,13 +55,7 @@ public class LineParser {
             String trimmedNumber = it.next();
             try {
                 double parsed = Double.parseDouble(trimmedNumber);
-                switch(nanStrategy){
-                    case REPLACE_WITH_ZERO:
-                        result.add( Double.isNaN(parsed) ? 0 : parsed );
-                        break;
-                    case LEAVE:
-                        result.add(parsed);
-                } 
+                result.add(parsed);
             } catch (NumberFormatException e) {
                 System.out.println(String.format("Couldn't parse double from '%s'\nin line %s", trimmedNumber, line));
             }

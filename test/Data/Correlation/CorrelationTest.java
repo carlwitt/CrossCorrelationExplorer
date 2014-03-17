@@ -4,12 +4,10 @@
  */
 package Data.Correlation;
 
-import Data.Correlation.CorrelogramMetadata;
-import Data.Correlation.CorrelationMatrix;
-import Data.Correlation.DFT;
 import Data.ComplexSequence;
 import Data.Correlation.CorrelationMatrix.Column;
 import Data.TimeSeries;
+import java.util.Arrays;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -75,9 +73,9 @@ public class CorrelationTest extends DFTTest {
         System.out.println("windowedCrossCorrelation");
         TimeSeries f = new TimeSeries(new double[]{1, 0, 0, 0, 1, 0, 0});
         TimeSeries g = new TimeSeries(new double[]{1, 0, 0, 0, 0, 1, 0});
-        CorrelationMatrix expected = new CorrelationMatrix(new CorrelogramMetadata(f, g, 4));
-        expected.append(new Column(ComplexSequence.create(new double[]{1, 0, 0, 0}, new double[4])));
-        expected.append(new Column(ComplexSequence.create(new double[]{0, 1, 0}, new double[3])));
+        CorrelationMatrix expected = new CorrelationMatrix(new CorrelogramMetadata(f, g, 4, DFT.NA_ACTION.LEAVE_UNCHANGED));
+        expected.append(new Column(ComplexSequence.create(new double[]{1, 0, 0, 0}, new double[4]), 0));
+        expected.append(new Column(ComplexSequence.create(new double[]{0, 1, 0}, new double[3]), 4));
         CorrelationMatrix result = DFT.crossCorrelation(f, g, 4);
         assertEquals(expected, result);
     }

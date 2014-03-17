@@ -13,35 +13,30 @@
 <?import javafx.scene.shape.*?>
 <?import javafx.scene.text.*?>
 
-<BorderPane minHeight="600.0" minWidth="800.0" prefHeight="768.0" prefWidth="1024.0" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.MainController">
+<BorderPane minHeight="600.0" minWidth="800.0" prefHeight="768.0" prefWidth="1024.0" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.MainWindowController">
   <center>
-    <SplitPane dividerPositions="0.2193211488250653, 0.566579634464752" focusTraversable="true" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0">
+    <SplitPane dividerPositions="0.1919060052219321, 0.5757180156657964" focusTraversable="true" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0">
       <items>
-        <AnchorPane fx:id="inputPane" minHeight="165.0" prefHeight="165.0" prefWidth="1022.0" style="-fx-background-color: gainsboro;">
+        <AnchorPane fx:id="inputPane" minHeight="144.0" prefHeight="144.0" prefWidth="1022.0" style="-fx-background-color: gainsboro;">
           <children>
             <Text layoutX="-39.0" layoutY="55.0" rotate="270.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Input Selection" translateX="0.0" />
-            <StackPane visible="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-              <TabPane prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: white;" tabClosingPolicy="UNAVAILABLE">
+            <StackPane prefHeight="165.0" visible="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+              <TabPane fx:id="inputTabPane" prefHeight="165.0" prefWidth="200.0" rotateGraphic="false" style="-fx-background-color: white;" tabClosingPolicy="UNAVAILABLE" tabMinHeight="13.0">
                 <tabs>
                   <Tab closable="false" style="" text="Available in File">
                     <content>
-                      <StackPane id="StackPane">
-                        <children>
-                          <!--The controller can be injected to the main window by adding the suffix "Controller" to the fx:id attribute, i.e. @FXML private FileInputTabController fileInputController; -->
-                          <fx:include fx:id="fileInput" source="FileInputTab.fxml" alignment="TOP_LEFT" />
-                        </children>
-                      </StackPane>
+                      <fx:include fx:id="fileInput" source="FileInputTab.fxml" alignment="TOP_LEFT" />
                     </content>
                   </Tab>
                   <Tab closable="false" text="Computation Input">
                     <content>
-                      <HBox prefHeight="100.0" prefWidth="200.0" />
+                      <fx:include fx:id="computationInput" source="ComputationInputTab.fxml" alignment="TOP_LEFT" />
                     </content>
                   </Tab>
                 </tabs>
               </TabPane>
               <StackPane fx:id="progressPane" disable="false" opacity="1.0" prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: rgba(0,0,0,0.5);" visible="false">
-                <StackPane id="progressPane" prefHeight="40.0" prefWidth="446.0" visible="true" StackPane.alignment="CENTER">
+                <StackPane prefHeight="40.0" prefWidth="446.0" visible="true" StackPane.alignment="CENTER">
                   <children>
                     <ProgressBar fx:id="progressBar" maxHeight="40.0" prefHeight="40.0" prefWidth="500.0" progress="0.0" />
                     <Label fx:id="progressLabel" alignment="CENTER" contentDisplay="RIGHT" prefHeight="40.000099999997474" prefWidth="500.0" text="Loading file contents...&#10;1 of 100" StackPane.alignment="CENTER" />
@@ -52,18 +47,16 @@
             </StackPane>
           </children>
         </AnchorPane>
-        <fx:include fx:id="timeSeriesView" source="TimeSeriesView.fxml" />
-        <AnchorPane fx:id="correlationView" prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: gainsboro;">
+        <AnchorPane prefHeight="-1.0" prefWidth="200.0" style="-fx-background-color: gainsboro;">
           <children>
-            <Text layoutX="-44.0" layoutY="60.0" rotate="270.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Correlation View" translateX="0.0" />
-            <ScatterChart id="ScatterChartNxN" legendVisible="false" prefHeight="197.0" prefWidth="840.0" style="-fx-background-color: white;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-              <xAxis>
-                <NumberAxis animated="false" label="Year" side="BOTTOM" />
-              </xAxis>
-              <yAxis>
-                <NumberAxis animated="false" label="Time Lag" lowerBound="-20.0" side="LEFT" upperBound="20.0" />
-              </yAxis>
-            </ScatterChart>
+            <Text rotate="270.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Time Series View" translateX="0.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="-45.0" AnchorPane.topAnchor="50.0" />
+            <fx:include fx:id="timeSeriesView" source="../Visualization/TimeSeriesView.fxml" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+          </children>
+        </AnchorPane>
+        <AnchorPane prefHeight="-1.0" prefWidth="200.0" style="-fx-background-color: gainsboro;">
+          <children>
+            <Text fontSmoothingType="GRAY" rotate="270.0" smooth="true" strikethrough="false" strokeType="OUTSIDE" strokeWidth="0.0" text="Correlation View" translateX="0.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="-45.0" AnchorPane.topAnchor="50.0" />
+            <fx:include fx:id="correlationView" source="../Visualization/Correlogram.fxml" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
           </children>
         </AnchorPane>
       </items>

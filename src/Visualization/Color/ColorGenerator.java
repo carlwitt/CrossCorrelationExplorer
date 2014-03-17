@@ -2,7 +2,7 @@
  * 
  */
 package Visualization.Color;
-import Visualization.Datatype.*;
+import Visualization.Color.Datatype.*;
 /**
  * @author juanzi
  *

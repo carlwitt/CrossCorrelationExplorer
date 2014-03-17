@@ -1,7 +1,7 @@
 package Data.Correlation;
 
-import Data.DataModel;
 import Data.TimeSeries;
+import Global.RuntimeConfiguration;
 import com.google.common.base.Joiner;
 import java.util.Collection;
 import java.util.HashMap;
@@ -12,14 +12,8 @@ import java.util.HashMap;
  */
 public class CorrelogramStore {
 
-    final DataModel dataModel;
-    
-    static HashMap<CorrelogramMetadata, CorrelationMatrix> correlogramsByMetadata = new HashMap<CorrelogramMetadata, CorrelationMatrix>();
+    static HashMap<CorrelogramMetadata, CorrelationMatrix> correlationMatricesByMetadata = new HashMap<CorrelogramMetadata, CorrelationMatrix>();
     static HashMap<Integer, CorrelationMatrix> correlogramsById = new HashMap<Integer, CorrelationMatrix>();
-    
-    public CorrelogramStore(DataModel d){
-        this.dataModel = d;
-    }
     
     public static int getSize() {
         return correlogramsById.size();
@@ -30,16 +24,16 @@ public class CorrelogramStore {
     }
 
     public static boolean contains(CorrelogramMetadata metadata) {
-        return correlogramsByMetadata.containsKey(metadata);
+        return correlationMatricesByMetadata.containsKey(metadata);
     }
     
     public static void append(CorrelationMatrix c) {
         correlogramsById.put(c.id, c);
-        correlogramsByMetadata.put(c.metadata, c);
+        correlationMatricesByMetadata.put(c.metadata, c);
     }
 
     public static Collection<CorrelationMatrix> getAllResults() {
-        System.out.println(String.format("Ids:\n%s\nMetadata:\n%s", correlogramsById.keySet(), correlogramsByMetadata.keySet()));
+        System.out.println(String.format("Ids:\n%s\nMetadata:\n%s", correlogramsById.keySet(), correlationMatricesByMetadata.keySet()));
         return correlogramsById.values();
     }
 
@@ -47,31 +41,30 @@ public class CorrelogramStore {
         return correlogramsById.get(id);
     }
 
-    /** The main access point for retrieving results. Computes the result if necessary. */
+    /** The main access point for retrieving results. Computes the result if not already present in the cache. */
     public static CorrelationMatrix getResult(CorrelogramMetadata metadata) {
         
-        CorrelationMatrix result = correlogramsByMetadata.get(metadata);
+        CorrelationMatrix result = correlationMatricesByMetadata.get(metadata);
 
         // compute result if not yet computed
         if(result == null){
             
-            if(metadata.timeSeries.size() == 2){
-                TimeSeries ts1 = metadata.timeSeries.get(0);
-                TimeSeries ts2 = metadata.timeSeries.get(1);
+            if(metadata.setA.size() == 1 && metadata.setB.size() == 1){
+                TimeSeries ts1 = metadata.setA.get(0);
+                TimeSeries ts2 = metadata.setB.get(0);
                 result = DFT.crossCorrelation(ts1, ts2, metadata.windowSize);
             } else{
-                result = new CorrelationMatrix(metadata.timeSeries, metadata.windowSize);
+                result = new CorrelationMatrix(metadata);
             }
             
 //            System.out.println("correlation result: "+result);
             
             append(result); // id and metadata are contained in the result
 //            System.out.println("Result computed. "+metadata);
-//            System.out.println("Keyset\n"+Joiner.on("\n").join(correlogramsByMetadata.keySet()));
+//            System.out.println("Keyset\n"+Joiner.on("\n").join(correlationMatricesByMetadata.keySet()));
         } else {
-//            System.out.println("Cache hit.");
+            if(RuntimeConfiguration.VERBOSE) System.out.println("Cache hit.");
         }
-            
         
         return result;
     }

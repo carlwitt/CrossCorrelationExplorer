@@ -1,4 +1,4 @@
-package Visualization;
+package Visualization.Color;
 
 import com.google.common.base.Joiner;
 import java.util.Arrays;

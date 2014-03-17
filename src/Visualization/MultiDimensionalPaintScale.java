@@ -1,5 +1,6 @@
 package Visualization;
 
+import Visualization.Color.Datatype;
 import Visualization.Color.Color_manager;
 import com.google.common.base.Joiner;
 import java.awt.Color;
