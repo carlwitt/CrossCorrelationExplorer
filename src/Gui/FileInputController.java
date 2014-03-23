@@ -166,7 +166,7 @@ public class FileInputController implements Initializable {
             }
         });
         
-        fileModel.setFilename("/Users/macbookdata/inputDataTab.txt");
+        fileModel.setFilename("/Users/macbookdata/inputDataExcerpt.txt");
         
     }
     

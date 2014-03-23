@@ -81,7 +81,7 @@ public class DFT {
         // iterate over all windows. Integer division N/windowSize automatically rounds up.
         for (int w = 0; w < f.length; w+=windowSize) {
             
-            // window extend
+            // window extend    
             int left  = w;
             int right = Math.min(left + windowSize-1, N-1);
             
@@ -101,7 +101,7 @@ public class DFT {
 //            int numOutputValues = resultWindow.getSize();
 //            int zerosToRemove = numOutputValues - numInputValues;
             ComplexSequence useValues = ComplexSequence.create(resultWindow.getDataItems(),0,numInputValues-1);
-            result.append(new Column(ComplexSequence.create(useValues.im), f.re[w]));
+            result.append(new Column(ComplexSequence.create(useValues.im), t1.getDataItems().re[w]));
         }
         return result;
     }

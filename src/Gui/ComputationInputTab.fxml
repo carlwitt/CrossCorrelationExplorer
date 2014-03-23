@@ -24,9 +24,9 @@
       </tooltip>
     </ListView>
     <Label alignment="CENTER" maxWidth="1.7976931348623157E308" prefWidth="300.0" text="Loaded Time Series" textAlignment="CENTER" GridPane.columnIndex="2" GridPane.hgrow="ALWAYS" GridPane.rowIndex="0" />
-    <ListView fx:id="loadedList" maxWidth="1.7976931348623157E308" prefHeight="-1.0" prefWidth="130.0" style="-fx-background-insets: 0;" GridPane.columnIndex="2" GridPane.rowIndex="1">
+    <ListView fx:id="loadedList" maxWidth="1.7976931348623157E308" onKeyReleased="#loadedListKeyTyped" prefHeight="-1.0" prefWidth="130.0" style="-fx-background-insets: 0;" GridPane.columnIndex="2" GridPane.rowIndex="1">
       <tooltip>
-        <Tooltip text="Displays all time series that have been loaded in the file input tab." />
+        <Tooltip text="Displays all time series that have been loaded in the file input tab.&#10;Use the left arrow key to add time series to correlation input set A and the right arrow key analogously." />
       </tooltip>
     </ListView>
     <Label alignment="CENTER" font="$x1" maxWidth="1.7976931348623157E308" prefWidth="300.0" text="Correlation Input Set B" textFill="#4333ff" GridPane.columnIndex="4" GridPane.rowIndex="0" />

@@ -19,7 +19,7 @@ public class CorrelationMatrix implements ResultContainer<Column> {
 
     public CorrelogramMetadata metadata;
     List<Column> columns;
-    private static int instanceCount = 0;
+    private static int instanceCount = 0; 
     public final int id;
     
     /** Minimum and maximum correlation mean across all columns of the matrix. */
@@ -35,6 +35,8 @@ public class CorrelationMatrix implements ResultContainer<Column> {
     /** Creates a correlation matrix from a list of other time series by first computing the cross correlation for all of them and then computing the average and standard deviation. */
     public void compute(){
         
+        DFT.naAction = metadata.naAction;
+        
         // check that all time series have the same length?
         
         // get/compute all the elementary (one-by-one) cross correlations
@@ -43,7 +45,7 @@ public class CorrelationMatrix implements ResultContainer<Column> {
         long before = System.currentTimeMillis();
         for(TimeSeries tsA : metadata.setA){
             for (TimeSeries tsB : metadata.setB) {
-                partialResults[freeSlot++] = CorrelogramStore.getResult(new CorrelogramMetadata(tsA, tsB, metadata.windowSize, DFT.NA_ACTION.LEAVE_UNCHANGED));
+                partialResults[freeSlot++] = CorrelogramStore.getResult(new CorrelogramMetadata(tsA, tsB, metadata.windowSize, metadata.naAction));
                 if(RuntimeConfiguration.VERBOSE) System.out.println(String.format("%d/%d ",freeSlot,partialResults.length));//,partialResults[freeSlot-1]
             }
         }
@@ -95,6 +97,14 @@ public class CorrelationMatrix implements ResultContainer<Column> {
         CorrelogramStore.append(this);
         
 //        System.out.println("Aggregated correlation matrix (constructor):\n"+this);
+    }
+    
+    public double getMinX(){
+        return columns.get(0).windowXOffset;
+    }
+    public double getMaxX(){
+        Column lastColumn = columns.get(columns.size()-1);
+        return lastColumn.windowXOffset + lastColumn.mean.length;
     }
     
     public String toString(){

@@ -79,7 +79,7 @@
       <center>
         <VBox alignment="TOP_CENTER" prefHeight="240.0" prefWidth="162.0" spacing="2.0">
           <children>
-            <RadioButton fx:id="fixedWidthSeparatorRadio" contentDisplay="RIGHT" font="$x2" graphicTextGap="8.0" mnemonicParsing="false" prefWidth="400.0" selected="false" text="Fixed Width">
+            <RadioButton fx:id="fixedWidthSeparatorRadio" contentDisplay="RIGHT" font="$x2" graphicTextGap="8.0" mnemonicParsing="false" prefWidth="400.0" selected="true" text="Fixed Width">
               <graphic>
                 <TextField fx:id="fixedWidthSeparatorText" prefWidth="40.0" promptText="" style="" text="16" />
               </graphic>
@@ -90,7 +90,7 @@
                 <Tooltip autoHide="true" style="" text="Use a fixed number of characters to separate text file rows into single numbers." />
               </tooltip>
             </RadioButton>
-            <RadioButton fx:id="tabSeparatorRadio" font="$x2" mnemonicParsing="false" prefWidth="372.0" selected="true" text="Tab" toggleGroup="$separatorSelection">
+            <RadioButton fx:id="tabSeparatorRadio" font="$x2" mnemonicParsing="false" prefWidth="372.0" selected="false" text="Tab" toggleGroup="$separatorSelection">
               <tooltip>
                 <Tooltip text="Split lines into number strings along each tab character." />
               </tooltip>

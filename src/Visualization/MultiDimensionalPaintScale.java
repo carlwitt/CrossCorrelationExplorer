@@ -3,11 +3,11 @@ package Visualization;
 import Visualization.Color.Datatype;
 import Visualization.Color.Color_manager;
 import com.google.common.base.Joiner;
-import java.awt.Color;
-import java.awt.Paint;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Vector;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 /**
  * Interpolates colors between min (blue) and max (red) via green 
  * As in the standard HSV color spectrum: http://en.wikipedia.org/wiki/HSV_color_space
@@ -15,7 +15,7 @@ import java.util.Vector;
  */
 public class MultiDimensionalPaintScale 
 {
-    double[] lowerBounds = new double[2], upperBounds = new double[2];
+    Double[] lowerBounds = new Double[2], upperBounds = new Double[2];
     
     Color_manager colorManager;
     /** How many base hue values are used to encode the first dimension. */
@@ -106,17 +106,17 @@ public class MultiDimensionalPaintScale
         return this;
     }
 
-    public MultiDimensionalPaintScale setLowerBounds(double[] d) {
+    public MultiDimensionalPaintScale setLowerBounds(Double... d) {
         this.lowerBounds = d;
         return this;
     }
 
-    public MultiDimensionalPaintScale setUpperBounds(double[] d) {
+    public MultiDimensionalPaintScale setUpperBounds(Double... d) {
         this.upperBounds = d;
         return this;
     }
 
-    public double interpolate(double d, int dim){
+    protected double interpolate(double d, int dim){
         double offset = d - lowerBounds[dim];
         double range = upperBounds[dim] - lowerBounds[dim];
         return range < 1e-10 ? offset : offset / range;
@@ -162,7 +162,7 @@ public class MultiDimensionalPaintScale
             c = colors[hueIndex][satIndex];
         }
        
-        return new Color((int)c.dimension_1, (int)c.dimension_2, (int)c.dimension_3);
+        return new Color(c.dimension_1/255., c.dimension_2/255., c.dimension_3/255., 1);
 //        return Color.getHSBColor(hue, saturation, 1f); //Math.min(1f,saturation)
     }
     

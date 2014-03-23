@@ -15,9 +15,10 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
-import org.controlsfx.control.RangeSlider;
 import org.controlsfx.dialog.Dialogs;
 
 /**
@@ -62,6 +63,7 @@ public class ComputationInputController implements Initializable {
     // list control buttons
     @FXML private Button loadAllSetAButton;
     @FXML private Button loadSelectedSetAButton;
+    @FXML private Button loadSelectedSetBButton;
     @FXML private Button loadRandomSetAButton;
     @FXML private Button unloadAllSetAButton;
     @FXML private Button unloadSelectedSetAButton;
@@ -119,21 +121,28 @@ public class ComputationInputController implements Initializable {
         
     }
     
+    public void loadedListKeyTyped(KeyEvent t) {
+        if(t.getCode() ==  KeyCode.LEFT){
+            loadSelectedSetAButton.fire();
+        } else if(t.getCode() ==  KeyCode.RIGHT){
+            loadSelectedSetBButton.fire();
+        }
+    }
+    
     public void compute(){
-        sharedData.correlationSetA.add(sharedData.dataModel.get(1));
-        sharedData.correlationSetB.add(sharedData.dataModel.get(2));
-        
+    
         int windowSize = Integer.parseInt(windowSizeText.getText());
         windowSizeText.setText(""+windowSize); // to display what was parsed
         
         Toggle selectedNanStrategy = nanStrategy.getSelectedToggle();
+        DFT.NA_ACTION naAction = DFT.NA_ACTION.LEAVE_UNCHANGED;
         if(selectedNanStrategy == nanLeaveRadio){
-            DFT.naAction = DFT.NA_ACTION.LEAVE_UNCHANGED;
+            naAction = DFT.NA_ACTION.LEAVE_UNCHANGED;
         } else if(selectedNanStrategy == nanSetToZeroRadio){
-            DFT.naAction = DFT.NA_ACTION.REPLACE_WITH_ZERO;
+            naAction = DFT.NA_ACTION.REPLACE_WITH_ZERO;
         }
         
-        CorrelogramMetadata metadata = new CorrelogramMetadata(sharedData.correlationSetA, sharedData.correlationSetB, windowSize, DFT.NA_ACTION.LEAVE_UNCHANGED);
+        CorrelogramMetadata metadata = new CorrelogramMetadata(sharedData.correlationSetA, sharedData.correlationSetB, windowSize, naAction);
         CorrelationMatrix result = new CorrelationMatrix(metadata);
         result.compute();
         sharedData.setcorrelationMatrix(result);

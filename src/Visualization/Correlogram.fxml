@@ -18,7 +18,7 @@
   <children>
     <StackPane alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="327.0" prefWidth="801.0" HBox.hgrow="ALWAYS">
       <children>
-        <LineChart fx:id="lineChart" alternativeRowFillVisible="true" animated="false" cache="true" createSymbols="false" horizontalGridLinesVisible="true" horizontalZeroLineVisible="true" legendVisible="false" maxWidth="1.7976931348623157E308" prefHeight="273.198974609375" prefWidth="-1.0" style="-fx-background-color: white;" verticalGridLinesVisible="true" verticalZeroLineVisible="true">
+        <LineChart fx:id="lineChart" alternativeRowFillVisible="false" animated="false" cache="true" createSymbols="false" horizontalGridLinesVisible="false" horizontalZeroLineVisible="true" legendVisible="false" maxWidth="1.7976931348623157E308" prefHeight="273.198974609375" prefWidth="-1.0" style="-fx-background-color: white;" verticalGridLinesVisible="false" verticalZeroLineVisible="true">
           <xAxis>
             <NumberAxis fx:id="xAxis" animated="false" autoRanging="false" forceZeroInRange="false" label="Year as Geotime (x + 1950)" lowerBound="1900.0" minorTickCount="4" side="BOTTOM" tickLabelRotation="0.0" tickLength="8.0" tickMarkVisible="true" tickUnit="4.0" upperBound="2000.0">
               <tickLabelFont>
@@ -27,7 +27,7 @@
             </NumberAxis>
           </xAxis>
           <yAxis>
-            <NumberAxis fx:id="yAxis" animated="false" autoRanging="false" label="Time Lag" lowerBound="-5.0" side="LEFT" upperBound="5.0" />
+            <NumberAxis fx:id="yAxis" animated="false" autoRanging="false" label="Time Lag" lowerBound="-5.0" minorTickCount="0" side="LEFT" tickUnit="1.0" upperBound="5.0" />
           </yAxis>
           <padding>
             <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
@@ -39,12 +39,12 @@
             <TextField prefWidth="40.0" />
           </graphic>
         </Label>
-        <Button minHeight="15.999900000002526" mnemonicParsing="false" onAction="#resetView" prefHeight="-1.0" text="reset view" StackPane.alignment="BOTTOM_RIGHT" />
+        <Button minHeight="15.999900000002526" mnemonicParsing="false" onAction="#resetView" prefHeight="-1.0" text="reset view" StackPane.alignment="BOTTOM_LEFT" />
       </children>
     </StackPane>
     <StackPane id="StackPane">
       <children>
-        <ScatterChart id="ScatterChart" alternativeRowFillVisible="true" animated="false" horizontalGridLinesVisible="true" legendVisible="false" prefHeight="326.9999000000025" prefWidth="200.0" style="-fx-background-color: gainsboro;" title="Legend" titleSide="TOP" verticalGridLinesVisible="true" verticalZeroLineVisible="true">
+        <ScatterChart id="ScatterChart" fx:id="legendScatterPlot" alternativeRowFillVisible="true" animated="false" horizontalGridLinesVisible="true" legendVisible="false" prefHeight="326.9999000000025" prefWidth="200.0" style="-fx-background-color: gainsboro;" title="Legend" titleSide="TOP" verticalGridLinesVisible="true" verticalZeroLineVisible="true">
           <xAxis>
             <NumberAxis animated="false" label="Standard Deviation" side="BOTTOM" upperBound="3.0" />
           </xAxis>

@@ -13,32 +13,11 @@
 <?import javafx.scene.shape.*?>
 <?import javafx.scene.text.*?>
 
-<AnchorPane fx:controller="Visualization.TimeSeriesViewController" fx:id="timeSeriesPane" prefHeight="326.9999000000025" prefWidth="1022.0" style="-fx-background-color: gainsboro;" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2">
+<AnchorPane fx:id="timeSeriesPane" fx:controller="Visualization.TimeSeriesViewController" prefHeight="326.9999000000025" prefWidth="1022.0" style="-fx-background-color: gainsboro;" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2">
   <children>
-    <StackPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-      <children>
-        <LineChart fx:id="lineChart" alternativeRowFillVisible="true" animated="false" cache="true" createSymbols="false" horizontalGridLinesVisible="true" horizontalZeroLineVisible="true" legendVisible="false" prefHeight="273.198974609375" prefWidth="770.0" style="-fx-background-color: white;" verticalGridLinesVisible="true" verticalZeroLineVisible="true">
-          <xAxis>
-            <NumberAxis fx:id="xAxis" animated="false" autoRanging="false" forceZeroInRange="false" label="Year as Geotime (x + 1950)" lowerBound="1900.0" minorTickCount="4" side="BOTTOM" tickLabelRotation="0.0" tickLength="8.0" tickMarkVisible="true" tickUnit="4.0" upperBound="2000.0">
-              <tickLabelFont>
-                <Font size="11.0" />
-              </tickLabelFont>
-            </NumberAxis>
-          </xAxis>
-          <yAxis>
-            <NumberAxis fx:id="yAxis" animated="false" autoRanging="false" label="Degree ˚C" lowerBound="-5.0" side="LEFT" upperBound="5.0" />
-          </yAxis>
-          <padding>
-            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-          </padding>
-        </LineChart>
-        <Canvas fx:id="chartCanvas" cache="true" onScroll="#scroll" onZoom="#zoom" />
-      </children>
-    </StackPane>
-    <Slider fx:id="detailSlider" blockIncrement="1.0" majorTickUnit="1.0" max="0.0" min="1.0" prefHeight="15.99999988079071" prefWidth="206.0" showTickLabels="false" showTickMarks="false" snapToTicks="true" value="30.0" 
-           AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" />
+      <!--The chart is added manually because classes with inheritance can't use XML injection (unless there's a special mechanism for that which I don't know) -->
+    <Slider fx:id="detailSlider" blockIncrement="1.0" majorTickUnit="1.0" max="1.0" min="1.0" prefHeight="15.99999988079071" prefWidth="206.0" showTickLabels="false" showTickMarks="false" snapToTicks="true" value="1.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" />
     <Label id="detailLevelLabel" fx:id="levelOfDetailLabel" text="show every N-th point:" visible="true" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="215.0" />
-    <Button minHeight="15.999900000002526" mnemonicParsing="false" onAction="#resetView" prefHeight="-1.0" text="reset view" 
-            AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="5.0" />
+    <Button minHeight="15.999900000002526" mnemonicParsing="false" onAction="#resetView" prefHeight="-1.0" text="reset view" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="5.0" />
   </children>
 </AnchorPane>
