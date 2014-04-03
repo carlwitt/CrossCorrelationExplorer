@@ -9,9 +9,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.ListChangeListener;
 import javafx.concurrent.WorkerStateEvent;
 import javafx.event.EventHandler;
+import javafx.event.EventType;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
@@ -77,8 +77,13 @@ public class MainWindowController implements Initializable {
 //                
 //            }
 //        });
+//        fileInputController.fileModel.setFilename("/Users/macbookdata/inputDataExcerpt.txt");
+//        fileInputController.fileModel.setFilename("/Users/macbookdata/lianhua_realisations.txt");
+        fileInputController.fileModel.setFilename("/Users/macbookdata/inputDataSimple.txt");
         fileInputController.loadButton.fire();
-                
+
+        // Todo: remove test support
+        inputTabPane.getSelectionModel().select(1);
         
     }
     

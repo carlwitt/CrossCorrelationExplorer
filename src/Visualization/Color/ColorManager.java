@@ -12,9 +12,6 @@ import Visualization.Color.Datatype.Color;
  */
 public class ColorManager {
 
-	/**
-	 * @param args
-	 */
 
 //! An object of the class is responsible for managing the display colors.
 /*!

@@ -11,7 +11,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<GridPane fx:id="computationInputPane" gridLinesVisible="false" maxWidth="1.7976931348623157E308" minHeight="-1.0" prefHeight="119.0" prefWidth="1141.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.ComputationInputController">
+<GridPane fx:id="computationInputPane" gridLinesVisible="false" maxWidth="1.7976931348623157E308" minHeight="0.0" prefHeight="119.0" prefWidth="1141.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.ComputationInputController">
   <children>
     <Label alignment="CENTER" maxWidth="1.7976931348623157E308" prefWidth="300.0" text="Correlation Input Set A" textAlignment="CENTER" textFill="#00cc52" GridPane.columnIndex="0" GridPane.hgrow="ALWAYS" GridPane.rowIndex="0">
       <font>

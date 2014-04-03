@@ -12,51 +12,14 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.*?>
 <?import javafx.scene.text.*?>
-<?import org.controlsfx.control.*?>
 
-<HBox fx:id="correlogramPane" prefHeight="326.9999000000025" prefWidth="1119.0" style="-fx-background-color: gainsboro;" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Visualization.CorrelogramController">
+<VBox fx:id="correlogramView" prefHeight="326.9999000000025" prefWidth="1119.0" style="-fx-background-color: gainsboro;" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Visualization.CorrelogramController">
   <children>
-    <StackPane alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="327.0" prefWidth="801.0" HBox.hgrow="ALWAYS">
+    <StackPane fx:id="correlogramPane" alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="-1.0" prefWidth="-1.0" style="/*-fx-background-color:white;*/" VBox.vgrow="ALWAYS">
       <children>
-        <LineChart fx:id="lineChart" alternativeRowFillVisible="false" animated="false" cache="true" createSymbols="false" horizontalGridLinesVisible="false" horizontalZeroLineVisible="true" legendVisible="false" maxWidth="1.7976931348623157E308" prefHeight="273.198974609375" prefWidth="-1.0" style="-fx-background-color: white;" verticalGridLinesVisible="false" verticalZeroLineVisible="true">
-          <xAxis>
-            <NumberAxis fx:id="xAxis" animated="false" autoRanging="false" forceZeroInRange="false" label="Year as Geotime (x + 1950)" lowerBound="1900.0" minorTickCount="4" side="BOTTOM" tickLabelRotation="0.0" tickLength="8.0" tickMarkVisible="true" tickUnit="4.0" upperBound="2000.0">
-              <tickLabelFont>
-                <Font size="11.0" />
-              </tickLabelFont>
-            </NumberAxis>
-          </xAxis>
-          <yAxis>
-            <NumberAxis fx:id="yAxis" animated="false" autoRanging="false" label="Time Lag" lowerBound="-5.0" minorTickCount="0" side="LEFT" tickUnit="1.0" upperBound="5.0" />
-          </yAxis>
-          <padding>
-            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-          </padding>
-        </LineChart>
-        <Canvas fx:id="chartCanvas" cache="true" onScroll="#scroll" onZoom="#zoom" />
-        <Label contentDisplay="RIGHT" text="time lag min" visible="false" StackPane.alignment="BOTTOM_LEFT">
-          <graphic>
-            <TextField prefWidth="40.0" />
-          </graphic>
-        </Label>
         <Button minHeight="15.999900000002526" mnemonicParsing="false" onAction="#resetView" prefHeight="-1.0" text="reset view" StackPane.alignment="BOTTOM_LEFT" />
       </children>
     </StackPane>
-    <StackPane id="StackPane">
-      <children>
-        <ScatterChart id="ScatterChart" fx:id="legendScatterPlot" alternativeRowFillVisible="true" animated="false" horizontalGridLinesVisible="true" legendVisible="false" prefHeight="326.9999000000025" prefWidth="200.0" style="-fx-background-color: gainsboro;" title="Legend" titleSide="TOP" verticalGridLinesVisible="true" verticalZeroLineVisible="true">
-          <xAxis>
-            <NumberAxis animated="false" label="Standard Deviation" side="BOTTOM" upperBound="3.0" />
-          </xAxis>
-          <yAxis>
-            <NumberAxis animated="false" label="Mean" lowerBound="-5.0" side="LEFT" upperBound="5.0" />
-          </yAxis>
-          <padding>
-            <Insets bottom="5.0" right="5.0" top="5.0" />
-          </padding>
-        </ScatterChart>
-        <CheckBox mnemonicParsing="false" prefHeight="20.999908447265625" text="bipolar" StackPane.alignment="TOP_RIGHT" />
-      </children>
-    </StackPane>
+    <StackPane fx:id="legendPane" maxHeight="160.0" maxWidth="1.7976931348623157E308" prefHeight="160.0" prefWidth="-1.0" style="/*-fx-background-color:blue;*/" VBox.vgrow="NEVER" />
   </children>
-</HBox>
+</VBox> 

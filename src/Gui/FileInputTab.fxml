@@ -11,7 +11,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<GridPane fx:id="filePane" gridLinesVisible="false" maxWidth="1.7976931348623157E308" minHeight="-1.0" prefHeight="119.0" prefWidth="-1.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.FileInputController">
+<GridPane fx:id="filePane" gridLinesVisible="false" maxWidth="1.7976931348623157E308" minHeight="0.0" prefHeight="119.0" prefWidth="-1.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.FileInputController">
   <children>
     <Label alignment="CENTER" prefWidth="667.0" text="Input file" textAlignment="LEFT" GridPane.columnIndex="0" GridPane.rowIndex="0" />
     <Label alignment="CENTER" prefWidth="544.0" text="Data Separator" GridPane.columnIndex="1" GridPane.rowIndex="0" />

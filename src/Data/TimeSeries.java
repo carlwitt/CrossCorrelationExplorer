@@ -1,5 +1,6 @@
 package Data;
 
+import java.util.UUID;
 import javax.validation.constraints.NotNull;
 
 /**
@@ -14,14 +15,15 @@ public class TimeSeries implements Comparable<TimeSeries>{
     /** The coordinates of the points of the time series. 
      * X values are represented as real parts of complex numbers and Y values are represented as imaginary parts of complex numbers. */
     private ComplexSequence values = null;
-
-//    public static int createdInstances = 0;
+    
+    /** To automatically generate ids, decrements of the maximum int value are used. */
+    private static int nextId = Integer.MAX_VALUE;
     
     /**
      * @param values The x and y values, specified in the real and imaginary parts of a complex sequence.
      */
     public TimeSeries(@NotNull ComplexSequence values){
-        this.id = -1;
+        this.id = nextId--;
 //        this.id = ++createdInstances;
         this.values = values;
     }

@@ -88,7 +88,7 @@ public class FileModel extends Observable{
     }
     
     /** Reusable concurrent execution logic for loading and parsing files with progress reporting.
-     * The service can be used to load and parse the file contents asynchronoulsy (non-UI-blocking) and to display progress.  */
+     * The service can be used to load and parse the file contents asynchronously (non-UI-blocking) and to display progress.  */
     public class LoadFileService extends Service<Void> {
                 
         @Override protected Task<Void> createTask() {

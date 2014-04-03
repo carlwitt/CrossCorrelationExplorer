@@ -40,10 +40,11 @@ public class CorrelogramMetadata {
     
     @Override
     public int hashCode() {
-        int hash = 5;
-        hash = 17 * hash + this.windowSize;
-        hash = 17 * hash + Objects.hashCode(this.setA);
-        hash = 17 * hash + Objects.hashCode(this.setB);
+        int hash = 7;
+        hash = 89 * hash + this.windowSize;
+        hash = 89 * hash + Objects.hashCode(this.setA);
+        hash = 89 * hash + Objects.hashCode(this.setB);
+        hash = 89 * hash + Objects.hashCode(this.naAction);
         return hash;
     }
 
@@ -65,7 +66,11 @@ public class CorrelogramMetadata {
         if (!Objects.equals(this.setB, other.setB)) {
             return false;
         }
+        if (this.naAction != other.naAction) {
+            return false;
+        }
         return true;
     }
+    
 
 }

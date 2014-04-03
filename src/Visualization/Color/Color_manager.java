@@ -117,7 +117,7 @@ public class Color_manager extends ColorManager{
 	    
 	    return t;
 	}
-
+public Vector<Vector<Color>> getColorPalettes() { return _color_palettes; }
 	
 	public void RuntimeException(String message){
 		

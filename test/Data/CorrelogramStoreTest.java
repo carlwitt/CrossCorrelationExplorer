@@ -77,18 +77,15 @@ public class CorrelogramStoreTest {
     public void tearDown() {
     }
 
-    /**
-     * Test of getResult method, of class CorrelogramStore.
-     */
     @Test
-    public void testMetadataEquality() {
-        System.out.println("metadataEquality");
+    public void testMetadataInequality() {
+        System.out.println("metadata inequality");
         
-        CorrelogramMetadata m1 = new CorrelogramMetadata(a, b, 4, DFT.NA_ACTION.LEAVE_UNCHANGED);
-        CorrelogramMetadata m2 = new CorrelogramMetadata(b, a, 4, DFT.NA_ACTION.LEAVE_UNCHANGED);
+        CorrelogramMetadata m1 = new CorrelogramMetadata(a, b, 4, DFT.NA_ACTION.REPLACE_WITH_ZERO);
+        CorrelogramMetadata m2 = new CorrelogramMetadata(a, b, 4, DFT.NA_ACTION.LEAVE_UNCHANGED);
         
-        // the pair of IDs is unordered, so the metadata should be considered equal
-        assertEquals(m1, m2);
+        // the way to deal with NaN values is different, so a cache result can not be used
+        assertNotSame(m1, m2);
     }
     
     /**
@@ -98,14 +95,17 @@ public class CorrelogramStoreTest {
     public void testGetResult_Metadata() {
         System.out.println("getResult");
         
-        
+        CorrelogramStore.clear();
         
         CorrelogramMetadata metadata = new CorrelogramMetadata(a, b, 4, DFT.NA_ACTION.LEAVE_UNCHANGED);
-//        CorrelationMatrix expResult = c2;
         CorrelationMatrix result = CorrelogramStore.getResult(metadata);
         
         // should now be retrieved from cache
         assertEquals(CorrelogramStore.getResult(metadata), result);
+
+        // results with different NaN strategies can not be exchanged
+        CorrelogramMetadata metadata2 = new CorrelogramMetadata(a, b, 4, DFT.NA_ACTION.REPLACE_WITH_ZERO);
+        assertFalse(CorrelogramStore.contains(metadata2));
     }
 
     @Test @Ignore
@@ -120,21 +120,6 @@ public class CorrelogramStoreTest {
         expResult = true;
         result = CorrelogramStore.contains(new Data.Correlation.CorrelogramMetadata(a, b, 0, DFT.NA_ACTION.LEAVE_UNCHANGED));
         assertEquals(expResult, result);
-    }
-
-    /**
-     * Test of getAllResults method, of class CorrelogramStore.
-     */
-    @Test
-    @Ignore
-    public void testGetAllResults() {
-        System.out.println("getAllResults");
-        CorrelogramStore instance = new CorrelogramStore();
-        Collection expResult = null;
-        Collection result = instance.getAllResults();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
 }

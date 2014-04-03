@@ -15,7 +15,6 @@ import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.input.ZoomEvent;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.text.Font;
 import javafx.scene.transform.Affine;
@@ -25,10 +24,12 @@ import javafx.scene.transform.Transform;
 import javafx.scene.transform.Translate;
 
 /**
- * Base class for 
+ * Base class for fast rendering charts using a canvas rather than the scene graph.
+ * The idea is to use a standard chart to generate axes, legend and title and position a canvas over it on which the content is drawn.
+ * TODO: much of the hassle aligning the canvas to the axes stems from the fact that axis labels grow to the right, thus pushing the axis to right when increasing precision. Custom axes rendering code should be written (using the scene graph to profit from simplified interaction, e.g. via picking)
  * @author Carl Witt
  */
-public abstract class CanvasChart extends Region {
+public abstract class CanvasChart extends StackPane {
 
     /** This is used to draw the data. Much faster than adding all the data elements to the scene graph. */
     public Canvas chartCanvas;
@@ -40,7 +41,8 @@ public abstract class CanvasChart extends Region {
     public Node chartPlotBackground;       // is a Region object with exactly the size and position the equals the desired draw region on the chart
     public Node xTickMarks, yTickMarks;
     
-    protected StackPane stackPane; // is used to display the canvas as an overlay to the chart
+    /** Toggles for basic interaction; */
+    public boolean allowScroll = true, allowZoom = true;
     
     public CanvasChart(){
         
@@ -68,14 +70,10 @@ public abstract class CanvasChart extends Region {
         buildComponents();
     }
     
-    /** Use this to add the chart to the scene graph. 
-     * @return Node the node containing the chart. */
-    public Node getNode(){ return stackPane; }
-    
     /** Sets up the GUI components */
     private void buildComponents(){
 
-        stackPane = new StackPane(chart, chartCanvas);
+        this.getChildren().addAll(chart, chartCanvas);
         
         chart.setAnimated(false);
         chart.setLegendVisible(false);
@@ -124,6 +122,9 @@ public abstract class CanvasChart extends Region {
         @Override public void handle(ScrollEvent e) {
             // TODO: don't let the user zoom and scroll outside content areas
             // TODO: scroll amount depends on zoom level
+            
+            if( ! allowScroll ) return;
+            
             double xScrollMult = -0.1;
             double yScrollMult = 0.001;
             xAxis.setLowerBound(xAxis.getLowerBound() + xScrollMult * e.getDeltaX());
@@ -138,6 +139,9 @@ public abstract class CanvasChart extends Region {
         @Override public void handle(ZoomEvent e) {
             // TODO: don't let the user zoom and scroll outside content areas
             // TODO: zoom y, too
+            
+            if( ! allowZoom ) return;
+            
             try {
                 Affine screenToData = dataToScreen().createInverse();
                 Point2D mousePositionScreen = new Point2D(e.getX(), e.getY());

@@ -8,26 +8,28 @@ import Data.TimeSeries;
 import com.google.common.base.Joiner;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 /**
  * 
  * TODO: clean up methods that have been introduced to fit the JFreeChart interfaces
  * @author Carl Witt
  */
-public class CorrelationMatrix implements ResultContainer<Column> {
+public class CorrelationMatrix {
 
+    /** Stores the input of the computation. */
     public CorrelogramMetadata metadata;
+    /** The column wise output of the computation. */
     List<Column> columns;
-    private static int instanceCount = 0; 
-    public final int id;
     
     /** Minimum and maximum correlation mean across all columns of the matrix. */
     Double minMean, maxMean;
     Double minStdDev, maxStdDev;
     
+    /**
+     * Sets the metadata for a correlation matrix, WITHOUT computing the actual contents (because the data structure is used in different ways).
+     * @param metadata The input time series, window size, NaN value handling strategy, etc.
+     */
     public CorrelationMatrix(CorrelogramMetadata metadata) {
-        this.id = ++instanceCount;
         this.columns = new ArrayList<>();
         this.metadata = metadata;
     }
@@ -69,16 +71,16 @@ public class CorrelationMatrix implements ResultContainer<Column> {
                 
                 // mean computation: iterate over partial results 
                 double mean = 0;
-                for (int ccPairIdx = 0; ccPairIdx < partialResults.length; ccPairIdx++) {
-                    mean += partialResults[ccPairIdx].columns.get(windowIdx).mean[timeLag];
+                for (CorrelationMatrix partialResult : partialResults) {
+                    mean += partialResult.columns.get(windowIdx).mean[timeLag];
                 }
                 mean /= partialResults.length;
                 
                 // std dev computation: iterate over partial results 
                 double stdDev = 0;
-                for (int ccPairIdx = 0; ccPairIdx < partialResults.length; ccPairIdx++) {
+                for (CorrelationMatrix partialResult : partialResults) {
                     // ∑ (x - µ)^2
-                    stdDev += Math.pow(partialResults[ccPairIdx].columns.get(windowIdx).mean[timeLag] - mean, 2);
+                    stdDev += Math.pow(partialResult.columns.get(windowIdx).mean[timeLag] - mean, 2);
                 }
                 stdDev = Math.sqrt(stdDev / partialResults.length);
                 
@@ -107,42 +109,19 @@ public class CorrelationMatrix implements ResultContainer<Column> {
         return lastColumn.windowXOffset + lastColumn.mean.length;
     }
     
-    public String toString(){
-        return "Correlation Matrix "+Joiner.on("\n").join(columns);
+    @Override public String toString(){
+        return "Correlation Matrix\n"+Joiner.on("\n").join(columns);
     }
     
-    @Override
-    public int getSize() {
-        return columns.size();
-    }
+    public int getSize() { return columns.size(); }
 
-    @Override
-    public boolean contains(int id) {
-        return id >= 0 && id < columns.size();
-    }
+    public List<Column> getResultItems() { return columns; }
 
-    @Override
-    public boolean isEmpty() {
-        return columns.isEmpty();
-    }
-
-    @Override
-    public List<Column> getResultItems() {
-        return columns;
-    }
-
-    @Override
-    public void append(Column c) {
-        columns.add(c);
-    }
+    public void append(Column c) { columns.add(c); }
     
-    public CorrelogramMetadata getMetadata(){
-        return metadata;
-    }
-    @Override
-    public Column getItembyID(int id) {
-        return columns.get(id);
-    }
+    public CorrelogramMetadata getMetadata(){ return metadata; }
+    
+    public Column getItembyID(int id) { return columns.get(id); }
     
     public double getMean(int window, int timeLag){
         return columns.get(window).mean[timeLag]; //  == Double.NaN ? 0 : columns.get(window).mean[timeLag];
@@ -151,21 +130,7 @@ public class CorrelationMatrix implements ResultContainer<Column> {
         return columns.get(window).stdDev[timeLag]; //  == Double.NaN ? 0 : columns.get(window).mean[timeLag];
     }
     
-    /** returns the smallest lag (given that the last half of the lags is displayed as negative lags). */
-    public int getMinY(){
-        // lags with tau != 0
-        int realLags = getItemCount(0) - 1;
-        int positiveLags = (int) Math.ceil(realLags/2.);
-        int negativeLags = realLags - positiveLags;
-        return -negativeLags;
-    }
-    /** Returns the largest lag (given that the last half of the lags is displayed as negative lags). */
-    public int getMaxY(){
-        // lags with tau != 0
-        int realLags = getItemCount(0) - 1;
-        int positiveLags = (int) Math.ceil(realLags/2.);
-        return positiveLags;
-    }
+    
     
     /**
      * Interprets the last half of the possible time lags as negative lags.
@@ -183,20 +148,23 @@ public class CorrelationMatrix implements ResultContainer<Column> {
         return timeLag <= positiveLags ? timeLag : -N + timeLag;
     }
     
-    /** @return The window that contains the time value. */
-    protected int containingWindow(int time){
-        return time/metadata.windowSize;
-    }
-    
-    // ------------------------------------------------------------
-    // XYZ dataset implementation
-    // ------------------------------------------------------------
-    
-    
-    // the range of x values
-    public int getSeriesCount() {
-        return columns.size();
-    }
+    /** @return the smallest lag (given that the last half of the lags is displayed as negative lags). */
+        public int getMinY(){
+            // lags with tau != 0
+    //        int realLags = getItemCount(0) - 1;
+    //        int positiveLags = (int) Math.ceil(realLags/2.);
+    //        int negativeLags = realLags - positiveLags;
+    //        return -negativeLags;
+            return 0;
+        }
+        /** @return the largest lag (given that the last half of the lags is displayed as negative lags). */
+        public int getMaxY(){
+            // lags with tau != 0
+    //        int realLags = getItemCount(0) - 1;
+    //        int positiveLags = (int) Math.ceil(realLags/2.);
+    //        return positiveLags;
+            return columns.get(0).mean.length;
+        }    
     
     public int getItemCount(int window) {
         return columns.get(window).mean.length;
@@ -208,8 +176,7 @@ public class CorrelationMatrix implements ResultContainer<Column> {
         if(minMean != null)
             return minMean;
         minMean = Double.POSITIVE_INFINITY;
-        for (Iterator<Column> it = columns.iterator(); it.hasNext();) {
-            Column column = it.next();
+        for (Column column : columns) {
             minMean = Math.min(minMean, column.getMeanMin());
         }
         return minMean;
@@ -259,9 +226,15 @@ public class CorrelationMatrix implements ResultContainer<Column> {
         public double[] mean;
         public double[] stdDev;
         
-        /** The original min x value of the time window processed. */
+        /** Each columns represents the results of a window of the x-axis. This is the x-value where the window starts (where it ends follows from the column length). */
         public final double windowXOffset;
         
+        /**
+         * Takes two arrays to represent 2D values (or pairs) as entries of the column
+         * @param mean The first dimension of the result values (correlation mean)
+         * @param stdDev The second dimension of the result values (correlation standard deviation)
+         * @param windowXOffset see {@link Column#windowXOffset} 
+         */
         public Column(double[] mean, double[] stdDev, double windowXOffset) {
             this.values = ComplexSequence.create(mean, stdDev);
             this.mean = values.re;
@@ -301,6 +274,9 @@ public class CorrelationMatrix implements ResultContainer<Column> {
                 return false;
             }
             final Column other = (Column) obj;
+            if(this.windowXOffset != other.windowXOffset){
+                return false;
+            }
             if (!Arrays.equals(this.mean, other.mean)) {
                 return false;
             }
@@ -313,7 +289,6 @@ public class CorrelationMatrix implements ResultContainer<Column> {
     @Override
     public int hashCode() {
         int hash = 3;
-        hash = 67 * hash + this.id;
         return hash;
     }
 
@@ -326,9 +301,7 @@ public class CorrelationMatrix implements ResultContainer<Column> {
             return false;
         }
         final CorrelationMatrix other = (CorrelationMatrix) obj;
-//        if (this.id != other.id) {
-//            return false;
-//        }
+        
         if (this.metadata != other.metadata && (this.metadata == null || !this.metadata.equals(other.metadata))) {
             return false;
         }
@@ -338,44 +311,4 @@ public class CorrelationMatrix implements ResultContainer<Column> {
         return true;
     }
     
-    
-    public Number getX(int time, int timeLag) {
-        return new Double(getXValue(time, timeLag));
-    }
-    
-    public double getXValue(int time, int timeLag) {
-        return time;
-    }
-    
-    
-    public Number getY(int time, int timeLag) {
-        return new Double(getYValue(time, timeLag));
-    }
-    
-    public double getYValue(int time, int timeLag) {
-        // returns a negative y (time lag) value for the last half of the correlation values
-        return splitLag(timeLag);
-    }
-    
-    public Number getZ(int time, int timeLag) {
-        return new Double(getZValue(time, timeLag));
-    }
-    
-    public double getZValue(int time, int timeLag) {
-        return getMean(time, timeLag);
-    }
-    public Number getZ2(int time, int timeLag) {
-        return new Double(getZ2Value(time, timeLag));
-    }
-    public double getZ2Value(int time, int timeLag) {
-        return getStdDev(time, timeLag);
-    }
-    
-    public Comparable getSeriesKey(int window) {
-        return String.format("Correlogram matrix %d", id);
-    }
-    
-    public int indexOf(Comparable windowKey) {
-        return 0;
-    }
 }

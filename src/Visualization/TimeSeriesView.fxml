@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<!--This file doesn't contain much anymore because most of the markup had to go into the CanvasChart class, 
+    but it is still necessary because the fx:controller attribute can be used only on the root element of a file. -->
 <?import java.lang.*?>
 <?import java.net.*?>
 <?import java.util.*?>
@@ -13,11 +15,11 @@
 <?import javafx.scene.shape.*?>
 <?import javafx.scene.text.*?>
 
-<AnchorPane fx:id="timeSeriesPane" fx:controller="Visualization.TimeSeriesViewController" prefHeight="326.9999000000025" prefWidth="1022.0" style="-fx-background-color: gainsboro;" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2">
+<AnchorPane fx:id="timeSeriesPane" prefHeight="326.9999000000025" prefWidth="1022.0" style="-fx-background-color: gainsboro;" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Visualization.TimeSeriesViewController">
   <children>
-      <!--The chart is added manually because classes with inheritance can't use XML injection (unless there's a special mechanism for that which I don't know) -->
+    <!--The chart is added manually because classes with inheritance can't use XML injection (unless there's a special mechanism for that which I don't know) -->
     <Slider fx:id="detailSlider" blockIncrement="1.0" majorTickUnit="1.0" max="1.0" min="1.0" prefHeight="15.99999988079071" prefWidth="206.0" showTickLabels="false" showTickMarks="false" snapToTicks="true" value="1.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" />
     <Label id="detailLevelLabel" fx:id="levelOfDetailLabel" text="show every N-th point:" visible="true" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="215.0" />
-    <Button minHeight="15.999900000002526" mnemonicParsing="false" onAction="#resetView" prefHeight="-1.0" text="reset view" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="5.0" />
+    <Button alignment="BOTTOM_LEFT" minHeight="15.999900000002526" mnemonicParsing="false" onAction="#resetView" prefHeight="-1.0" text="reset view" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" />
   </children>
 </AnchorPane>

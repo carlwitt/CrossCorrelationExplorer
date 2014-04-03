@@ -17,11 +17,11 @@
   <center>
     <SplitPane dividerPositions="0.1919060052219321, 0.5757180156657964" focusTraversable="true" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0">
       <items>
-        <AnchorPane fx:id="inputPane" minHeight="144.0" prefHeight="144.0" prefWidth="1022.0" style="-fx-background-color: gainsboro;">
+        <AnchorPane fx:id="inputPane" minHeight="0.0" prefHeight="144.0" prefWidth="1022.0" style="-fx-background-color: gainsboro;">
           <children>
             <Text layoutX="-39.0" layoutY="55.0" rotate="270.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Input Selection" translateX="0.0" />
-            <StackPane prefHeight="165.0" visible="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-              <TabPane fx:id="inputTabPane" prefHeight="165.0" prefWidth="200.0" rotateGraphic="false" style="-fx-background-color: white;" tabClosingPolicy="UNAVAILABLE" tabMinHeight="13.0">
+            <StackPane minHeight="0.0" prefHeight="165.0" visible="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+              <TabPane fx:id="inputTabPane" minHeight="0.0" prefHeight="165.0" prefWidth="200.0" rotateGraphic="false" style="-fx-background-color: white;" tabClosingPolicy="UNAVAILABLE" tabMaxHeight="26.0" tabMinHeight="0.0">
                 <tabs>
                   <Tab closable="false" style="" text="Available in File">
                     <content>
@@ -35,7 +35,7 @@
                   </Tab>
                 </tabs>
               </TabPane>
-              <StackPane fx:id="progressPane" disable="false" opacity="1.0" prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: rgba(0,0,0,0.5);" visible="false">
+              <StackPane fx:id="progressPane" disable="false" minHeight="0.0" opacity="1.0" prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: rgba(0,0,0,0.5);" visible="false">
                 <StackPane prefHeight="40.0" prefWidth="446.0" visible="true" StackPane.alignment="CENTER">
                   <children>
                     <ProgressBar fx:id="progressBar" maxHeight="40.0" prefHeight="40.0" prefWidth="500.0" progress="0.0" />

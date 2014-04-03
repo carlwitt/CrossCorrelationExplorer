@@ -1,6 +1,7 @@
 package Gui;
 
 import Data.*;
+import Data.Correlation.CorrelogramStore;
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
@@ -18,11 +19,9 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.stage.FileChooser;
-import javafx.util.Callback;
 import org.controlsfx.dialog.Dialogs;
 
 /**
@@ -166,8 +165,6 @@ public class FileInputController implements Initializable {
             }
         });
         
-        fileModel.setFilename("/Users/macbookdata/inputDataExcerpt.txt");
-        
     }
     
     // -------------------------------------------------------------------------
@@ -206,6 +203,11 @@ public class FileInputController implements Initializable {
         
         fileModel.loadFileService.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
             @Override public void handle(WorkerStateEvent t) {
+                
+                sharedData.correlationSetA.clear();
+                sharedData.correlationSetB.clear();
+                CorrelogramStore.clear();
+                
                 // TODO: should be encapsulated in a separate class that can be used to control the UI
                 progressPane.setVisible(false);
                 progressCancelButton.setDisable(false);
@@ -218,6 +220,12 @@ public class FileInputController implements Initializable {
                     toAdd.add(i);
                 }
                 availableTimeSeries.addAll(toAdd);
+                
+                // TODO: remove test support
+                loadAllButton.fire();
+                sharedData.correlationSetA.add(sharedData.dataModel.get(1));
+                sharedData.correlationSetB.add(sharedData.dataModel.get(2));
+                sharedData.correlationSetB.add(sharedData.dataModel.get(3));
             }
         });
         
@@ -316,12 +324,12 @@ public class FileInputController implements Initializable {
         // make a copy of the selection, because removing list items changes the selection
         Object[] selectionCopy = loadedList.getSelectionModel().getSelectedItems().toArray();
         for (Object item : selectionCopy) {
-            Integer tsIndex = (Integer) item;
-            availableTimeSeries.add(tsIndex); // insert sorted
-            sharedData.dataModel.timeSeries.remove(tsIndex);
-            sharedData.previewTimeSeries.remove(tsIndex);
-            sharedData.correlationSetA.remove(tsIndex);
-            sharedData.correlationSetB.remove(tsIndex);
+            TimeSeries timeSeries = (TimeSeries) item;
+            availableTimeSeries.add(timeSeries.id); // insert sorted
+            sharedData.dataModel.timeSeries.remove(timeSeries.id);
+            sharedData.previewTimeSeries.remove(timeSeries);
+            sharedData.correlationSetA.remove(timeSeries);
+            sharedData.correlationSetB.remove(timeSeries);
         }
         availableTimeSeries.sort(null);
     }

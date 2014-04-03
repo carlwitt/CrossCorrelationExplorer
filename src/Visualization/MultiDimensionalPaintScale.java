@@ -9,140 +9,106 @@ import java.util.Vector;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 /**
- * Interpolates colors between min (blue) and max (red) via green 
- * As in the standard HSV color spectrum: http://en.wikipedia.org/wiki/HSV_color_space
+ * Converts value pairs into colors. The first dimension is encoded as a hue value, 
+ * the second is encoded by decreasing saturation of the color used in the first dimension.
  * @author Carl Witt
  */
 public class MultiDimensionalPaintScale 
 {
-    Double[] lowerBounds = new Double[2], upperBounds = new Double[2];
+    public static int DEFAULT_COLOR_DEPTH = 13;
+    public static int DEFAULT_SAT_DEPTH = 4;
     
-    Color_manager colorManager;
+    /** The two colors that define the range between which colors are interpolated.<br/>
+     * If the palette is bipolar, the interpolation will be primary color ... white ... secondary color.<br/>
+     * If the palette is not bipolar, the interpolation will be primary color ... white */
+    protected Color primaryColor = Color.BLUE, secondaryColor = Color.RED;
+
+    /** Whether the palette is a bipolar color palette. */
+    protected boolean biPolar = true;
+    
+    protected Double[] lowerBounds = new Double[2], upperBounds = new Double[2];
+    
     /** How many base hue values are used to encode the first dimension. */
-    int numColors;
+    protected int colorDepth;
     /** How many saturation steps are used to encode the second dimension. */
-    int satDepth;
+    protected int saturationDepth;
     /** The computed colors. First dimension refers to base color, second to saturation. */
-    Datatype.Color colors[][];
+    private Color colors[][];
     
-    public static int DEFAULT_NUM_COLORS = 32;
-    public static int DEFAULT_SAT_DEPTH = 5;
-    
-    public MultiDimensionalPaintScale(Integer numberOfColors, Integer saturationDepth){
+    public MultiDimensionalPaintScale(Integer colorDepth, Integer saturationDepth){
         
-        numColors = numberOfColors == null ? DEFAULT_NUM_COLORS : numberOfColors;
-        satDepth  = saturationDepth == null ? DEFAULT_SAT_DEPTH : saturationDepth;
-        
-       computePaletteRainbow();
-//       computeBiPolarPalette();
-//        numColors = numberOfColors == null ? DEFAULT_NUM_COLORS : numberOfColors;
-//        satDepth = saturationDepth == null ? DEFAULT_SAT_DEPTH : saturationDepth;
-//        
-//        colorManager = new Color_manager(numColors); 
-//        colorManager.addColorPalette(new float[]{240f, 0f});
-//        
-//        colors = new Datatype.Color[2*numColors-1][satDepth];
-//        numColors = 2*numColors-1;
-//        
-//        Vector<Datatype.Color> palette = colorManager._color_palettes.get(0);
-//        System.out.println("palette: "+palette.size());
-//        
-//        for (int i = 0; i < numColors; i++) {
-//            
-//            for (int j = 0; j < satDepth; j++) {
-//                colors[i][j] = palette.get(i);
-//                System.out.println("["+palette.get(i).printColorRGB()+"],");
-//            }
-//        }
-//        
-//        printPalettesJSON();
+        this.colorDepth = colorDepth == null ? DEFAULT_COLOR_DEPTH : colorDepth;
+        this.saturationDepth  = saturationDepth == null ? DEFAULT_SAT_DEPTH : saturationDepth;
+
+        compute();
         
     }
     
-    // deprecated
-    private void computePaletteRainbow(){
+    /** Uses the state of the palette (primary and secondary color, resolution, bipolar or not) to compute the colors. */
+    protected final void compute(){
+        
+        // use the color manager to generate an optically optimized gradient between colors
+        Color_manager colorManager;
+        Vector<Datatype.Color> palette;
+        
+        if(this.biPolar){
+            // even color depth with bipolar scale is not allowed because the color manager always generates two-color scales with an odd number of colors
+            if( colorDepth % 2 == 0 ){ colorDepth++; }
+            
+            colorManager = new Color_manager((int)Math.ceil((colorDepth+1)/2.f)); 
+            colorManager.addColorPalette(new float[]{
+                (float)primaryColor.getHue(), 
+                (float)secondaryColor.getHue()
+            });
+            palette = colorManager.getColorPalettes().get(0);
+        } else {
+            colorManager = new Color_manager(colorDepth); 
+            colorManager.addColorPalette(new float[]{
+                (float)primaryColor.getHue()
+            });
+            palette = colorManager.reverse(colorManager.getColorPalettes().get(0));
+        }
 
-        int skipFirstSatValues = 2; //satDepth/4;
-
-        colorManager = new Color_manager(satDepth); // the first depth level is dismissed because it's too dark
-        colors = new Datatype.Color[numColors][satDepth-skipFirstSatValues];
-        // create a gradient for each color 
-        for (int baseColor = 0; baseColor < numColors; baseColor++) {
-
-            // use hue values between blue (240˚) and red (0˚) 
-            colorManager.addColorPalette(new float[]{220f-baseColor*160/(numColors-1)});
-            Vector<Datatype.Color> palette = colorManager._color_palettes.get(baseColor);
-
-            // write colors from vector to array
-            for (int saturation = skipFirstSatValues; saturation < palette.size(); saturation++) {
-                colors[baseColor][saturation-skipFirstSatValues] = palette.get(saturation);
+        colors = new Color[this.saturationDepth][this.colorDepth];
+        
+        for (int i = 0; i < colorDepth; i++) {
+            
+            for (int j = 0; j < saturationDepth; j++) {
+                Datatype.Color color = palette.get(i);
+                
+                // the factor (in range 0..1) by which the saturation is multiplied compared to the base color
+                // the following gives stronger decay in the beginning and a softer decay in the end leading to a visually more continuous saturation loss
+                double satPercent = (double)j/(saturationDepth-1);
+                double saturationReduction = -Math.log(0.45*satPercent+1/Math.E);// 1.f - 0.85 * ( (float)j/(saturationDepth-1) );
+                
+                colors[j][i] = Color
+                        .rgb((int)color.dimension_1,(int)color.dimension_2,(int)color.dimension_3)
+                        .deriveColor(0, saturationReduction, 1, 1); // leave all unchanged except saturation
             }
         }
-        satDepth-=skipFirstSatValues;
-    //        printPalettesJSON();
-    
-    }
-    
-    int HUE_DIM = 0;
-    int SAT_DIM = 1;
-    
-    public Paint getPaint(double value) {
-        return getPaint(new double[]{value,0,0});
-    }
-    
-    public double getLowerBound() {
-        return lowerBounds[0];
-    }
-    
-    public double getUpperBound() {
-        return upperBounds[0];
-    }
-    public MultiDimensionalPaintScale setLowerBound(double lowerBound) {
-        this.lowerBounds[0] = lowerBound;
-        return this;
-    }
-    public MultiDimensionalPaintScale setUpperBound(double upperBound) {
-        this.upperBounds[0] = upperBound;
-        return this;
-    }
-
-    public MultiDimensionalPaintScale setLowerBounds(Double... d) {
-        this.lowerBounds = d;
-        return this;
-    }
-
-    public MultiDimensionalPaintScale setUpperBounds(Double... d) {
-        this.upperBounds = d;
-        return this;
     }
 
     protected double interpolate(double d, int dim){
         double offset = d - lowerBounds[dim];
         double range = upperBounds[dim] - lowerBounds[dim];
         return range < 1e-10 ? offset : offset / range;
-        
-        
-//        Color hsb = Color.getHSBColor((float)hue, 1.f, 1.f);
-//        return new Color(hsb.getRed(), hsb.getGreen(), hsb.getBlue(), (int)(255*Math.random()));//Color.getHSBColor((float)hue, 1.f, 1.f);
-//        System.out.println(String.format("Color request for value = %s\nMin = %s, Max = %s\noffset = %s, percent = %s\nhue = %s",value,getLowerBound(),getUpperBound(),offset, percent,hue));
     }
-    Paint getPaint(double[] d) {
-        
-        // 2/3 ~ 240˚ is a blue hue value (if value equals lowerBound)
-        // 1/3 is green
-        // 0 is red (if value equals upperBound)
-        float huePercent = (float) interpolate(d[HUE_DIM], HUE_DIM);
-//        float hue = 2f/3f - 2f/3f*huePercent;
+    
+    int HUE_DIM = 0;
+    int SAT_DIM = 1;
+    /**
+     * Returns the associated color
+     * @param x The value in the first dimension.
+     * @param y The value in the second dimension.
+     * @return A color encoding the value pair.
+     */
+    Paint getPaint(Double... d) {
         
         float saturationPercent = (float) interpolate(d[SAT_DIM], SAT_DIM);
-        // when the paintscale legend is rendered, it requests always stdDev = 0, which might be 
-        // below the min stdDev of the data set from which the lower bounds where passed to the paint scale.
-        saturationPercent = Math.max(saturationPercent,0);
+        float huePercent = (float) interpolate(d[HUE_DIM], HUE_DIM);
         
-//        float saturation = Math.max(0.2f, 1-saturationPercent);
-       
-        int hueIndex = Math.round((numColors-1) * huePercent);
-        int satIndex = Math.round((satDepth-1) * saturationPercent);
+        int satIndex = Math.round((saturationDepth-1) * saturationPercent);
+        int hueIndex = Math.round((colorDepth-1) * huePercent);
         
         if(huePercent > 1 || saturationPercent > 1 || huePercent < 0 || saturationPercent < 0)
         System.out.println(String.format(
@@ -155,32 +121,28 @@ public class MultiDimensionalPaintScale
                 huePercent, hueIndex,
                 saturationPercent, satIndex));
         
-        Datatype.Color c;
-        if(hueIndex < 0 || hueIndex >= colors.length){
-            c = new Datatype.Color(Datatype.ColorType.RGBA, 0, 0, 0);
-        } else {
-            c = colors[hueIndex][satIndex];
-        }
+        Color c;
+//        if(hueIndex < 0 || hueIndex >= colors.length){
+//            c = Color.BLACK;
+//        } else {
+            c = colors[satIndex][hueIndex];
+//        }
        
-        return new Color(c.dimension_1/255., c.dimension_2/255., c.dimension_3/255., 1);
-//        return Color.getHSBColor(hue, saturation, 1f); //Math.min(1f,saturation)
+        return c;
     }
-    
-    
-    
     
     // dumps the generated palettes of this paint scale as rgb values [r,g,b] in javascript array notation
-    private void printPalettesJSON(){
+    // format: [ [ [color1 satdepth1], [color2 satdepth2], ... ], [colors belonging to saturation depth 2], ... ]
+    protected void printPalettesJSON(){
         
         System.out.println("[");
         
-        for (int i = 0; i < numColors; i++) {
-System.out.println("Color1: "+i);
-            System.out.println("colors[i]");
+        for (int row = 0; row < saturationDepth; row++) {
             ArrayList<String> colorCodes = new ArrayList<String>();
             
-            for (Datatype.Color color : colors[i]) {
-                colorCodes.add(String.format("[%s]",color.printColorRGB()));
+            for (int col = 0; col < colorDepth; col++) {
+                Color color = colors[row][col];
+                colorCodes.add(String.format("[%s,%s,%s]",(int)(color.getRed()*255), (int)(color.getGreen()*255), (int)(color.getBlue()*255)));
             }
             System.out.println(String.format("[%s],",Joiner.on(",").join(colorCodes)));
         }
@@ -189,26 +151,51 @@ System.out.println("Color1: "+i);
         
     }
     
-    // test method to generate colors and their gradients
-    private void computeAndPrintPalettesJSON(int numColors, int saturationResolution){
-        Color_manager colorManager = new Color_manager(saturationResolution);
-        
-        System.out.println("[");
-        
-        for (int i = 0; i <= numColors; i++) {
-            
-            colorManager.addColorPalette(new float[]{240f-i*240f/numColors});
-            Vector<Datatype.Color> cp = colorManager._color_palettes.get(i);
-            
-            ArrayList<String> colorCodes = new ArrayList<String>();
-            for (Datatype.Color color : cp) {
-                colorCodes.add(String.format("[%s]",color.printColorRGB()));
-            }
-            System.out.println(String.format("[%s],",Joiner.on(",").join(colorCodes)));
-        }
-        
-        System.out.println("]");
-        
+    public Double[] getLowerBounds() { return this.lowerBounds; }
+    
+    public MultiDimensionalPaintScale setLowerBounds(Double... d) {
+        this.lowerBounds = d;
+        return this;
     }
     
+    public Double[] getUpperBounds() { return this.upperBounds; }
+    
+    public MultiDimensionalPaintScale setUpperBounds(Double... d) {
+        this.upperBounds = d;
+        return this;
+    }
+    
+    public Color getPrimaryColor() { return primaryColor; }
+    
+    public void setPrimaryColor(Color primaryColor) {
+        this.primaryColor = primaryColor;
+        compute();
+    }
+    public Color getSecondaryColor() { return secondaryColor; }
+    
+    public void setSecondaryColor(Color secondaryColor) {
+        this.secondaryColor = secondaryColor;
+        compute();
+    }
+
+    public boolean isBiPolar() { return biPolar; }
+    
+    public void setBiPolar(boolean biPolar) {
+        this.biPolar = biPolar;
+        compute();
+    }
+
+    public int getColorDepth() { return colorDepth; }
+    public void setColorDepth(int colorDepth) {
+        this.colorDepth = colorDepth;
+        compute();
+    }
+
+    public int getSaturationDepth() { return saturationDepth; }
+    public void setSaturationDepth(int saturationDepth) {
+        this.saturationDepth = saturationDepth;
+        compute();
+    }
+    
+    public Color[][] getColors() { return colors; }
 }

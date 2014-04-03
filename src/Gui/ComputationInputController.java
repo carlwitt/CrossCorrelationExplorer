@@ -3,6 +3,7 @@ package Gui;
 import Data.*;
 import Data.Correlation.CorrelationMatrix;
 import Data.Correlation.CorrelogramMetadata;
+import Data.Correlation.CorrelogramStore;
 import Data.Correlation.DFT;
 import java.net.URL;
 import java.util.ArrayList;
@@ -143,9 +144,10 @@ public class ComputationInputController implements Initializable {
         }
         
         CorrelogramMetadata metadata = new CorrelogramMetadata(sharedData.correlationSetA, sharedData.correlationSetB, windowSize, naAction);
-        CorrelationMatrix result = new CorrelationMatrix(metadata);
-        result.compute();
+        
+        CorrelationMatrix result = CorrelogramStore.getResult(metadata) ;
         sharedData.setcorrelationMatrix(result);
+        
     }
     
     // -------------------------------------------------------------------------

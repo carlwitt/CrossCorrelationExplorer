@@ -6,14 +6,15 @@ package Data.Correlation;
 
 import Data.Correlation.CorrelogramMetadata;
 import Data.Correlation.CorrelationMatrix;
-import Data.ComplexSequence;
 import Data.DataModel;
 import Data.TimeSeries;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.Executors;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Before;
 import org.junit.Ignore;
 
 /**
@@ -22,9 +23,15 @@ import org.junit.Ignore;
  */
 public class CorrelationMatrixTest {
     
-    DataModel dataModel = new DataModel();
+    DataModel dataModel;
     
     public CorrelationMatrixTest() {
+    }
+    
+    @Before
+    public void setUp() {
+        dataModel = new DataModel();
+        CorrelogramStore.clear();
     }
     
     /**
@@ -59,9 +66,55 @@ public class CorrelationMatrixTest {
         assertEquals(3.52766, instance.columns.get(2).stdDev[0], 1e-4);
     }
     
+    /**
+     * Test of aggregation constructor, i.e. the computation of mean and standard deviation.
+     */
+    @Test
+    public void testAggregateConstructor2() {
+        System.out.println("aggregateConstructor2");
+        
+        TimeSeries ts1 = new TimeSeries(1, new double[]{1,2,3,4}, new double[]{1,1,1,1});
+        TimeSeries ts2 = new TimeSeries(2, new double[]{1,2,3,4}, new double[]{1,2,3,4});
+        TimeSeries ts3 = new TimeSeries(3, new double[]{1,2,3,4}, new double[]{1,4,1,8});
+        
+        dataModel.put(1, ts1);
+        dataModel.put(2, ts2);
+        dataModel.put(3, ts3);
+        
+        List<TimeSeries> timeSeriesSetA = Arrays.asList(new TimeSeries[]{ts1});
+        List<TimeSeries> timeSeriesSetB = Arrays.asList(new TimeSeries[]{ts2,ts3});
+        CorrelogramMetadata metadata = new CorrelogramMetadata(timeSeriesSetA, timeSeriesSetB, 4, DFT.NA_ACTION.LEAVE_UNCHANGED);
+        CorrelationMatrix instance = CorrelogramStore.getResult(metadata);
+        
+        for (CorrelationMatrix m : CorrelogramStore.getAllResults()) {
+            System.out.println(String.format("result: %s", m));
+        }
+
+        
+        System.out.println(String.format("%s", instance));
+//        System.out.println(String.format("correlogram store\n%s", CorrelogramStore.correlationMatricesByMetadata.entrySet()));
+        for (int i = 0; i < 4; i++) {
+            assertEquals(12, instance.columns.get(0).mean[i], 1e-5);
+            assertEquals(2, instance.columns.get(0).stdDev[i], 1e-5);
+        }
+    }
     
+    /**
+     * Test the 
+     */
+    @Test
+	@Ignore
+    public void testGetMinMaxXY() {
+        System.out.println("getting min/max x/y values");
+        CorrelationMatrix result = new CorrelationMatrix(null);
+        result.append(new CorrelationMatrix.Column(new double[]{1,1,1}, new double[]{2,1,0}, 1));
+        result.append(new CorrelationMatrix.Column(new double[]{3.5,3.5,3.5}, new double[]{2,1,0}, 2));
+        result.append(new CorrelationMatrix.Column(new double[]{6,6,6}, new double[]{2,1,0}, 3));
+        System.out.println(String.format("mean min %s max %s\nstdd min %s max %s", result.getMeanMinValue(), result.getMeanMaxValue(), result.getStdDevMinValue(), result.getStdDevMaxValue()));
+        System.out.println(String.format("X min %s max %s\nY min %s max %s", result.getMinX(), result.getMaxX(), result.getMinY(), result.getMaxY()));
+    }
     
-    
+        
     /**
      * Test of getSize method, of class CorrelationMatrix.
      */
@@ -72,52 +125,6 @@ public class CorrelationMatrixTest {
         CorrelationMatrix instance = null;
         int expResult = 0;
         int result = instance.getSize();
-        assertEquals(expResult, result);
-        
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of contains method, of class CorrelationMatrix.
-     */
-    @Test
-	@Ignore
-    public void testContains() {
-        System.out.println("contains");
-        int id = 0;
-        CorrelationMatrix instance = null;
-        boolean expResult = false;
-        boolean result = instance.contains(id);
-        assertEquals(expResult, result);
-        
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of isEmpty method, of class CorrelationMatrix.
-     */
-    @Test
-	@Ignore
-    public void testIsEmpty() {
-        System.out.println("isEmpty");
-        CorrelationMatrix instance = null;
-        boolean expResult = false;
-        boolean result = instance.isEmpty();
-        assertEquals(expResult, result);
-        
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getResultItems method, of class CorrelationMatrix.
-     */
-    @Test
-	@Ignore
-    public void testGetResultItems() {
-        System.out.println("getResultItems");
-        CorrelationMatrix instance = null;
-        List expResult = null;
-        List result = instance.getResultItems();
         assertEquals(expResult, result);
         
         fail("The test case is a prototype.");
@@ -203,40 +210,6 @@ public class CorrelationMatrixTest {
     }
 
     /**
-     * Test of getZ method, of class CorrelationMatrix.
-     */
-    @Test
-	@Ignore
-    public void testGetZ() {
-        System.out.println("getZ");
-        int window = 0;
-        int timeLag = 0;
-        CorrelationMatrix instance = null;
-        Number expResult = null;
-        Number result = instance.getZ(window, timeLag);
-        assertEquals(expResult, result);
-        
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getZValue method, of class CorrelationMatrix.
-     */
-    @Test
-	@Ignore
-    public void testGetZValue() {
-        System.out.println("getZValue");
-        int window = 0;
-        int timeLag = 0;
-        CorrelationMatrix instance = null;
-        double expResult = 0.0;
-        double result = instance.getZValue(window, timeLag);
-        assertEquals(expResult, result, 0.0);
-        
-        fail("The test case is a prototype.");
-    }
-
-    /**
      * Test of getItemCount method, of class CorrelationMatrix.
      */
     @Test
@@ -247,122 +220,6 @@ public class CorrelationMatrixTest {
         CorrelationMatrix instance = null;
         int expResult = 0;
         int result = instance.getItemCount(window);
-        assertEquals(expResult, result);
-        
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getX method, of class CorrelationMatrix.
-     */
-    @Test
-	@Ignore
-    public void testGetX() {
-        System.out.println("getX");
-        int window = 0;
-        int timeLag = 0;
-        CorrelationMatrix instance = null;
-        Number expResult = null;
-        Number result = instance.getX(window, timeLag);
-        assertEquals(expResult, result);
-        
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getXValue method, of class CorrelationMatrix.
-     */
-    @Test
-	@Ignore
-    public void testGetXValue() {
-        System.out.println("getXValue");
-        int window = 0;
-        int timeLag = 0;
-        CorrelationMatrix instance = null;
-        double expResult = 0.0;
-        double result = instance.getXValue(window, timeLag);
-        assertEquals(expResult, result, 0.0);
-        
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getY method, of class CorrelationMatrix.
-     */
-    @Test
-	@Ignore
-    public void testGetY() {
-        System.out.println("getY");
-        int window = 0;
-        int timeLag = 0;
-        CorrelationMatrix instance = null;
-        Number expResult = null;
-        Number result = instance.getY(window, timeLag);
-        assertEquals(expResult, result);
-        
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getYValue method, of class CorrelationMatrix.
-     */
-    @Test
-	@Ignore
-    public void testGetYValue() {
-        System.out.println("getYValue");
-        int window = 0;
-        int timeLag = 0;
-        CorrelationMatrix instance = null;
-        double expResult = 0.0;
-        double result = instance.getYValue(window, timeLag);
-        assertEquals(expResult, result, 0.0);
-        
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getSeriesCount method, of class CorrelationMatrix.
-     */
-    @Test
-	@Ignore
-    public void testGetSeriesCount() {
-        System.out.println("getSeriesCount");
-        CorrelationMatrix instance = null;
-        int expResult = 0;
-        int result = instance.getSeriesCount();
-        assertEquals(expResult, result);
-        
-        fail("The test case is a prototype.");
-    }
-
-
-    /**
-     * Test of getSeriesKey method, of class CorrelationMatrix.
-     */
-    @Test
-	@Ignore
-    public void testGetSeriesKey() {
-        System.out.println("getSeriesKey");
-        int window = 0;
-        CorrelationMatrix instance = null;
-        Comparable expResult = null;
-        Comparable result = instance.getSeriesKey(window);
-        assertEquals(expResult, result);
-        
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of indexOf method, of class CorrelationMatrix.
-     */
-    @Test
-	@Ignore
-    public void testIndexOf() {
-        System.out.println("indexOf");
-        Comparable windowKey = null;
-        CorrelationMatrix instance = null;
-        int expResult = 0;
-        int result = instance.indexOf(windowKey);
         assertEquals(expResult, result);
         
         fail("The test case is a prototype.");
