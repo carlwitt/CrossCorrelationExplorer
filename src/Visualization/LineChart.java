@@ -79,7 +79,10 @@ public class LineChart extends CanvasChart {
                 }
             }
         }
-        positionChartCanvas();
+        
+        xAxis.drawContents();
+        yAxis.drawContents();
+        
     }
     
 }

@@ -1,13 +1,24 @@
 package Visualization;
 
+import com.sun.javafx.tk.FontLoader;
+import java.util.Locale;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.geometry.Point2D;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.transform.Affine;
+import javafx.scene.transform.NonInvertibleTransformException;
+import javafx.scene.transform.Rotate;
+import javafx.scene.transform.Scale;
+import javafx.scene.transform.Transform;
+import javafx.scene.transform.Translate;
+import javafx.util.converter.NumberStringConverter;
 
 /**
- * The data model for a number axis, i.e. independent of any visualization. Computes 
- *  - the display value range to for a given value range (padding)
- *  - the values where tick marks should be placed
- *  - the tick labels
+ * The component that draws an axis, its tick marks, tick labels and the axis label.
  * 
  * Ticks are conceived as an infinite set of data coordinate values where tick marks should be placed.
  * {@link NumberAxis#getTickMarks} returns those marks that are within the current range of the axis.
@@ -17,65 +28,227 @@ import javafx.beans.property.SimpleDoubleProperty;
  * Setting unit and origin manually allows tick marks at uneven (though not arbitrary) positions.
  * 
  * The term data coordinates refer to the intrinsic dimensions of the data (e.g. 12˚C, 3m, etc.) 
- * as opposed to sceen or view coordinates that translate it to a position in the graphics output.
+ * as opposed to sceen or view coordinates which refer to the graphics output.
  * 
  * @author Carl Witt
  */
-public class NumberAxis {
+public class NumberAxis extends Canvas {
     
     /** Describes the strategy that the axis uses to */
-    public enum TICK_POSITIONS {
+    public enum TICK_GENERATION_METHOD {
         /** Tick positions are generated using the S/R algorithm */
         AUTO,    
         /** Either tick unit or tick origin has been altered */
         MANUAL   
     }
     
-    protected TICK_POSITIONS tickPositionType = TICK_POSITIONS.AUTO;
-    /** @return the tick position generation strategy 
-    public TICK_POSITIONS getTickPositionType(){ return tickPositionType; }
-     
+    /** The axis label that is displayed below the tick marks and tick labels. */
+    protected String label;
+
+    /** Defines whether the axis is rendered horizontally or vertically. */
+    protected boolean isHorizontal = true;
+
+    /** Converts numbers to tick label strings. */
+    NumberStringConverter tickLabelFormatter = new NumberStringConverter(Locale.ENGLISH);
+    
+    /** How to find the data values at which to place tick marks. */
+    protected TICK_GENERATION_METHOD tickPositionType = TICK_GENERATION_METHOD.AUTO;
+    protected Font tickLabelFont = new Font(10d);
+    
+    /** Translates data domain coordinates into screen coordinates. */
+    private Affine dataToScreen;
+    
+    public NumberAxis(){
+    
+        getGraphicsContext2D().setFont(tickLabelFont);
+    
+    }
+    
     // -------------------------------------------------------------------------
-    // property definitions
+    // coordinate transformations
     // -------------------------------------------------------------------------
     
-    /** The smallest value on the axis (doesn't necessarily correspond to a tick position). */
-    private final DoubleProperty lowerBound = new SimpleDoubleProperty();
-    public DoubleProperty lowerBoundProperty() { return lowerBound; }
-    public double getLowerBound() { return lowerBound.get(); }
-    public void setLowerBound(double value) {
-        lowerBound.set(value);
+    /**
+     * @return an affine transform that can be used to convert between data and screen coordinates.
+     */
+    protected Affine computeDataToScreen() {
+
+        double offsetX, offsetY;    // translate
+        double scaleX, scaleY;
+        
+        if(isHorizontal){
+            offsetX = lowerBound.get();
+            offsetY = 0;
+            scaleX = getWidth() / getRange();
+            scaleY = 1;
+        } else {
+            offsetX = 0;
+            offsetY = lowerBound.get();
+            scaleX = 1;
+            scaleY = getHeight() / getRange();
+        }
+        
+        Transform translate = new Translate(-offsetX, -offsetY);
+        Transform scale = new Scale(scaleX, -scaleY);
+        Transform mirror = new Translate(0, getHeight());
+        return new Affine(mirror.createConcatenation(scale).createConcatenation(translate));
     }
     
-    /** The largest value on the axis (doesn't necessarily correspond to a tick position). */
-    private final DoubleProperty upperBound = new SimpleDoubleProperty();
-    public DoubleProperty upperBoundProperty() { return upperBound; }
-    public double getUpperBound() { return upperBound.get(); }
-    public void setUpperBound(double value) {
-        upperBound.set(value);
+    /**
+     * Transforms a data coordinate into the according position on the screen.
+     * @param value The data coordinate (usually in range [lowerBound, upperBound])
+     * @return The pixel coordinate (usually in range [0, width])
+     */
+    public double toScreen(double value){
+        if(isHorizontal)
+            return computeDataToScreen().transform(value, 0).getX();
+        else
+            return computeDataToScreen().transform(0, value).getY();
     }
-
-    /** Defines a value (data coordinates) that is used to derive the set of tick marks. */
-    private final DoubleProperty tickOrigin = new SimpleDoubleProperty();
-    public double getTickOrigin() { return tickOrigin.get(); }
-    public DoubleProperty tickOriginProperty() { return tickOrigin; }
-    public void setTickOrigin(double value) {
-        tickOrigin.set(value);
+    
+    /**
+     * Transforms a screen coordinate along the axis into a data coordinate position. 
+     * @param value The pixel coordinate (usually in range [0, width])
+     * @return 
+     */
+    public double fromScreen(double value){
+        try {
+            if(isHorizontal)
+                return computeDataToScreen().inverseTransform(value, 0).getX();
+            else
+                return computeDataToScreen().inverseTransform(0, value).getY();
+        } catch (NonInvertibleTransformException ex) {
+            System.err.println(String.format("Axis is malconfigured, the data to screen transform can not be inverted.\n"
+                    + "axis label: %s horizontal: %s lower bound: %s upper bound: %s", 
+                    label, isHorizontal,lowerBound.get(),upperBound.get()));
+            return 0;
+        }
     }
-
-    /** Defines the distance between ticks. */
-    private final DoubleProperty tickUnit = new SimpleDoubleProperty();
-    public double getTickUnit() { return tickUnit.get(); }
-    public DoubleProperty tickUnitProperty() { return tickUnit; }
-    public void setTickUnit(double value) {
-        this.tickPositionType = TICK_POSITIONS.MANUAL;
-        tickUnit.set(value);
-    }
-
+    
     // -------------------------------------------------------------------------
-    // custom code
+    // content drawing 
     // -------------------------------------------------------------------------
     
+    /**
+     * The main drawing routine that calls all other drawing routines.
+     */
+    public void drawContents(){
+        
+        dataToScreen = computeDataToScreen();
+        GraphicsContext g = getGraphicsContext2D();
+        
+        // clear
+        g.setFill(new Color(1.,1.,1.,1.));
+        g.fillRect(0, 0, getWidth(), getHeight());
+        
+        // draw axis line
+        g.setStroke(Color.GRAY);
+        g.setLineWidth(2);
+        if(isHorizontal){
+            g.strokeLine(0, 0, getWidth(), 0);
+        } else {
+            g.strokeLine(getWidth(), 0, getWidth(), getHeight());
+        }
+        // draw axis label
+        g.setStroke(Color.BLACK);
+        g.setLineWidth(1);
+        Point2D textSize = renderedTextSize(label, tickLabelFont);
+        if(isHorizontal){
+            g.strokeText(label, getWidth()/2 - textSize.getX()/2, getHeight()-5);
+        } else {
+            g.save();   
+            double startX = textSize.getY(),
+                   startY = getHeight()/2 + textSize.getX()/2;
+            Rotate r = new Rotate(270, startX, startY);
+            g.setTransform(r.getMxx(), r.getMyx(), r.getMxy(), r.getMyy(), r.getTx(), r.getTy());
+            g.strokeText(label, startX, startY);
+            g.restore();
+        }
+        
+        // draw tick marks and labels
+        g.setStroke(Color.GRAY);
+        double availableSpace = isHorizontal ? getWidth() : getHeight();
+        
+        double exampleTickUnit = tickUnit(20, getLowerBound(), getUpperBound());
+        double largestValue = Math.max(Math.abs(getLowerBound()), getUpperBound());
+        String exampleLabel = tickLabelFormatter.toString(nextLowerTickMarkValue(largestValue, exampleTickUnit));
+        
+        double tickLabelSize = isHorizontal ? 
+                renderedTextSize(exampleLabel, tickLabelFont).getX() : 
+                renderedTextSize(exampleLabel, tickLabelFont).getY();
+        
+        int notTooManyTicks = (int) Math.floor(0.5 * availableSpace / tickLabelSize);
+        tickUnit.set(tickUnit(notTooManyTicks, getLowerBound(), getUpperBound()));
+        
+        double nextLower = nextLowerTickMarkValue(getLowerBound(), tickUnit.get());
+        
+        
+        int numTicks = (int) Math.ceil( getRange()/tickUnit.get() );
+        for (int i = 0; i < numTicks+5; i++) {
+            drawTickMark(g, nextLower+i*tickUnit.get());
+        }
+        
+    }
+    
+    /** Draws a single tick mark.
+     * @param g The graphics context to draw on.
+     * @param value The data coordinates value to put a tick mark on.
+     */
+    protected void drawTickMark(GraphicsContext g, double value){
+        
+        double tickMarkLength = 3;
+        g.setLineWidth(1);
+        g.setFont(tickLabelFont);
+        
+        String tickLabel = tickLabelFormatter.toString(value);
+        Point2D textDimensions = renderedTextSize(tickLabel, tickLabelFont);
+        
+        if(isHorizontal){
+            double screenCoordinate = dataToScreen.transform(value, 0).getX();
+            // tick mark
+            g.strokeLine(screenCoordinate, 0, screenCoordinate, tickMarkLength);
+            // tick label
+            double labelStartPos = screenCoordinate - textDimensions.getX()/2;
+            // don't draw labels that are only partially visible
+            if(labelStartPos >= 0 && labelStartPos <= getWidth() - textDimensions.getX()){
+                g.strokeText(tickLabel, labelStartPos, tickMarkLength+textDimensions.getY());
+            }
+        } else {
+            double screenCoordinate = dataToScreen.transform(0, value).getY();
+            // tick mark
+            g.strokeLine(getWidth()-tickMarkLength, screenCoordinate, getWidth(), screenCoordinate);
+            // tick label
+            double labelStartPos = screenCoordinate + textDimensions.getY()/4;
+            // don't draw labels that are only partially visible
+            if(labelStartPos >= textDimensions.getY() && labelStartPos <= getHeight()){
+                g.strokeText(tickLabel, getWidth() - tickMarkLength - textDimensions.getX() - 2, labelStartPos);
+            }
+        }
+    }
+    
+    // -------------------------------------------------------------------------
+    // tick computation logic 
+    // -------------------------------------------------------------------------
+    
+    /**
+     * @param rawValue an arbitrary value on the axis
+     * @return find next lower value that is on a tick position
+     */
+    protected double nextLowerTickMarkValue(double rawValue, double tickUnit){
+        // take "modulo" of the lower bound and the tick unit
+        double div = rawValue / tickUnit;
+        // use only the fractional part to get the "residual" of the division
+        double mod = tickUnit * (div - Math.floor(div)); 
+        
+        double result = rawValue - mod;
+        return result;
+        // there's nothing like an intrinsic precision: what about 1/3? 
+//        double intrinsicPrecision = Math.ceil(Math.log10(Math.abs(result)));
+//        // round to that precision to get rid of numerical errors that stem from raising to the power of a logarithm
+//        double roundedToIntrinsic = Math.round(result*Math.pow(10, -intrinsicPrecision)) * Math.pow(10, intrinsicPrecision);
+//        
+//        return roundedToIntrinsic;
+    }
     /**
      * S/R algorithm for tick units
      * @param tickIntervals The number of desired tick intervals (the number of ticks will be tickIntervals + 1)
@@ -131,19 +304,66 @@ public class NumberAxis {
     }
 
     
+    /**
+     * Computes the width and height of string. Used to align tick labels.
+     * @param string The string to draw.
+     * @param font The font name and font size in which the string is drawn.
+     * @return The width (x component) and height (y component) of the string if plotted.
+     */
+    FontLoader fontLoader = com.sun.javafx.tk.Toolkit.getToolkit().getFontLoader();
+    protected Point2D renderedTextSize(String string, Font font){
+        return new Point2D(fontLoader.computeStringWidth(string, font),fontLoader.getFontMetrics(font).getLineHeight());
+    }
     
+    // -------------------------------------------------------------------------
+    // property definitions
+    // -------------------------------------------------------------------------
+    
+    /** The smallest value on the axis (doesn't necessarily correspond to a tick position). */
+    private final DoubleProperty lowerBound = new SimpleDoubleProperty();
+    public DoubleProperty lowerBoundProperty() { return lowerBound; }
+    public double getLowerBound() { return lowerBound.get(); }
+    public void setLowerBound(double value) {
+        lowerBound.set(value);
+    }
+    
+    /** The largest value on the axis (doesn't necessarily correspond to a tick position). */
+    private final DoubleProperty upperBound = new SimpleDoubleProperty();
+    public DoubleProperty upperBoundProperty() { return upperBound; }
+    public double getUpperBound() { return upperBound.get(); }
+    public void setUpperBound(double value) {
+        upperBound.set(value);
+    }
+
     /** Returns the total range that is covered by the axis. */
     public double getRange(){
         return upperBound.get() - lowerBound.get();
     }
     
-    
-
-
-    
-    /** The mark position and its label */
-    public static class TickMark{
-        public double position; /** The position where to place the tick mark (data coordinates) */
-        public String label;
+    /** Defines a value (data coordinates) that is used to derive the set of tick marks. */
+    private final DoubleProperty tickOrigin = new SimpleDoubleProperty();
+    public double getTickOrigin() { return tickOrigin.get(); }
+    public DoubleProperty tickOriginProperty() { return tickOrigin; }
+    public void setTickOrigin(double value) {
+        tickOrigin.set(value);
     }
+
+    /** Defines the distance between ticks. */
+    private final DoubleProperty tickUnit = new SimpleDoubleProperty();
+    public double getTickUnit() { return tickUnit.get(); }
+    public DoubleProperty tickUnitProperty() { return tickUnit; }
+    public void setTickUnit(double value) {
+        this.tickPositionType = TICK_GENERATION_METHOD.MANUAL;
+        tickUnit.set(value);
+    }
+    
+    public void setLabel(String label) { this.label = label; }
+    public void setIsHorizontal(boolean isHorizontal) { this.isHorizontal = isHorizontal; }
+
+    public final void setTickLabelFormatter(NumberStringConverter sc) {
+        this.tickLabelFormatter = sc;
+    }
+    
+    /** @return the tick position generation strategy */
+    public TICK_GENERATION_METHOD getTickPositionType(){ return tickPositionType; }
 }

@@ -48,17 +48,13 @@ public class CorrelogramController {
         correlogram.yAxis.setTickLabelFormatter(new NumberStringConverter(new DecimalFormat("#")));
         
         legend.xAxis.setLabel("μ");//Mean
-        legend.xAxis.setMinorTickVisible(false);
         legend.yAxis.setLabel("σ");//Standard Deviation
-        legend.yAxis.setMinorTickVisible(false);
         Tooltip xAxisTip = new Tooltip("Average correlation within all aligned time windows.");
         Tooltip yAxisTip = new Tooltip("Standard deviation of the correlation within all aligned time windows.");
         Tooltip.install(legend.xAxis, xAxisTip);
         Tooltip.install(legend.yAxis, yAxisTip);
         legend.setPaintScale(new MultiDimensionalPaintScale(meanColorResolution, standardDeviationColorResolution));
         legend.legendMode = true;
-//        legend.allowScroll = false;
-//        legend.allowZoom = false;
         
     }
     
@@ -138,7 +134,9 @@ public class CorrelogramController {
     
     public void resetView(ActionEvent e) {
         correlogram.resetView();
+        correlogram.drawContents();
         legend.resetView();
+        legend.drawContents();
     }
 
 }

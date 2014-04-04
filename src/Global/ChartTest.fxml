@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.canvas.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
+<?import javafx.scene.shape.*?>
+
+<AnchorPane fx:id="rootPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="0.0" minWidth="0.0" prefHeight="400.0" prefWidth="600.0" style="" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Global.ChartTestController">
+  <children>
+    <!--<StackPane fx:id="canvasPane" prefHeight="150.0" prefWidth="200.0" style="-fx-border-color: transparent transparent black black;&#10;-fx-border-width: 2;" AnchorPane.bottomAnchor="40.0" AnchorPane.leftAnchor="40.0" AnchorPane.rightAnchor="40.0" AnchorPane.topAnchor="40.0">-->
+    <AnchorPane fx:id="canvasPane" minHeight="0.0" minWidth="0.0" prefHeight="150.0" prefWidth="200.0" style="/*-fx-border-color: transparent transparent gray gray;*/" AnchorPane.bottomAnchor="40.0" AnchorPane.leftAnchor="40.0" AnchorPane.rightAnchor="40.0" AnchorPane.topAnchor="40.0">
+      <!--</StackPane>-->
+      <children>
+        <Canvas fx:id="canvas" scaleX="1.0" scaleY="1.0" style="" visible="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+        <Canvas fx:id="xAxisMarks" scaleX="1.0" scaleY="1.0" style="" visible="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+        <Canvas fx:id="yAxisMarks" scaleX="1.0" scaleY="1.0" style="" visible="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+      </children>
+      <padding>
+        <Insets />
+      </padding>
+    </AnchorPane>
+  </children>
+</AnchorPane>

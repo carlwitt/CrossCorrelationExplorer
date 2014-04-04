@@ -18,9 +18,6 @@ import javafx.scene.transform.Translate;
 public class BlockChart extends CanvasChart {
     
     public BlockChart(){
-        chart.setHorizontalGridLinesVisible(false);
-        chart.setVerticalGridLinesVisible(false);
-        yAxis.setMinorTickCount(1);
     }
     
     private final ObjectProperty<CorrelationMatrix> matrix = new SimpleObjectProperty<>();
@@ -105,8 +102,10 @@ public class BlockChart extends CanvasChart {
 
             }
         }
+        
+        xAxis.drawContents();
+        yAxis.drawContents();
 
-        positionChartCanvas();
     }
 
     /**
@@ -128,7 +127,6 @@ public class BlockChart extends CanvasChart {
             yMax = Math.max(yMin+1, m.getStdDevMaxValue());
 //            yMax = m.getStdDevMaxValue();
             yAxis.setTickUnit((yMax-yMin)/(m.getResultItems().get(0).stdDev.length-1));
-            yAxis.setMinorTickCount(1);
 //System.out.println(String.format("reset view: x tick units %s y tick units %s",xAxis.getTickUnit(), yAxis.getTickUnit()));
         } else {
             xMin = m.getMinX();
