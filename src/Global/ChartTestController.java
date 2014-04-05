@@ -1,5 +1,6 @@
 package Global;
 
+import Visualization.Correlogram;
 import Visualization.NumberAxis;
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -27,6 +28,8 @@ import javafx.scene.transform.Scale;
  */
 public class ChartTestController implements Initializable {
     
+    Correlogram c = new Correlogram();
+            
     @FXML private AnchorPane rootPane;
     @FXML private AnchorPane canvasPane;
     @FXML private Canvas canvas;

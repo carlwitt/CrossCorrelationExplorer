@@ -71,8 +71,8 @@ public class MainWindowController implements Initializable {
 //            }
 //        });
 //        fileInputController.fileModel.setFilename("/Users/macbookdata/inputDataExcerpt.txt");
-//        fileInputController.fileModel.setFilename("/Users/macbookdata/lianhua_realisations.txt");
-        fileInputController.fileModel.setFilename("/Users/macbookdata/inputDataSimple.txt");
+        fileInputController.fileModel.setFilename("/Users/macbookdata/lianhua_realisations.txt");
+//        fileInputController.fileModel.setFilename("/Users/macbookdata/inputDataSimple.txt");
         fileInputController.loadButton.fire();
 
         // Todo: remove test support

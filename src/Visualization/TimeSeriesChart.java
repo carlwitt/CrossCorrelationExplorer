@@ -9,7 +9,9 @@ import java.util.Random;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.geometry.Point2D;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import javafx.scene.transform.Affine;
@@ -20,7 +22,7 @@ import javafx.scene.transform.Translate;
  * TODO: more sophisticated data aggregation. keeping peaks is important to provide an undistorted impression of the overall shape
  * @author Carl Witt
  */
-public class LineChart extends CanvasChart {
+public class TimeSeriesChart extends CanvasChart {
 
     //TODO sharedData should be refactored out (the line chart isn't reusable this way)
     public SharedData sharedData;
@@ -32,6 +34,10 @@ public class LineChart extends CanvasChart {
     public final int getDrawEachNthDataPoint(){ return drawEachNthDataPoint.get(); }
     public final IntegerProperty drawEachNthDataPointProperty(){ return drawEachNthDataPoint; }
 
+    public TimeSeriesChart(){
+        xAxis.setMinTickUnit(1);
+    }
+    
     @Override public void drawContents() {
         
         GraphicsContext gc = chartCanvas.getGraphicsContext2D();
@@ -83,6 +89,14 @@ public class LineChart extends CanvasChart {
         xAxis.drawContents();
         yAxis.drawContents();
         
+    }
+    
+    public void resetView() {
+        // TODO: add a padding of max(5px, 2.5% of the pixel width/height of the canvas)
+        double xRange = sharedData.dataModel.getMaxX() - sharedData.dataModel.getMinX();
+        double yRange = sharedData.dataModel.getMaxY() - sharedData.dataModel.getMinY();
+        axesRanges.set(new Rectangle2D(sharedData.dataModel.getMinX(), sharedData.dataModel.getMinY(), xRange, yRange));
+        drawContents();
     }
     
 }

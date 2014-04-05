@@ -15,8 +15,6 @@ import javafx.scene.paint.Paint;
  */
 public class MultiDimensionalPaintScale 
 {
-    public static int DEFAULT_COLOR_DEPTH = 13;
-    public static int DEFAULT_SAT_DEPTH = 4;
     
     /** The two colors that define the range between which colors are interpolated.<br/>
      * If the palette is bipolar, the interpolation will be primary color ... white ... secondary color.<br/>
@@ -35,10 +33,10 @@ public class MultiDimensionalPaintScale
     /** The computed colors. First dimension refers to base color, second to saturation. */
     private Color colors[][];
     
-    public MultiDimensionalPaintScale(Integer colorDepth, Integer saturationDepth){
+    public MultiDimensionalPaintScale(int colorDepth, int saturationDepth){
         
-        this.colorDepth = colorDepth == null ? DEFAULT_COLOR_DEPTH : colorDepth;
-        this.saturationDepth  = saturationDepth == null ? DEFAULT_SAT_DEPTH : saturationDepth;
+        this.colorDepth = colorDepth;// == null ? DEFAULT_COLOR_DEPTH : colorDepth;
+        this.saturationDepth  = saturationDepth; //== null ? DEFAULT_SAT_DEPTH : saturationDepth;
 
         compute();
         

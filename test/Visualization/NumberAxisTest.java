@@ -60,9 +60,9 @@ public class NumberAxisTest {
 
     @Test public void testNextLowerTickMarkValue(){
         System.out.println("next lower tick mark value with tick unit 1000");
-        System.out.println(String.format("1001.1 => %s", instance.nextLowerTickMarkValue(1001.1, 1000)));
+        System.out.println(String.format("1001.1 => %s", instance.nextLowerTickMarkValue(1001.1, 0, 1000)));
         System.out.println("next lower tick mark value with tick unit 5");
-        System.out.println(String.format("250 => %s", instance.nextLowerTickMarkValue(250, 5)));
+        System.out.println(String.format("250 => %s", instance.nextLowerTickMarkValue(250, 3, 5)));
         
     }
     

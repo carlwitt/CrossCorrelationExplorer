@@ -15,9 +15,14 @@ import javafx.scene.transform.Translate;
  * Used to draw the correlogram. Takes a matrix with two dimensional entries and renders each of them as a matrix of colored blocks.
  * @author Carl Witt
  */
-public class BlockChart extends CanvasChart {
+public class CorrelogramLegend extends CanvasChart {
     
-    public BlockChart(){
+    public CorrelogramLegend(MultiDimensionalPaintScale paintScale){
+        this.paintScale = paintScale;
+        xAxis.setTickPositionType(NumberAxis.TICK_GENERATION_METHOD.MANUAL);
+        yAxis.setTickPositionType(NumberAxis.TICK_GENERATION_METHOD.MANUAL);
+        this.allowScroll = false;
+        this.allowZoom = false;
     }
     
     private final ObjectProperty<CorrelationMatrix> matrix = new SimpleObjectProperty<>();
@@ -31,16 +36,12 @@ public class BlockChart extends CanvasChart {
         drawContents();
     }
     
-    /** If legendMode is set to true, the value pairs in the matrix will be rendered at coordinates corresponding to the value pairs and thus label them via the tick marks. */
-    public boolean legendMode = false;
-    
     // encodes 2D values in a single color
-    MultiDimensionalPaintScale paintScale = new MultiDimensionalPaintScale(null, null);
+    MultiDimensionalPaintScale paintScale;
 
     @Override public void drawContents() {
 
         GraphicsContext gc = chartCanvas.getGraphicsContext2D();
-        
 
         // reset transform to identity, clear previous contents
         gc.setTransform(new Affine(new Translate()));
@@ -69,22 +70,12 @@ public class BlockChart extends CanvasChart {
             
             double minX, minY, startY, width, height;
             
-            if(legendMode){
-                // the mean resolution is expected to be ≥ 3 (at least two columns)
-                width = Math.max(1, columns.get(1).windowXOffset - columns.get(0).windowXOffset);
-                height = Math.max(1, columns.get(0).stdDev[1] - columns.get(0).stdDev[0]);
-                
-                minX = matrix.getMeanMinValue() + i*width - width/2;
-                startY = matrix.getStdDevMinValue()+height/2;
-            } else {
-                // window covers a time period equal to the length of the resulting cross-correlation
-                width = column.mean.length;
-                // center windows around their starting point because shifts extend in both directions
-                minX = column.windowXOffset;// - 0.5*width;
-                height = 1; // each cell represents a time lag applied to a window. time lags are discrete, as we operate on discrete functions
-                startY = 1;
-            }
+            // the mean resolution is expected to be ≥ 3 (at least two columns)
+            width = columns.get(1).windowXOffset - columns.get(0).windowXOffset;
+            height = columns.get(0).stdDev[1] - columns.get(0).stdDev[0];
 
+            minX = matrix.getMeanMinValue() + i*width - width/2;
+            startY = matrix.getStdDevMinValue()+height/2;
 
             Point2D ulc, brc; // upper left corner, bottom right corner of the cell
             for (int lag = 0; lag < column.mean.length; lag++) {
@@ -99,9 +90,15 @@ public class BlockChart extends CanvasChart {
 //      + "%s, %s m=%s s=%s to color %s",
 //        minX, minY, minX+width, minY+height, 
 //        ulc, brc, column.mean[lag], column.stdDev[lag], gc.getFill()));
-
             }
         }
+        
+        // draw highlight on legend entry
+//        gc.save();
+//        gc.setStroke(Color.YELLOW);
+//        gc.setLineWidth(1);
+//        gc.strokeRect(ulc.getX(), ulc.getY(), brc.getX() - ulc.getX(), ulc.getY() - brc.getY());
+//        gc.restore();
         
         xAxis.drawContents();
         yAxis.drawContents();
@@ -113,32 +110,26 @@ public class BlockChart extends CanvasChart {
      * Performs a redraw.
      */
     void resetView() {
+
         CorrelationMatrix m = matrix.get();
-        
         if(m == null) return;
         
-        double xMin, xMax, yMin, yMax;
-        if(legendMode){
-            xMin = m.getMeanMinValue();
-            xMax = Math.max(xMin+1, m.getMeanMaxValue());
-//            xMax = m.getMeanMaxValue();
-            xAxis.setTickUnit((xMax-xMin)/(m.getResultItems().size()-1));
-            yMin = m.getStdDevMinValue();
-            yMax = Math.max(yMin+1, m.getStdDevMaxValue());
-//            yMax = m.getStdDevMaxValue();
-            yAxis.setTickUnit((yMax-yMin)/(m.getResultItems().get(0).stdDev.length-1));
-//System.out.println(String.format("reset view: x tick units %s y tick units %s",xAxis.getTickUnit(), yAxis.getTickUnit()));
-        } else {
-            xMin = m.getMinX();
-            xMax = m.getMaxX();
-            yMin = m.getMinY();
-            yMax = m.getMaxY();
-        }
+        double xMin = m.getMeanMinValue();
+        double xMax = Math.max(xMin+1, m.getMeanMaxValue());        // in case max = min, display shouldn't shrink to zero
+        xAxis.setTickOrigin(m.getMeanMinValue());
+        xAxis.setTickUnit((xMax-xMin)/(m.getResultItems().size()-1));
         
-        xAxis.setLowerBound(xMin);
-        xAxis.setUpperBound(xMax);
-        yAxis.setLowerBound(yMin);
-        yAxis.setUpperBound(yMax);
+        double yMin = m.getStdDevMinValue();
+        double yMax = Math.max(yMin+1, m.getStdDevMaxValue());      // in case max = min, display shouldn't shrink to zero
+        yAxis.setTickOrigin(yMin);
+        yAxis.setTickUnit((yMax-yMin)/(m.getResultItems().get(0).stdDev.length-1));
+        
+        xAxis.setLowerBound(xMin - xAxis.getTickUnit()/2);
+        xAxis.setUpperBound(xMax + xAxis.getTickUnit()/2);
+        yAxis.setLowerBound(yMin - yAxis.getTickUnit()/2);
+        yAxis.setUpperBound(yMax + yAxis.getTickUnit()/2);
+        
+//System.out.println(String.format("reset view: x tick units %s y tick units %s",xAxis.getTickUnit(), yAxis.getTickUnit()));
     }
     
     public MultiDimensionalPaintScale getPaintScale() {

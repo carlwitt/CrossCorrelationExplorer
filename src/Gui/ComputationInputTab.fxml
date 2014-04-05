@@ -13,7 +13,7 @@
 
 <GridPane fx:id="computationInputPane" gridLinesVisible="false" maxWidth="1.7976931348623157E308" minHeight="0.0" prefHeight="119.0" prefWidth="1141.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.ComputationInputController">
   <children>
-    <Label alignment="CENTER" maxWidth="1.7976931348623157E308" prefWidth="300.0" text="Correlation Input Set A" textAlignment="CENTER" textFill="#00cc52" GridPane.columnIndex="0" GridPane.hgrow="ALWAYS" GridPane.rowIndex="0">
+    <Label alignment="BOTTOM_LEFT" maxWidth="1.7976931348623157E308" prefWidth="300.0" text="Correlation Input Set A" textAlignment="LEFT" textFill="#00cc52" GridPane.columnIndex="0" GridPane.hgrow="ALWAYS" GridPane.rowIndex="0">
       <font>
         <Font name="System Bold" size="13.0" fx:id="x1" />
       </font>
@@ -23,13 +23,13 @@
         <Tooltip text="Each time series in input set A will be cross correlated with each time series in input set B.&#10;Double clicking on a time series removes it." fx:id="inputSetToolTip" />
       </tooltip>
     </ListView>
-    <Label alignment="CENTER" maxWidth="1.7976931348623157E308" prefWidth="300.0" text="Loaded Time Series" textAlignment="CENTER" GridPane.columnIndex="2" GridPane.hgrow="ALWAYS" GridPane.rowIndex="0" />
+    <Label alignment="CENTER_LEFT" maxWidth="1.7976931348623157E308" prefWidth="300.0" text="Loaded Time Series" textAlignment="CENTER" GridPane.columnIndex="2" GridPane.hgrow="ALWAYS" GridPane.rowIndex="0" />
     <ListView fx:id="loadedList" maxWidth="1.7976931348623157E308" onKeyReleased="#loadedListKeyTyped" prefHeight="-1.0" prefWidth="130.0" style="-fx-background-insets: 0;" GridPane.columnIndex="2" GridPane.rowIndex="1">
       <tooltip>
         <Tooltip text="Displays all time series that have been loaded in the file input tab.&#10;Use the left arrow key to add time series to correlation input set A and the right arrow key analogously." />
       </tooltip>
     </ListView>
-    <Label alignment="CENTER" font="$x1" maxWidth="1.7976931348623157E308" prefWidth="300.0" text="Correlation Input Set B" textFill="#4333ff" GridPane.columnIndex="4" GridPane.rowIndex="0" />
+    <Label alignment="CENTER_LEFT" font="$x1" maxWidth="1.7976931348623157E308" prefWidth="300.0" text="Correlation Input Set B" textFill="#4333ff" GridPane.columnIndex="4" GridPane.rowIndex="0" />
     <ListView fx:id="setBList" maxWidth="1.7976931348623157E308" prefHeight="-1.0" prefWidth="130.0" style="-fx-background-insets: 0;" tooltip="$inputSetToolTip" GridPane.columnIndex="4" GridPane.rowIndex="1" />
     <VBox alignment="TOP_CENTER" disable="false" fillWidth="true" prefHeight="223.0" prefWidth="101.0" spacing="3.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
       <children>

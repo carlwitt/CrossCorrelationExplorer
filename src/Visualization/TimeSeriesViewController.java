@@ -10,6 +10,7 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.layout.AnchorPane;
@@ -27,7 +28,7 @@ public class TimeSeriesViewController {
     /** maps a color to each set of time series (for instance the time series in correlation set A, in correlation set B and temporary time series for preview). */
     HashMap<Color, ObservableList<TimeSeries>> seriesSets = new HashMap<>();
     
-    Visualization.LineChart timeSeriesChart = new Visualization.LineChart();
+    Visualization.TimeSeriesChart timeSeriesChart = new Visualization.TimeSeriesChart();
     
     /** controls the level of detail with which time series are drawn.
      * this is important since rendering all series with all points takes very long and is not the main purpose of the software. */
@@ -47,6 +48,14 @@ public class TimeSeriesViewController {
         timeSeriesChart.seriesSets = seriesSets;
         
         timeSeriesChart.drawEachNthDataPointProperty().bind(detailSlider.valueProperty());
+        
+        // listen to changes in zoom and pan 
+        sharedData.visibleTimeRangeProperty().bindBidirectional(timeSeriesChart.axesRangesProperty());
+        sharedData.visibleTimeRangeProperty().addListener(new ChangeListener() {
+            @Override public void changed(ObservableValue ov, Object t, Object t1) {
+                timeSeriesChart.drawContents();
+            }
+        });
         
         // when loading additional time series, reset the view to show the whole time span
 //        sharedData.dataModel.timeSeries.addListener(new MapChangeListener<Integer, TimeSeries>() {
@@ -136,13 +145,7 @@ public class TimeSeriesViewController {
     };
     
     public void resetView(ActionEvent e) {
-        // TODO: add a padding of max(5px, 2.5% of the pixel width/height of the canvas)
-        
-        timeSeriesChart.xAxis.setLowerBound(sharedData.dataModel.getMinX());
-        timeSeriesChart.yAxis.setLowerBound(sharedData.dataModel.getMinY());
-        timeSeriesChart.xAxis.setUpperBound(sharedData.dataModel.getMaxX());
-        timeSeriesChart.yAxis.setUpperBound(sharedData.dataModel.getMaxY());
-        timeSeriesChart.drawContents();
+        timeSeriesChart.resetView();
     }
     
     

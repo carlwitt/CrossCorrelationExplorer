@@ -8,6 +8,8 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Rectangle2D;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -24,19 +26,26 @@ public class CorrelogramController {
     SharedData sharedData;          
 
     /** The number of colors used to encode the mean dimension in the correlation matrix. */
-    private final int meanColorResolution = 13;
+    private final int meanColorResolution = 12;
     /** The number of colors used to encode the standard deviation dimension in the correlation matrix. */
     private final int standardDeviationColorResolution = 4;
     
-    protected BlockChart correlogram = new BlockChart();
-    protected BlockChart legend = new BlockChart();
+    protected MultiDimensionalPaintScale paintScale;
+    
+    protected Correlogram correlogram = new Correlogram(new MultiDimensionalPaintScale(1200, 400));
+    protected CorrelogramLegend legend = new CorrelogramLegend(new MultiDimensionalPaintScale(meanColorResolution, standardDeviationColorResolution));;
     
     @FXML VBox correlogramView;
     @FXML StackPane correlogramPane;
     @FXML StackPane legendPane;
+    @FXML ToggleButton linkWithTimeSeriesViewToggle;
     
     public void initialize() {
-
+        
+//        legendPaintScale = new MultiDimensionalPaintScale(meanColorResolution, standardDeviationColorResolution);
+//        correlogram = new Correlogram(new MultiDimensionalPaintScale(1200, 400));
+//        legend = new CorrelogramLegend(new MultiDimensionalPaintScale(meanColorResolution, standardDeviationColorResolution));
+         
         correlogramPane.getChildren().add(correlogram);
         correlogram.toBack();
         legendPane.getChildren().add(legend);
@@ -53,12 +62,13 @@ public class CorrelogramController {
         Tooltip yAxisTip = new Tooltip("Standard deviation of the correlation within all aligned time windows.");
         Tooltip.install(legend.xAxis, xAxisTip);
         Tooltip.install(legend.yAxis, yAxisTip);
-        legend.setPaintScale(new MultiDimensionalPaintScale(meanColorResolution, standardDeviationColorResolution));
-        legend.legendMode = true;
+        
+//        correlogram.setPaintScale(paintScale);
+//        legend.setPaintScale(paintScale);
         
     }
     
-    public void setSharedData(SharedData sharedData) {
+    public void setSharedData(final SharedData sharedData) {
         
         this.sharedData = sharedData;
         correlogram.matrixProperty().bind(sharedData.correlationMatrixProperty());
@@ -67,27 +77,52 @@ public class CorrelogramController {
         sharedData.correlationMatrixProperty().addListener(new ChangeListener<CorrelationMatrix>() {
             @Override
             public void changed(ObservableValue<? extends CorrelationMatrix> ov, CorrelationMatrix t, CorrelationMatrix t1) {
-                updateLegend();
+                
+                // Computes a sample from the full range of the current correlation matrix (its correlation means and standard deviations).
+                CorrelationMatrix valueRangeSample = valueRangeSample(meanColorResolution, standardDeviationColorResolution);
+                legend.setMatrix(valueRangeSample);
+//                legend.setPaintScale(new MultiDimensionalPaintScale(meanColorResolution, standardDeviationColorResolution));
+                
+                // reset correlogram and legend
                 resetView(null);
             }
         });
-    }
-
-    /**
-     * Computes a sample from the full range of the current correlation matrix (its correlation means and standard deviations).
-     * Displays the according colors in the legend plot.
-     */
-    protected void updateLegend() {
         
-        CorrelationMatrix valueRangeSample = valueRangeSample(meanColorResolution, standardDeviationColorResolution);
+        // report navigation in the correlogram to the time series view (via the shared data)
+        correlogram.axesRangesProperty().addListener(pushCorrelogramNavigation);
         
-        legend.setMatrix(valueRangeSample);
-        legend.setPaintScale(new MultiDimensionalPaintScale(meanColorResolution, standardDeviationColorResolution));
-        legend.resetView();
-        legend.drawContents();
+        // listen to navigation in the time series view (via shared data)
+        sharedData.visibleTimeRangeProperty().addListener(new ChangeListener() {
+            @Override
+            public void changed(ObservableValue ov, Object t, Object t1) {
+                if(linkWithTimeSeriesViewToggle.isSelected()){
+                    Rectangle2D newBounds = (Rectangle2D) t1;
+                    correlogram.xAxis.setLowerBound(newBounds.getMinX());
+                    correlogram.xAxis.setUpperBound(newBounds.getMaxX());
+                    correlogram.drawContents();
+                }
+            }
+        });
         
     }
     
+    ChangeListener<Object> pushCorrelogramNavigation = new ChangeListener<Object>() {
+        @Override public void changed(ObservableValue<? extends Object> ov, Object t, Object t1) {
+
+            Rectangle2D oldTimeSeriesBounds = sharedData.getVisibleTimeRange();
+
+            if(linkWithTimeSeriesViewToggle.isSelected() && oldTimeSeriesBounds != null){
+                Rectangle2D newCorrelogramBounds = (Rectangle2D) t1;
+                Rectangle2D newTimeSeriesBounds = new Rectangle2D(
+                        newCorrelogramBounds.getMinX(), 
+                        oldTimeSeriesBounds.getMinY(), 
+                        newCorrelogramBounds.getWidth(), 
+                        oldTimeSeriesBounds.getHeight());
+                sharedData.setVisibleTimeRange(newTimeSeriesBounds);
+            }
+        }
+    };
+
     /** 
      * Computes evenly spaced samples from the two value ranges of the current correlation matrix.
      * @param meanResolution number of samples taken from the value range of the first dimension (correlation mean). Must be at least 2.
@@ -135,6 +170,7 @@ public class CorrelogramController {
     public void resetView(ActionEvent e) {
         correlogram.resetView();
         correlogram.drawContents();
+//        correlogram.setAxesRanges(new Rectangle2D(correlogram.xAxis.getLowerBound(), correlogram.yAxis.getLowerBound(), correlogram.xAxis.getRange(), correlogram.yAxis.getRange()));
         legend.resetView();
         legend.drawContents();
     }

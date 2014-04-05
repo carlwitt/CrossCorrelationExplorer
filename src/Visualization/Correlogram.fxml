@@ -28,9 +28,21 @@
             </ImageView>
           </graphic>
           <tooltip>
-            <Tooltip text="Reset view" />
+            <Tooltip text="Reset correlogram view" />
           </tooltip>
         </Button>
+        <ToggleButton fx:id="linkWithTimeSeriesViewToggle" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" selected="true" text="" translateX="-20.0" translateY="-20.0" StackPane.alignment="BOTTOM_LEFT">
+          <graphic>
+            <ImageView fitHeight="14.0" fitWidth="14.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" smooth="false">
+              <image>
+                <Image url="@../Gui/img/glyphicons_050_link.png" />
+              </image>
+            </ImageView>
+          </graphic>
+          <tooltip>
+            <Tooltip text="Link horizontal zoom and pan with time series view" />
+          </tooltip>
+        </ToggleButton>
       </children>
     </StackPane>
   </children>

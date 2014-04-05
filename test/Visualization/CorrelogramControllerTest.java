@@ -135,13 +135,5 @@ public class CorrelogramControllerTest {
         fail("The test case is a prototype.");
     }
     
-    @Test @Ignore
-    public void testUpdateLegend() {
-        System.out.println("updateLegend");
-        CorrelogramController instance = new CorrelogramController();
-        instance.updateLegend();
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
     
 }
