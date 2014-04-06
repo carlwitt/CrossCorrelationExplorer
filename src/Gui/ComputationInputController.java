@@ -11,6 +11,7 @@ import java.util.Random;
 import java.util.ResourceBundle;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.concurrent.WorkerStateEvent;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -40,11 +41,7 @@ public class ComputationInputController implements Initializable {
     // time series for computation input. set A and set B are cross correlated (in cross-product manner) and the available series is a view on the data model
     ObservableList<TimeSeries> loadedTimeSeries;
     
-    // progress display layer controls (must be set from parent controller, because it blocks the entire input pane)
-    public Pane progressPane;               // container (has a background color and blocks underlying elements)
-    public ProgressBar progressBar;
-    public Label progressLabel;             // status message element (what is happening?)
-    public Button progressCancelButton;
+    ProgressLayer progressLayer;
     
     // -------------------------------------------------------------------------
     // injected control elements
@@ -68,6 +65,7 @@ public class ComputationInputController implements Initializable {
     @FXML private Button loadRandomSetAButton;
     @FXML private Button unloadAllSetAButton;
     @FXML private Button unloadSelectedSetAButton;
+    @FXML private Button unloadSelectedSetBButton;
     
     @FXML private Button runButton;
     
@@ -122,19 +120,13 @@ public class ComputationInputController implements Initializable {
         
     }
     
-    public void loadedListKeyTyped(KeyEvent t) {
-        if(t.getCode() ==  KeyCode.LEFT){
-            loadSelectedSetAButton.fire();
-        } else if(t.getCode() ==  KeyCode.RIGHT){
-            loadSelectedSetBButton.fire();
-        }
-    }
-    
     public void compute(){
     
+        // window size
         int windowSize = Integer.parseInt(windowSizeText.getText());
         windowSizeText.setText(""+windowSize); // to display what was parsed
         
+        // NaN handle strategy
         Toggle selectedNanStrategy = nanStrategy.getSelectedToggle();
         DFT.NA_ACTION naAction = DFT.NA_ACTION.LEAVE_UNCHANGED;
         if(selectedNanStrategy == nanLeaveRadio){
@@ -145,8 +137,42 @@ public class ComputationInputController implements Initializable {
         
         CorrelogramMetadata metadata = new CorrelogramMetadata(sharedData.correlationSetA, sharedData.correlationSetB, windowSize, naAction);
         
-        CorrelationMatrix result = CorrelogramStore.getResult(metadata) ;
-        sharedData.setcorrelationMatrix(result);
+        // get result from cache or execute an asynchronuous compute service
+        CorrelationMatrix result;
+        if(CorrelogramStore.contains(metadata)){
+            result = CorrelogramStore.getResult(metadata);
+            sharedData.setcorrelationMatrix(result);
+        } else {
+            result = new CorrelationMatrix(metadata);
+            final CorrelationMatrix.ComputeService service = result.computeService;
+            
+            // remove partial state if previous computation was cancelled
+            service.reset();
+            
+            // after the computation, put correlation result in the shared data object 
+            service.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
+                @Override public void handle(WorkerStateEvent t) {
+                    progressLayer.hide();
+                    sharedData.setcorrelationMatrix(service.getValue());
+                }
+            });
+            
+            // on cancel: hide the progress layer. wire the cancel button to that action.
+            service.setOnCancelled(new EventHandler<WorkerStateEvent>() {
+                @Override public void handle(WorkerStateEvent t) { progressLayer.hide(); }
+            });
+            progressLayer.cancelButton.setOnAction(new EventHandler<ActionEvent>() {
+                @Override public void handle(ActionEvent t) { service.cancel(); }
+            });
+            
+            // bind progress display elements
+            progressLayer.progressBar.progressProperty().bind(service.progressProperty());
+            progressLayer.messageLabel.textProperty().bind(service.messageProperty());
+        
+            progressLayer.show();
+            
+            service.start();
+        }
         
     }
     
@@ -259,5 +285,27 @@ public class ComputationInputController implements Initializable {
             sourceView.getItems().remove((TimeSeries) item);
         }
     }
+    
+    public void loadedListKeyTyped(KeyEvent t) {
+        if(t.getCode() ==  KeyCode.LEFT){
+            loadSelectedSetAButton.fire();
+        } else if(t.getCode() ==  KeyCode.RIGHT){
+            loadSelectedSetBButton.fire();
+        }
+    }
+    
+    public void setAListKeyTyped(KeyEvent t) {
+        if(t.getCode() ==  KeyCode.RIGHT){
+            unloadSelectedSetAButton.fire();
+        } 
+    }
+    
+    public void setBListKeyTyped(KeyEvent t) {
+        if(t.getCode() ==  KeyCode.LEFT){
+            unloadSelectedSetBButton.fire();
+        } 
+    }
+    
+    
     
 }

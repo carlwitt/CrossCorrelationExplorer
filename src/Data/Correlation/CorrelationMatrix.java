@@ -9,6 +9,8 @@ import com.google.common.base.Joiner;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import javafx.concurrent.Service;
+import javafx.concurrent.Task;
 /**
  * 
  * TODO: clean up methods that have been introduced to fit the JFreeChart interfaces
@@ -24,6 +26,8 @@ public class CorrelationMatrix {
     /** Minimum and maximum correlation mean across all columns of the matrix. */
     Double minMean, maxMean;
     Double minStdDev, maxStdDev;
+    
+    public final ComputeService computeService = new ComputeService();
     
     /**
      * Sets the metadata for a correlation matrix, WITHOUT computing the actual contents (because the data structure is used in different ways).
@@ -99,6 +103,102 @@ public class CorrelationMatrix {
         CorrelogramStore.append(this);
         
 //        System.out.println("Aggregated correlation matrix (constructor):\n"+this);
+    }
+    
+    /** Reusable concurrent execution logic for loading and parsing files with progress reporting.
+     * The service can be used to load and parse the file contents asynchronously (non-UI-blocking) and to display progress.  */
+    public class ComputeService extends Service<CorrelationMatrix> {
+                
+//        CorrelationMatrix input, result;
+//        public ComputeService(CorrelationMatrix input){
+//            this.input = input;
+//        }
+        
+        @Override protected Task<CorrelationMatrix> createTask() {
+            return new Task<CorrelationMatrix>() {
+                
+                @Override protected CorrelationMatrix call() {
+                    
+                    DFT.naAction = metadata.naAction;
+        
+                    // check that all time series have the same length?
+
+                    
+                    // get/compute all the elementary (one-by-one) cross correlations
+                    CorrelationMatrix[] partialResults = new CorrelationMatrix[metadata.setA.size()*metadata.setB.size()];
+                    int freeSlot = 0; // where to put the next partial result in the array
+                    long before = System.currentTimeMillis();
+                    int processedCCs = 0;
+                    for(TimeSeries tsA : metadata.setA){
+                        for (TimeSeries tsB : metadata.setB) {
+                            processedCCs++;
+                            updateMessage(String.format("Retrieving windowed cross correlation between time series %s and %s.",tsA.id,tsB.id));
+                            updateProgress(processedCCs, partialResults.length);
+                            
+                            partialResults[freeSlot++] = CorrelogramStore.getResult(new CorrelogramMetadata(tsA, tsB, metadata.windowSize, metadata.naAction));
+                            if(RuntimeConfiguration.VERBOSE) System.out.println(String.format("%d/%d ",freeSlot,partialResults.length));//,partialResults[freeSlot-1]
+                        }
+                    }
+
+                    if(RuntimeConfiguration.VERBOSE){
+                        System.out.println("Needed time for correlation: "+(System.currentTimeMillis()-before)+" ms");
+                    }
+
+                    before = System.currentTimeMillis();
+
+                    //List<Column> 
+                    List<Column> _columns = new ArrayList<>();
+                    // create the result column by column
+                    for (int windowIdx = 0; windowIdx < partialResults[0].columns.size(); windowIdx++) {
+                        
+                        updateMessage(String.format("Aggregating correlation results in window %s",windowIdx+1));
+                        updateProgress(windowIdx, partialResults[0].columns.size());
+                        
+                        Column window = partialResults[0].columns.get(windowIdx);
+
+                        double[] means = new double[window.mean.length];
+                        double[] stdDevs = new double[window.mean.length];
+
+                        // vertical dimension of the correlogram
+                        for (int timeLag = 0; timeLag < means.length; timeLag++) {
+
+                            // mean computation: iterate over partial results 
+                            double mean = 0;
+                            for (CorrelationMatrix partialResult : partialResults) {
+                                mean += partialResult.columns.get(windowIdx).mean[timeLag];
+                            }
+                            mean /= partialResults.length;
+
+                            // std dev computation: iterate over partial results 
+                            double stdDev = 0;
+                            for (CorrelationMatrix partialResult : partialResults) {
+                                // ∑ (x - µ)^2
+                                stdDev += Math.pow(partialResult.columns.get(windowIdx).mean[timeLag] - mean, 2);
+                            }
+                            // sqrt(1/N * ANS)
+                            stdDev = Math.sqrt(stdDev / partialResults.length);
+
+                            means[timeLag] = mean;
+                            stdDevs[timeLag] = stdDev;
+                        }
+
+                        ComplexSequence windowValues = ComplexSequence.create(means,stdDevs);
+                        _columns.add(new Column(windowValues, window.windowXOffset));
+
+                    }
+                    if(RuntimeConfiguration.VERBOSE){
+                        System.out.println("Needed time for aggregation: "+(System.currentTimeMillis()-before)+" ms");
+                    }
+
+                    CorrelationMatrix.this.columns = _columns;
+                    CorrelogramStore.append(CorrelationMatrix.this);
+
+                    return CorrelationMatrix.this;
+                }
+                
+            };
+            
+        }
     }
     
     public double getMinX(){

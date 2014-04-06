@@ -250,13 +250,17 @@ public class NumberAxis extends Canvas {
      * @return find closest smaller tick mark value to rawValue
      */
     protected double nextLowerTickMarkValue(double rawValue, double tickOrigin, double tickUnit){
+
+        // align raw value to new origin
+        rawValue -= tickOrigin;
+        
         // take "modulo" of the lower bound and the tick unit
         double div = rawValue / tickUnit;
         // use only the fractional part to get the "residual" of the division
         double mod = tickUnit * (div - Math.floor(div)); 
         
         double result = rawValue - mod;
-        return result;
+        return result + tickOrigin;
         // there's nothing like an intrinsic precision: what about 1/3? 
 //        double intrinsicPrecision = Math.ceil(Math.log10(Math.abs(result)));
 //        // round to that precision to get rid of numerical errors that stem from raising to the power of a logarithm

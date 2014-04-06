@@ -49,8 +49,6 @@ public class NumberAxisTest {
     }
 
     @Test public void testSRAlgorithm(){
-        
-        
         assertEquals(200d, instance.tickUnit(5, 99d, 799d),1e-10);
         assertEquals(500d, instance.tickUnit(2, 0d, 1000d), 1e-10);
         assertEquals(0.005, instance.tickUnit(2, 0.01, 0.02), 1e-10);
@@ -59,10 +57,8 @@ public class NumberAxisTest {
     }
 
     @Test public void testNextLowerTickMarkValue(){
-        System.out.println("next lower tick mark value with tick unit 1000");
-        System.out.println(String.format("1001.1 => %s", instance.nextLowerTickMarkValue(1001.1, 0, 1000)));
-        System.out.println("next lower tick mark value with tick unit 5");
-        System.out.println(String.format("250 => %s", instance.nextLowerTickMarkValue(250, 3, 5)));
+        assertEquals(1000, instance.nextLowerTickMarkValue(1001.1, 0, 1000), 1e-10);
+        assertEquals(248, instance.nextLowerTickMarkValue(250, 3, 5), 1e-10);
         
     }
     

@@ -49,10 +49,7 @@ public class FileInputController implements Initializable {
     FileModel fileModel = new FileModel(null, null);
     
     // progress display layer controls (must be set from parent controller, because it blocks the entire input pane)
-    public Pane progressPane;               // container (has a background color and blocks underlying elements)
-    public ProgressBar progressBar;
-    public Label progressLabel;             // status message element (what is happening?)
-    public Button progressCancelButton;
+    ProgressLayer progressLayer;
     
     // -------------------------------------------------------------------------
     // injected control elements
@@ -197,7 +194,7 @@ public class FileInputController implements Initializable {
         
         fileModel.loadFileService.reset();
         
-        progressCancelButton.setOnAction(new EventHandler<ActionEvent>() {
+        progressLayer.cancelButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override public void handle(ActionEvent t) { fileModel.loadFileService.cancel(); }
         });
         
@@ -208,9 +205,6 @@ public class FileInputController implements Initializable {
                 sharedData.correlationSetB.clear();
                 CorrelogramStore.clear();
                 
-                // TODO: should be encapsulated in a separate class that can be used to control the UI
-                progressPane.setVisible(false);
-                progressCancelButton.setDisable(false);
                 availableTimeSeries.clear();
                 sharedData.dataModel.timeSeries.clear();
                 
@@ -226,33 +220,33 @@ public class FileInputController implements Initializable {
                 sharedData.correlationSetA.add(sharedData.dataModel.get(1));
                 sharedData.correlationSetB.add(sharedData.dataModel.get(2));
                 sharedData.correlationSetB.add(sharedData.dataModel.get(3));
+                // /TODO
+                
+                progressLayer.hide();
             }
         });
         
         fileModel.loadFileService.setOnCancelled(new EventHandler<WorkerStateEvent>() {
-            @Override
-            public void handle(WorkerStateEvent t) {
-                progressPane.setVisible(false);
-                progressCancelButton.setDisable(false);
+            @Override public void handle(WorkerStateEvent t) {
+                progressLayer.hide();
                 // at this point, no change to the data model should have been made
             }
         });
         fileModel.loadFileService.setOnFailed(new EventHandler<WorkerStateEvent>() {
             @Override
             public void handle(WorkerStateEvent t) {
-                progressPane.setVisible(false);
-                progressCancelButton.setDisable(false);
+                progressLayer.hide();
 
                 sharedData.dataModel.clear();
                 availableTimeSeries.clear();
             }
         });
         
-        progressPane.setVisible(true);
-//        progressCancelButton.setDisable(true);
+        progressLayer.show();
         
-        progressBar.progressProperty().bind(fileModel.loadFileService.progressProperty());
-        progressLabel.textProperty().bind(fileModel.loadFileService.messageProperty());
+        progressLayer.progressBar.progressProperty().bind(fileModel.loadFileService.progressProperty());
+        progressLayer.messageLabel.textProperty().bind(fileModel.loadFileService.messageProperty());
+        
         fileModel.loadFileService.start();
         
     }

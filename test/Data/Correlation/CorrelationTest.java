@@ -7,9 +7,9 @@ package Data.Correlation;
 import Data.ComplexSequence;
 import Data.Correlation.CorrelationMatrix.Column;
 import Data.TimeSeries;
-import java.util.Arrays;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 /**
  *
@@ -24,19 +24,25 @@ public class CorrelationTest extends DFTTest {
         
         // input
         TimeSeries f = new TimeSeries(new double[]{ 2, 3,-1, 1, 0, 0, 0});
+        f.id = 1;
         TimeSeries g = new TimeSeries(new double[]{ 0, 0, 0, 1, 4, 2,-1});
+        g.id = 2;
         
         // output
         TimeSeries initialF = new TimeSeries(new double[]{ 2, 3,-1, 1, 0, 0, 0});
+        initialF.id = 1;
         TimeSeries initialG = new TimeSeries(new double[]{ 0, 0, 0, 1, 4, 2,-1});
+        initialG.id = 2;
         TimeSeries expected = new TimeSeries(new double[]{1,3,1,11,15,1,-2});
         TimeSeries resultBrute = DFT.bruteForceCrossCorrelation(f,g);
-
+        
+        resultBrute.id = expected.id;
 //        System.out.println("DFT result:\n"+DFT.crossCorrelation(f, g, 7));
 //        System.out.println("BRUTE result:\n"+resultBrute);
         
         // check results are correct
-        assertEquals(resultBrute,expected);
+        assertEquals(expected, resultBrute);
+        
         // check initial data is not altered
         assertEquals(initialF, f);
         assertEquals(initialG, g);

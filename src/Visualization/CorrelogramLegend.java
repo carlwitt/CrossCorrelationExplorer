@@ -117,7 +117,7 @@ public class CorrelogramLegend extends CanvasChart {
         double xMin = m.getMeanMinValue();
         double xMax = Math.max(xMin+1, m.getMeanMaxValue());        // in case max = min, display shouldn't shrink to zero
         xAxis.setTickOrigin(m.getMeanMinValue());
-        xAxis.setTickUnit((xMax-xMin)/(m.getResultItems().size()-1));
+        xAxis.setTickUnit((xMax-xMin)/(m.getResultItems().size()-1)); // one less interval than ticks
         
         double yMin = m.getStdDevMinValue();
         double yMax = Math.max(yMin+1, m.getStdDevMaxValue());      // in case max = min, display shouldn't shrink to zero

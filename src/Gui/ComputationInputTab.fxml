@@ -111,24 +111,22 @@
         <Insets bottom="5.0" />
       </padding>
     </VBox>
-    <BorderPane prefHeight="103.0" prefWidth="180.0" GridPane.columnIndex="5" GridPane.rowIndex="1">
+    <BorderPane prefHeight="103.0" prefWidth="180.0" GridPane.columnIndex="6" GridPane.rowIndex="1">
       <bottom>
         <Button id="openFileButton" fx:id="runButton" alignment="BOTTOM_CENTER" defaultButton="true" disable="false" font="$x2" mnemonicParsing="false" onAction="#compute" prefHeight="18.0" prefWidth="130.0" text="Run" textAlignment="LEFT" wrapText="false" BorderPane.alignment="CENTER" />
       </bottom>
       <center>
-        <VBox alignment="TOP_LEFT" prefHeight="80.0" prefWidth="341.0" spacing="5.0">
+        <VBox alignment="TOP_LEFT" prefHeight="80.0" prefWidth="341.0" spacing="10.0" BorderPane.alignment="TOP_LEFT">
           <children>
-            <RadioButton id="fixedWidthSeparatorRadio" fx:id="nanSetToZeroRadio" alignment="TOP_LEFT" contentDisplay="RIGHT" font="$x2" graphicTextGap="8.0" mnemonicParsing="false" prefWidth="-1.0" selected="true" text="Set to Zero">
+            <RadioButton id="fixedWidthSeparatorRadio" fx:id="nanSetToZeroRadio" alignment="TOP_LEFT" contentDisplay="RIGHT" graphicTextGap="8.0" mnemonicParsing="false" prefWidth="-1.0" selected="true" text="Set to Zero">
+              <font>
+                <Font size="13.0" fx:id="x3" />
+              </font>
               <toggleGroup>
                 <ToggleGroup fx:id="nanStrategy" />
               </toggleGroup>
             </RadioButton>
-            <RadioButton id="characterSeparatorRadio" fx:id="nanLeaveRadio" alignment="TOP_LEFT" contentDisplay="RIGHT" font="$x2" graphicTextGap="20.0" mnemonicParsing="false" prefWidth="-1.0" selected="false" text="Leave" toggleGroup="$nanStrategy" underline="false" />
-            <Label contentDisplay="RIGHT" text="Correlation Window Size" wrapText="true">
-              <graphic>
-                <TextField fx:id="windowSizeText" alignment="TOP_RIGHT" prefWidth="45.0" text="20" />
-              </graphic>
-            </Label>
+            <RadioButton id="characterSeparatorRadio" fx:id="nanLeaveRadio" alignment="TOP_LEFT" contentDisplay="RIGHT" font="$x3" graphicTextGap="20.0" mnemonicParsing="false" prefWidth="-1.0" selected="false" text="Leave" toggleGroup="$nanStrategy" underline="false" />
           </children>
           <padding>
             <Insets top="5.0" />
@@ -139,7 +137,39 @@
         <Insets bottom="5.0" left="5.0" right="5.0" />
       </padding>
     </BorderPane>
-    <Label alignment="CENTER" prefWidth="544.0" text="Handle NaN Values" GridPane.columnIndex="5" GridPane.rowIndex="0" />
+    <Label alignment="CENTER_LEFT" prefWidth="544.0" text="Handle NaN Values" GridPane.columnIndex="6" GridPane.rowIndex="0" />
+    <Label alignment="CENTER_LEFT" prefWidth="544.0" text="Limits" GridPane.columnIndex="5" GridPane.rowIndex="0" />
+    <GridPane GridPane.columnIndex="5" GridPane.rowIndex="1">
+      <children>
+        <Label contentDisplay="RIGHT" text="Time lag min" wrapText="true" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="0">
+          <tooltip>
+            <Tooltip text="Defines the lower limit of the time lag range to compute in each window." />
+          </tooltip>
+        </Label>
+        <TextField id="windowSizeText" fx:id="timeLagMinText" alignment="TOP_RIGHT" prefWidth="45.0" text="-10" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+        <TextField id="windowSizeText" fx:id="timeLagMaxText" alignment="TOP_RIGHT" prefWidth="45.0" text="10" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+        <Label contentDisplay="RIGHT" text="max" wrapText="true" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="1">
+          <tooltip>
+            <Tooltip text="Defines the upper limit of the time lag range to compute in each window." />
+          </tooltip>
+        </Label>
+        <Label contentDisplay="RIGHT" text="Window size" wrapText="true" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="2">
+          <tooltip>
+            <Tooltip text="Defines the size of the windows in which the time series are shifted and cross correlated." />
+          </tooltip>
+        </Label>
+        <TextField fx:id="windowSizeText" alignment="TOP_RIGHT" prefWidth="45.0" text="20" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+      </children>
+      <columnConstraints>
+        <ColumnConstraints hgrow="SOMETIMES" maxWidth="118.0" minWidth="10.0" prefWidth="89.0" />
+        <ColumnConstraints hgrow="SOMETIMES" maxWidth="73.0" minWidth="10.0" prefWidth="61.0" />
+      </columnConstraints>
+      <rowConstraints>
+        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+      </rowConstraints>
+    </GridPane>
   </children>
   <columnConstraints>
     <ColumnConstraints fillWidth="true" hgrow="ALWAYS" maxWidth="1.7976931348623157E308" minWidth="100.0" prefWidth="-1.0" />
@@ -147,6 +177,7 @@
     <ColumnConstraints hgrow="ALWAYS" maxWidth="1.7976931348623157E308" minWidth="100.0" prefWidth="-1.0" />
     <ColumnConstraints hgrow="ALWAYS" maxWidth="101.0" minWidth="100.0" prefWidth="63.0" />
     <ColumnConstraints hgrow="ALWAYS" maxWidth="1.7976931348623157E308" minWidth="100.0" prefWidth="-1.0" />
+    <ColumnConstraints maxWidth="543.0" minWidth="150.0" prefWidth="200.0" />
     <ColumnConstraints maxWidth="543.0" minWidth="150.0" prefWidth="200.0" />
   </columnConstraints>
   <rowConstraints>

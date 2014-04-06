@@ -36,6 +36,9 @@ public class MainWindowController implements Initializable {
     @FXML private TimeSeriesViewController timeSeriesViewController;
     @FXML private ComputationInputController computationInputController;
     @FXML private CorrelogramController correlationViewController;
+    
+    
+    protected ProgressLayer progressLayer;
     /**
      * Called after the controls have been parsed from the XML. Sets up logic and components that could not be set up using the GUI builder.
      */
@@ -44,10 +47,14 @@ public class MainWindowController implements Initializable {
         
         sharedData = new SharedData();
         
-        fileInputController.progressPane = progressPane;
-        fileInputController.progressBar = progressBar;
-        fileInputController.progressLabel = progressLabel;
-        fileInputController.progressCancelButton = progressCancelButton;
+        progressLayer = new ProgressLayer();
+        progressLayer.overlay = progressPane;
+        progressLayer.progressBar = progressBar;
+        progressLayer.messageLabel = progressLabel;
+        progressLayer.cancelButton = progressCancelButton;
+        
+        fileInputController.progressLayer = progressLayer;
+        computationInputController.progressLayer = progressLayer;
         
         fileInputController.setSharedData(sharedData);
         timeSeriesViewController.setSharedData(sharedData);
@@ -71,8 +78,9 @@ public class MainWindowController implements Initializable {
 //            }
 //        });
 //        fileInputController.fileModel.setFilename("/Users/macbookdata/inputDataExcerpt.txt");
-        fileInputController.fileModel.setFilename("/Users/macbookdata/lianhua_realisations.txt");
-//        fileInputController.fileModel.setFilename("/Users/macbookdata/inputDataSimple.txt");
+//        fileInputController.fileModel.setFilename("/Users/macbookdata/lianhua_realisations.txt");
+//        fileInputController.fileModel.setFilename("/Users/macbookdata/dongge_realisations.txt");
+        fileInputController.fileModel.setFilename("/Users/macbookdata/inputDataSimple.txt");
         fileInputController.loadButton.fire();
 
         // Todo: remove test support

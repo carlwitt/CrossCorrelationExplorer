@@ -6,6 +6,8 @@ import Data.TimeSeries;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.ObservableList;
@@ -15,6 +17,7 @@ import javafx.geometry.Rectangle2D;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import javafx.scene.transform.Affine;
+import javafx.scene.transform.NonInvertibleTransformException;
 import javafx.scene.transform.Translate;
 
 /**
@@ -57,30 +60,65 @@ public class TimeSeriesChart extends CanvasChart {
         // compute affine transform that maps data coordinates to screen coordinates
         Affine dataToScreen = dataToScreen();
         
+        
+        // for displaying NaN values, draw a red 10x10px circle
+        Color nanValueColor = Color.RED;
+        Point2D tenTimesTenPixels;
+//        try {
+//            tenTimesTenPixels = dataToScreen.inverseTransform(10,0);
+//        } catch (NonInvertibleTransformException ex) {
+            tenTimesTenPixels = new Point2D(1, 1);
+//        }
+        
         // simple complexity reduction: display only every n-th point
         final int step = Math.max(1, getDrawEachNthDataPoint());
 
         Random randomColors = new Random(0);
-//System.out.println("draw: "+seriesSets.entrySet());
         for (Map.Entry<Color, ObservableList<TimeSeries>> coloredSet : seriesSets.entrySet()) {
-//System.out.println("has: "+coloredSet.getValue().size());
-            // different color for each series (but always the same for each series)
-//            gc.setStroke(new Color(randomColors.nextDouble(), randomColors.nextDouble(), randomColors.nextDouble(), 0.6));
+            // slightly different stroke width for each set
             gc.setStroke(coloredSet.getKey());
             gc.setLineWidth(randomColors.nextDouble()+1);
             
-//System.out.println(String.format("Drawing each %s datapoint", step));
             for (TimeSeries ts : coloredSet.getValue()) {
-//System.out.println(String.format("ts: %s in datamodel: %s", ts, sharedData.dataModel.containsValue(ts)));
                 
-                if( ! sharedData.dataModel.containsValue(ts))
-                    continue;
+//                if( ! sharedData.dataModel.containsValue(ts))
+//                    continue;
+                
                 ComplexSequence data = ts.getDataItems();
                 Point2D nextPoint, lastPoint = dataToScreen.transform(new Point2D(data.re[0], data.im[0]));
-                // TODO: render only visible points
+                
+//                boolean lastPointHasNaN = false, nextPointHasNaN = false;
+//                // fix and mark first point if it contains NaN components
+//                if(Double.isNaN(lastPoint.getX()) || Double.isNaN(lastPoint.getY())){
+//                    lastPointHasNaN = true;
+//                    if(Double.isNaN(lastPoint.getX())) lastPoint = new Point2D(0, data.im[0]);
+//                    if(Double.isNaN(lastPoint.getY())) lastPoint = new Point2D(lastPoint.getX(), 0);
+//                    lastPoint = dataToScreen.transform(lastPoint);
+//                    gc.save(); gc.setStroke(Color.YELLOW); 
+//                    gc.strokeOval(lastPoint.getX()-tenTimesTenPixels.getX()/2, chartCanvas.getHeight()-tenTimesTenPixels.getY()/2, tenTimesTenPixels.getX(), tenTimesTenPixels.getY());
+//                    gc.restore();
+//                }
+                
                 for (int i = 1 * step; i < data.re.length; i += step) {
+                    
                     nextPoint = dataToScreen.transform(new Point2D(data.re[i], data.im[i]));
-                    gc.strokeLine(lastPoint.getX(), lastPoint.getY(), nextPoint.getX(), nextPoint.getY());
+                    
+//                    if(Double.isNaN(nextPoint.getX()) || Double.isNaN(nextPoint.getY())){
+//                        nextPointHasNaN = true;
+//                        if(Double.isNaN(nextPoint.getX())) nextPoint = new Point2D(0, data.im[i]);
+//                        if(Double.isNaN(nextPoint.getY())) nextPoint = new Point2D(nextPoint.getX(), 0);
+//                        nextPoint = dataToScreen.transform(nextPoint);
+//                        // draw a red circle around the placeholder location
+//                        gc.save(); gc.setStroke(nanValueColor); 
+//                        gc.strokeOval(nextPoint.getX()-tenTimesTenPixels.getX()/2, chartCanvas.getHeight()-tenTimesTenPixels.getY()/2, tenTimesTenPixels.getX(), tenTimesTenPixels.getY());
+//                        gc.restore();
+//                    } else {
+//                        nextPointHasNaN = false;
+//                        if(! lastPointHasNaN)
+                            gc.strokeLine(lastPoint.getX(), lastPoint.getY(), nextPoint.getX(), nextPoint.getY());
+//                    }
+                    
+//                    lastPointHasNaN = nextPointHasNaN;
                     lastPoint = nextPoint;
                 }
             }

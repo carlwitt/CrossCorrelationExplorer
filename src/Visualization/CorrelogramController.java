@@ -16,8 +16,8 @@ import javafx.scene.layout.VBox;
 import javafx.util.converter.NumberStringConverter;
 
 /**
- * Controller for the correlogram view. Listens to changes in the correlation matrix that is stored in the shared data between the views.
- * Renders the correlation matrix and the legend.
+ * Controller for the correlogram view. Manages the correlation matrix and the legend.
+ * Listens to changes in the correlation matrix that is stored in the shared data between the views.
  * @author Carl Witt
  */
 public class CorrelogramController {
@@ -26,14 +26,14 @@ public class CorrelogramController {
     SharedData sharedData;          
 
     /** The number of colors used to encode the mean dimension in the correlation matrix. */
-    private final int meanColorResolution = 12;
+    private final int meanColorResolution = 13;
     /** The number of colors used to encode the standard deviation dimension in the correlation matrix. */
     private final int standardDeviationColorResolution = 4;
     
     protected MultiDimensionalPaintScale paintScale;
     
     protected Correlogram correlogram = new Correlogram(new MultiDimensionalPaintScale(1200, 400));
-    protected CorrelogramLegend legend = new CorrelogramLegend(new MultiDimensionalPaintScale(meanColorResolution, standardDeviationColorResolution));;
+    protected CorrelogramLegend legend = new CorrelogramLegend(new MultiDimensionalPaintScale(1200, 400));
     
     @FXML VBox correlogramView;
     @FXML StackPane correlogramPane;

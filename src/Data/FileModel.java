@@ -96,7 +96,7 @@ public class FileModel extends Observable{
             return new Task<Void>() {
                 
                 private FileModel fail(String message){
-                    System.err.println("message");
+                    System.err.println(message);
                     this.updateMessage(message);
                     return null;
                 }

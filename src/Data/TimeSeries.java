@@ -10,7 +10,7 @@ import javax.validation.constraints.NotNull;
 public class TimeSeries implements Comparable<TimeSeries>{
 
     /** One based unique number to access this time series in the data model {@link DataModel}. */
-    public final int id;
+    public int id;
 
     /** The coordinates of the points of the time series. 
      * X values are represented as real parts of complex numbers and Y values are represented as imaginary parts of complex numbers. */
@@ -24,7 +24,6 @@ public class TimeSeries implements Comparable<TimeSeries>{
      */
     public TimeSeries(@NotNull ComplexSequence values){
         this.id = nextId--;
-//        this.id = ++createdInstances;
         this.values = values;
     }
     public TimeSeries(int id, @NotNull double[] xValues, @NotNull double[] yValues){
@@ -38,7 +37,7 @@ public class TimeSeries implements Comparable<TimeSeries>{
      * @param d The sequence of function values
      */
     public TimeSeries(double[] d) {
-        this.id = -1;
+        this.id = nextId--;
         this.values = ComplexSequence.create(new double[d.length], d);
     }
 

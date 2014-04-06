@@ -10,7 +10,6 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.layout.AnchorPane;
@@ -67,7 +66,8 @@ public class TimeSeriesViewController {
         
         ListChangeListener<TimeSeries> drawContentListener = new ListChangeListener<TimeSeries>() {
             @Override public void onChanged(ListChangeListener.Change<? extends TimeSeries> change) {
-                resetView(null);
+                if(timeSeriesChart.getAxesRanges() == null) timeSeriesChart.resetView();
+                timeSeriesChart.drawContents();
             }
         };
         sharedData.previewTimeSeries.addListener(drawContentListener);
