@@ -4,18 +4,15 @@
  */
 package Data.Correlation;
 
-import Data.Correlation.CorrelogramMetadata;
-import Data.Correlation.CorrelationMatrix;
 import Data.DataModel;
 import Data.TimeSeries;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.Executors;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Test;
 
 /**
  *
@@ -34,11 +31,36 @@ public class CorrelationMatrixTest {
         CorrelogramStore.clear();
     }
     
+    @Test public void testSplitLagEven() {
+        // time lags 0 ... 5 should be split rendered -2, -1, ..., 3
+        int[] timeLags = new int[]{0, 1, 2, 3, 4, 5};
+        int[] renderAs = new int[]{0, 1, 2, 3, -2, -1};
+        
+        for (int i = 0; i < timeLags.length; i++) {
+            assertEquals(renderAs[i], CorrelationMatrix.splitLag(timeLags[i], timeLags.length)); 
+        }
+        
+        assertEquals(-2, CorrelationMatrix.minLag(6));
+        assertEquals(3, CorrelationMatrix.maxLag(6));
+    }
+
+    @Test public void testSplitLagOdd() {
+        // time lags 0 ... 5 should be split rendered -2, -1, ..., 3
+        int[] timeLags = new int[]{0, 1, 2, 3, 4, 5, 6};
+        int[] renderAs = new int[]{0, 1, 2, 3, -3, -2, -1};
+        
+        for (int i = 0; i < timeLags.length; i++) {
+            assertEquals(renderAs[i], CorrelationMatrix.splitLag(timeLags[i], timeLags.length)); 
+        }
+        
+        assertEquals(-3, CorrelationMatrix.minLag(7));
+        assertEquals(3, CorrelationMatrix.maxLag(7));
+    }
+    
     /**
      * Test of aggregation constructor, i.e. the computation of mean and standard deviation.
      */
-    @Test
-    public void testAggregateConstructor() {
+    @Test public void testAggregateConstructor() {
         System.out.println("aggregateConstructor");
         
         TimeSeries ts1 = new TimeSeries(1, new double[]{0,1,2}, new double[]{0,1,2});

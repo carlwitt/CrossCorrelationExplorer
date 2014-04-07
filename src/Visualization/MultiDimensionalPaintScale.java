@@ -16,8 +16,8 @@ import javafx.scene.paint.Paint;
 public class MultiDimensionalPaintScale 
 {
     
-    /** The two colors that define the range between which colors are interpolated.<br/>
-     * If the palette is bipolar, the interpolation will be primary color ... white ... secondary color.<br/>
+    /** The two colors that define the range between which colors are interpolated.<br>
+     * If the palette is bipolar, the interpolation will be primary color ... white ... secondary color.<br>
      * If the palette is not bipolar, the interpolation will be primary color ... white */
     protected Color primaryColor = Color.BLUE, secondaryColor = Color.RED;
 

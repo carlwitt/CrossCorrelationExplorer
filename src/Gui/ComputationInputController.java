@@ -6,6 +6,7 @@ import Data.Correlation.CorrelogramMetadata;
 import Data.Correlation.CorrelogramStore;
 import Data.Correlation.DFT;
 import java.net.URL;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.ResourceBundle;
@@ -16,11 +17,12 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Point2D;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Pane;
+import javafx.util.StringConverter;
 import org.controlsfx.dialog.Dialogs;
 
 /**
@@ -57,6 +59,8 @@ public class ComputationInputController implements Initializable {
     @FXML private RadioButton nanLeaveRadio;
     
     @FXML private TextField windowSizeText;
+    @FXML private TextField timeLagMinText;
+    @FXML private TextField timeLagMaxText;
     
     // list control buttons
     @FXML private Button loadAllSetAButton;
@@ -76,13 +80,39 @@ public class ComputationInputController implements Initializable {
     public void setSharedData(final SharedData sharedData){
         
         this.sharedData = sharedData;
+        
+        // bind loaded series and correlation input sets
         loadedTimeSeries = sharedData.dataModel.getObservableLoadedSeries();
         loadedList.setItems(loadedTimeSeries);
         setAList.setItems(sharedData.correlationSetA);
         setBList.setItems(sharedData.correlationSetB);
+        
+        // push selected time series to be rendered as preview
         loadedList.getSelectionModel().getSelectedItems().addListener(new ListChangeListener<TimeSeries>() {
             @Override public void onChanged(ListChangeListener.Change<? extends TimeSeries> change) {
                 sharedData.previewTimeSeries.setAll(loadedList.getSelectionModel().getSelectedItems());
+            }
+        });
+        
+        // bind min/max time lag input 
+        timeLagMinText.textProperty().bindBidirectional(sharedData.timeLagBoundsProperty(), new StringConverter<Point2D>() {
+            @Override public String toString(Point2D t) {
+                return "" + t.getX();
+            }
+            @Override public Point2D fromString(String string) {
+                Point2D currentBounds = sharedData.getTimeLagBounds();
+                try{ return new Point2D(Double.parseDouble(string), currentBounds.getY()); }
+                catch(NumberFormatException e) { return currentBounds; }
+            }
+        });
+        timeLagMaxText.textProperty().bindBidirectional(sharedData.timeLagBoundsProperty(), new StringConverter<Point2D>() {
+            @Override public String toString(Point2D t) {
+                return "" + t.getY();
+            }
+            @Override public Point2D fromString(String string) {
+                Point2D currentBounds = sharedData.getTimeLagBounds();
+                try{ return new Point2D(currentBounds.getX(), Double.parseDouble(string)); }
+                catch(NumberFormatException e) { return currentBounds; }
             }
         });
         
@@ -94,6 +124,8 @@ public class ComputationInputController implements Initializable {
         };
         sharedData.correlationSetA.addListener(checkNonEmpty);
         sharedData.correlationSetB.addListener(checkNonEmpty);
+        
+        
     }
     /**
      * Initializes the controller class.
@@ -162,7 +194,7 @@ public class ComputationInputController implements Initializable {
                 @Override public void handle(WorkerStateEvent t) { progressLayer.hide(); }
             });
             progressLayer.cancelButton.setOnAction(new EventHandler<ActionEvent>() {
-                @Override public void handle(ActionEvent t) { service.cancel(); }
+                @Override public void handle(ActionEvent t) { System.err.println(String.format("cancel computation! success: %s",service.cancel())); progressLayer.hide(); }
             });
             
             // bind progress display elements

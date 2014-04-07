@@ -23,7 +23,7 @@ import org.junit.Ignore;
 
 /**
  *
- * @author macbookdata
+ * @author Carl Witt
  */
 public class CorrelogramControllerTest {
     

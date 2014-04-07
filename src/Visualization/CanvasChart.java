@@ -142,9 +142,9 @@ public abstract class CanvasChart extends AnchorPane {
                 double offsetX = xAxis.fromScreen(dragStartMousePositionSC.getX()) - xAxis.fromScreen(t.getX()),
                        offsetY = yAxis.fromScreen(dragStartMousePositionSC.getY()) - yAxis.fromScreen(t.getY());
                 
-                if(t.getSource() == xAxis || t.isShiftDown()){
+                if(t.getSource() == xAxis || t.isAltDown()){
                     offsetY = 0;
-                } else if(t.getSource() == yAxis || t.isAltDown()){
+                } else if(t.getSource() == yAxis || t.isShiftDown()){
                     offsetX = 0;
                 }
                 
@@ -179,9 +179,9 @@ public abstract class CanvasChart extends AnchorPane {
                 double zoomFactorX = 1 - scrollAmount;
                 double zoomFactorY = 1 - scrollAmount;
                 
-                if(t.getSource() == xAxis || t.isShiftDown()){
+                if(t.getSource() == xAxis || t.isAltDown()){
                     zoomFactorY = 1;
-                } else if(t.getSource() == yAxis || t.isAltDown()){
+                } else if(t.getSource() == yAxis || t.isShiftDown()){
                     zoomFactorX = 1;
                 }
                 

@@ -1,6 +1,7 @@
 package Global;
 
 import Visualization.Correlogram;
+import Visualization.MultiDimensionalPaintScale;
 import Visualization.NumberAxis;
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -24,11 +25,11 @@ import javafx.scene.transform.Scale;
 /**
  * FXML Controller class
  *
- * @author macbookdata
+ * @author Carl Witt
  */
 public class ChartTestController implements Initializable {
     
-    Correlogram c = new Correlogram();
+    Correlogram c = new Correlogram(new MultiDimensionalPaintScale(13, 4));
             
     @FXML private AnchorPane rootPane;
     @FXML private AnchorPane canvasPane;

@@ -3,9 +3,11 @@ package Data;
 import Data.Correlation.CorrelationMatrix;
 import java.util.Observable;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 
 /**
@@ -23,6 +25,12 @@ public class SharedData extends Observable {
     
     /** time series for which a preview shall be rendered (e.g. selected in the loaded series list) */
     public ObservableList<TimeSeries> previewTimeSeries = FXCollections.observableArrayList();
+    
+    /** Represents the current min/max time lag. The minimum is stored in getX() the maximum is stored in getY() */
+    private final ObjectProperty<Point2D> timeLagBounds = new ReadOnlyObjectWrapper<>(new Point2D(-10,10));
+    public Point2D getTimeLagBounds() { return timeLagBounds.get(); }
+    public void setTimeLagBounds(Point2D value) { timeLagBounds.set(value); }
+    public ObjectProperty timeLagBoundsProperty() { return timeLagBounds; }
     
     /** The cross correlation result. It can be listened to a change in the result. */
     private final ObjectProperty<CorrelationMatrix> correlationMatrix  = new SimpleObjectProperty<>();

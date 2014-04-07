@@ -5,10 +5,6 @@ import java.util.Arrays;
 
 public class Datatype {
 
-	/**
-	 * @param args
-	 */
-
 	//! Enum that contains the available color types.
 	public static enum ColorType  {
 		RGBA,   /*!< Enum value representing the RGB color type incl. the Alpha value. */

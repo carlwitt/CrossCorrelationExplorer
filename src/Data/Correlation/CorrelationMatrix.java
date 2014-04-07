@@ -52,7 +52,7 @@ public class CorrelationMatrix {
         for(TimeSeries tsA : metadata.setA){
             for (TimeSeries tsB : metadata.setB) {
                 partialResults[freeSlot++] = CorrelogramStore.getResult(new CorrelogramMetadata(tsA, tsB, metadata.windowSize, metadata.naAction));
-                if(RuntimeConfiguration.VERBOSE) System.out.println(String.format("%d/%d ",freeSlot,partialResults.length));//,partialResults[freeSlot-1]
+//if(RuntimeConfiguration.VERBOSE) System.out.println(String.format("%d/%d ",freeSlot,partialResults.length));//,partialResults[freeSlot-1]
             }
         }
         
@@ -136,7 +136,7 @@ public class CorrelationMatrix {
                             updateProgress(processedCCs, partialResults.length);
                             
                             partialResults[freeSlot++] = CorrelogramStore.getResult(new CorrelogramMetadata(tsA, tsB, metadata.windowSize, metadata.naAction));
-                            if(RuntimeConfiguration.VERBOSE) System.out.println(String.format("%d/%d ",freeSlot,partialResults.length));//,partialResults[freeSlot-1]
+//if(RuntimeConfiguration.VERBOSE) System.out.println(String.format("%d/%d ",freeSlot,partialResults.length));//,partialResults[freeSlot-1]
                         }
                     }
 
@@ -196,6 +196,11 @@ public class CorrelationMatrix {
                     return CorrelationMatrix.this;
                 }
                 
+                @Override protected void cancelled() {
+                    super.cancelled();
+                    System.out.println("correlation computation aborted.");
+                }
+                
             };
             
         }
@@ -234,18 +239,23 @@ public class CorrelationMatrix {
     
     /**
      * Interprets the last half of the possible time lags as negative lags.
-     * A time series of length 6 can be aligned in six positions.
+     * A time series of length 6 can be shifted by six different time lags.
      * lag    0  1  2  3  4  5
      * split  0  1  2  3 -2 -1
      * So the largest time lag is equivalent to time lag -1, second last equals -2, etc.
      * @param timeLag a time lag in range [0..N-1] 
-     * @return a time lag in range [-floor(N/2)..ceil(N/2)]
+     * @param numElements the length of the column
+     * @return a time lag in range [-floor(N/2)..ceil((N-1)/2)]
      */
-    public int splitLag(int timeLag){
-        int N = getItemCount(0);
-        int realLags = N - 1;       // lags with tau != 0
-        int positiveLags = (int) Math.ceil(realLags/2.);
-        return timeLag <= positiveLags ? timeLag : -N + timeLag;
+    public static int splitLag(int timeLag, int numElements){
+        int splitPoint = (int) Math.ceil(0.5 * (numElements-1));
+        return timeLag > splitPoint ? timeLag - numElements : timeLag;
+    }
+    public static int minLag(int numElements){
+        return (int) -Math.floor(0.5 * (numElements-1));
+    }
+    public static int maxLag(int numElements){
+        return (int) Math.floor(0.5 * numElements);
     }
     
     /** @return the smallest lag (given that the last half of the lags is displayed as negative lags). */
@@ -255,15 +265,15 @@ public class CorrelationMatrix {
     //        int positiveLags = (int) Math.ceil(realLags/2.);
     //        int negativeLags = realLags - positiveLags;
     //        return -negativeLags;
-            return 0;
+            int N = columns.get(0).mean.length;
+            return minLag(N);
+//            return 0;
         }
         /** @return the largest lag (given that the last half of the lags is displayed as negative lags). */
         public int getMaxY(){
-            // lags with tau != 0
-    //        int realLags = getItemCount(0) - 1;
-    //        int positiveLags = (int) Math.ceil(realLags/2.);
-    //        return positiveLags;
-            return columns.get(0).mean.length;
+            int N = columns.get(0).mean.length;
+            return maxLag(N);
+//            return columns.get(0).mean.length;
         }    
     
     public int getItemCount(int window) {

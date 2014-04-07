@@ -201,10 +201,10 @@ public class FileInputController implements Initializable {
         fileModel.loadFileService.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
             @Override public void handle(WorkerStateEvent t) {
                 
+                // clear existing data
                 sharedData.correlationSetA.clear();
                 sharedData.correlationSetB.clear();
                 CorrelogramStore.clear();
-                
                 availableTimeSeries.clear();
                 sharedData.dataModel.timeSeries.clear();
                 

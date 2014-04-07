@@ -14,7 +14,7 @@ import javax.validation.constraints.NotNull;
  */
 public class DFT {
     
-    /** Two time series with length < BRUTEFORCE_LENGTH will be cross correlated using the brute force algorithm. */
+    /** Two time series with length &lt; BRUTEFORCE_LENGTH will be cross correlated using the brute force algorithm. */
     public static int CC_BRUTEFORCE_LENGTH = 0;
 
     /** Behaviors to deal with not available (NA) values in the data. 

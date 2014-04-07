@@ -22,7 +22,6 @@ import javafx.util.converter.NumberStringConverter;
  * Everything is shown by drawing on the canvas that the objects extend.
  * 
  * Ticks are conceived as an infinite set of data coordinate values where tick marks should be placed.
- * {@link NumberAxis#getTickMarks} returns those marks that are within the current range of the axis.
  * The set is defined by an origin O and a tick unit U such that tick = { O + kU | k in N }.
  * See {@link NumberAxis#tickOrigin} and {@link NumberAxis#tickUnit}.
  * When the auto tick strategy is used, the S/R algorithms generates the tick units and zero is always used as origin.
@@ -245,7 +244,7 @@ public class NumberAxis extends Canvas {
     
     /**
      * @param rawValue an arbitrary value on the axis
-     * @param tickOrigin TODO: is currently ignored but should be considered when having other offsets than 0 (e.g. tick unit = 5, tick origin = 1 => 1,6,11)
+     * @param tickOrigin TODO: is currently ignored but should be considered when having other offsets than 0 (e.g. tick unit = 5, tick origin = 1 =&gt; 1,6,11)
      * @param tickUnit tick mark values are multiples of this value
      * @return find closest smaller tick mark value to rawValue
      */

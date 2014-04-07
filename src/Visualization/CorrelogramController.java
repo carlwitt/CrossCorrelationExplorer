@@ -8,6 +8,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.Tooltip;
@@ -104,6 +105,15 @@ public class CorrelogramController {
             }
         });
         
+        // listen to changes in the min/max time lag
+        sharedData.timeLagBoundsProperty().addListener(new ChangeListener() {
+            @Override public void changed(ObservableValue ov, Object t, Object t1) {
+                Rectangle2D currentRanges = correlogram.getAxesRanges();
+                Point2D newTimeLagBounds = (Point2D) t1;
+                correlogram.setAxesRanges(new Rectangle2D(currentRanges.getMinX(), newTimeLagBounds.getX(), currentRanges.getHeight(), newTimeLagBounds.getY()));
+            }
+        });
+        
     }
     
     ChangeListener<Object> pushCorrelogramNavigation = new ChangeListener<Object>() {
@@ -125,21 +135,38 @@ public class CorrelogramController {
 
     /** 
      * Computes evenly spaced samples from the two value ranges of the current correlation matrix.
-     * @param meanResolution number of samples taken from the value range of the first dimension (correlation mean). Must be at least 2.
-     * @param stdDevResolution number of samples taken from the value range of the second dimension (correlation standard deviation). Must be at least 2.
-     * @return a matrix comprised of the interpolated values or null if there is no current correlation matrix
+     * @param meanResolution number of samples taken from the value range of the first dimension (correlation mean). Must be at least two. 
+     * @param stdDevResolution number of samples taken from the value range of the second dimension (correlation standard deviation). Must be at least two. 
+     * @return The resulting matrix might have a lower resolution, if there's only a single value along one dimension, or null if there is no current correlation matrix
      */
     protected CorrelationMatrix valueRangeSample(int meanResolution, int stdDevResolution){
         
         CorrelationMatrix m = sharedData.getcorrelationMatrix();
         if(m == null) return null;
         
+//        if(meanResolution < 2){
+//            meanResolution = 2;
+//            System.err.println("Number of mean value samples must be at least two.");
+//        }
+//        if(stdDevResolution < 2){
+//            stdDevResolution = 2;
+//            System.err.println("Number of mean value samples must be at least two.");
+//        }
+        
         double[] meanRange = new double[]{m.getMeanMinValue(), m.getMeanMaxValue()};
         double[] stdDevRange = new double[]{m.getStdDevMinValue(), m.getStdDevMaxValue()};
         
+        // if the lower bound equals the upper bound, use only one return value in that dimension
+        if(meanRange[1]-meanRange[0] < 1e-10){
+            meanResolution = 1;
+        }
+        if(stdDevRange[1]-stdDevRange[0] < 1e-10){
+            stdDevResolution = 1;
+        }
+        
         // increments of the values in each step. resolution is taken -1 because N requested values give N-1 intervals
-        double meanStep = (meanRange[1]-meanRange[0])/(meanResolution-1);
-        double stdDevStep = (stdDevRange[1]-stdDevRange[0])/(stdDevResolution-1);
+        double meanStep = meanResolution > 1 ? (meanRange[1]-meanRange[0])/(meanResolution-1) : 0, 
+               stdDevStep = stdDevResolution > 1 ? (stdDevRange[1]-stdDevRange[0])/(stdDevResolution-1) : 0;
         
         CorrelationMatrix result = new CorrelationMatrix(null);
         
@@ -163,7 +190,7 @@ public class CorrelogramController {
             ComplexSequence columnValues = ComplexSequence.create(meanValues, stdDevValues);
             result.append(new CorrelationMatrix.Column(columnValues, currentMean));
         }   
-//System.out.println(String.format("value range sample: %s", result));
+System.out.println(String.format("value range sample: %s", result));
         return result;
     }
     

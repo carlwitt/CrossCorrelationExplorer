@@ -11,9 +11,6 @@ import Visualization.Color.Datatype.ColorType;
 
 
 public class Color_manager extends ColorManager{ 
-	/**
-	 * @param args
-	 */
 	
 	protected int _number_of_colors;                                              /*!< Number of colors generated for one subpalette */
 	protected float _max_lightness;                                               /*!< Maximum value for lightness */

@@ -1,6 +1,7 @@
 package Visualization;
 
 import Data.*;
+import Data.Correlation.CorrelationMatrix;
 
 import java.text.DecimalFormat;
 import java.util.*;
@@ -63,6 +64,13 @@ public class TimeSeriesViewController {
 //                drawContents();
 //            }
 //        });
+        
+        // when a new correlation matrix has been computed, reset the view 
+        sharedData.correlationMatrixProperty().addListener(new ChangeListener<CorrelationMatrix>() {
+            @Override public void changed(ObservableValue<? extends CorrelationMatrix> ov, CorrelationMatrix t, CorrelationMatrix t1) { 
+                resetView(null);  
+            }
+        });
         
         ListChangeListener<TimeSeries> drawContentListener = new ListChangeListener<TimeSeries>() {
             @Override public void onChanged(ListChangeListener.Change<? extends TimeSeries> change) {
