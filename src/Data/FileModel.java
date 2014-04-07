@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 
 import java.util.List;
-import java.util.Observable;
 import java.util.function.Predicate;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
@@ -17,7 +16,7 @@ import org.apache.commons.io.FileUtils;
  * Parses a number matrix from the string data and encapsulates the conventions on how to interpret these numbers (i.e. how x- and y-values are stored within the matrix).
  * @author Carl Witt
  */
-public class FileModel extends Observable{
+public class FileModel {
     
     /** A matrix representing all numbers in the file. The first dimension refers to rows and the second to columns. */
     double[][] rowValues;

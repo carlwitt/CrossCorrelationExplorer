@@ -1,9 +1,12 @@
 package Data;
 
 import Data.Correlation.CorrelationMatrix;
+import java.awt.Point;
 import java.util.Observable;
+import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -35,7 +38,7 @@ public class SharedData extends Observable {
     /** The cross correlation result. It can be listened to a change in the result. */
     private final ObjectProperty<CorrelationMatrix> correlationMatrix  = new SimpleObjectProperty<>();
     public final void setcorrelationMatrix(CorrelationMatrix value) { correlationMatrix.set(value); }
-    public final CorrelationMatrix getcorrelationMatrix() { return correlationMatrix.get(); }
+    public final CorrelationMatrix getCorrelationMatrix() { return correlationMatrix.get(); }
     public final ObjectProperty<CorrelationMatrix> correlationMatrixProperty() { return correlationMatrix; }
    
     /** The min/max time (in the x component) that is visible in both the time series and correlogram view. */
@@ -43,6 +46,15 @@ public class SharedData extends Observable {
     public Rectangle2D getVisibleTimeRange() { return visibleTimeRange.get(); }
     public void setVisibleTimeRange(Rectangle2D value) { visibleTimeRange.set(value); }
     public ObjectProperty visibleTimeRangeProperty() { return visibleTimeRange; }
+
+    /** Specifies the current time window and time lag in the correlation matrix which is currently under the mouse cursor.
+     * The x component specifies the 0-based index of the column, the y component specifies the 0-based index of the cell.
+     * No time lag splitting here! Simply the elements with their raw time lags in range [0..column length]. */
+    private final ObjectProperty<Point> highlightedCell = new SimpleObjectProperty<>(new Point(1, 1));
+    public ObjectProperty highlightedCellProperty() { return highlightedCell; }
+    public Point getHighlightedCell() { return highlightedCell.get(); }
+    public void setHighlightedCell(Point value) { highlightedCell.set(value); }
+    
     
     
 }

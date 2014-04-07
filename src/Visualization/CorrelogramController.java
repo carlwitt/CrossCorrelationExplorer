@@ -26,11 +26,6 @@ public class CorrelogramController {
     /** Data that is shared between views to implement linked views. */
     SharedData sharedData;          
 
-    /** The number of colors used to encode the mean dimension in the correlation matrix. */
-    private final int meanColorResolution = 13;
-    /** The number of colors used to encode the standard deviation dimension in the correlation matrix. */
-    private final int standardDeviationColorResolution = 4;
-    
     protected MultiDimensionalPaintScale paintScale;
     
     protected Correlogram correlogram = new Correlogram(new MultiDimensionalPaintScale(1200, 400));
@@ -72,22 +67,8 @@ public class CorrelogramController {
     public void setSharedData(final SharedData sharedData) {
         
         this.sharedData = sharedData;
-        correlogram.matrixProperty().bind(sharedData.correlationMatrixProperty());
-        
-        // render the correlogram if the result matrix has changed
-        sharedData.correlationMatrixProperty().addListener(new ChangeListener<CorrelationMatrix>() {
-            @Override
-            public void changed(ObservableValue<? extends CorrelationMatrix> ov, CorrelationMatrix t, CorrelationMatrix t1) {
-                
-                // Computes a sample from the full range of the current correlation matrix (its correlation means and standard deviations).
-                CorrelationMatrix valueRangeSample = valueRangeSample(meanColorResolution, standardDeviationColorResolution);
-                legend.setMatrix(valueRangeSample);
-//                legend.setPaintScale(new MultiDimensionalPaintScale(meanColorResolution, standardDeviationColorResolution));
-                
-                // reset correlogram and legend
-                resetView(null);
-            }
-        });
+        correlogram.setSharedData(sharedData);
+        legend.setSharedData(sharedData);
         
         // report navigation in the correlogram to the time series view (via the shared data)
         correlogram.axesRangesProperty().addListener(pushCorrelogramNavigation);
@@ -114,8 +95,9 @@ public class CorrelogramController {
             }
         });
         
-    }
+    } // set shared data
     
+    // report changes in the correlogram axis bounds to sync the time series view
     ChangeListener<Object> pushCorrelogramNavigation = new ChangeListener<Object>() {
         @Override public void changed(ObservableValue<? extends Object> ov, Object t, Object t1) {
 
@@ -131,69 +113,9 @@ public class CorrelogramController {
                 sharedData.setVisibleTimeRange(newTimeSeriesBounds);
             }
         }
+        
     };
 
-    /** 
-     * Computes evenly spaced samples from the two value ranges of the current correlation matrix.
-     * @param meanResolution number of samples taken from the value range of the first dimension (correlation mean). Must be at least two. 
-     * @param stdDevResolution number of samples taken from the value range of the second dimension (correlation standard deviation). Must be at least two. 
-     * @return The resulting matrix might have a lower resolution, if there's only a single value along one dimension, or null if there is no current correlation matrix
-     */
-    protected CorrelationMatrix valueRangeSample(int meanResolution, int stdDevResolution){
-        
-        CorrelationMatrix m = sharedData.getcorrelationMatrix();
-        if(m == null) return null;
-        
-//        if(meanResolution < 2){
-//            meanResolution = 2;
-//            System.err.println("Number of mean value samples must be at least two.");
-//        }
-//        if(stdDevResolution < 2){
-//            stdDevResolution = 2;
-//            System.err.println("Number of mean value samples must be at least two.");
-//        }
-        
-        double[] meanRange = new double[]{m.getMeanMinValue(), m.getMeanMaxValue()};
-        double[] stdDevRange = new double[]{m.getStdDevMinValue(), m.getStdDevMaxValue()};
-        
-        // if the lower bound equals the upper bound, use only one return value in that dimension
-        if(meanRange[1]-meanRange[0] < 1e-10){
-            meanResolution = 1;
-        }
-        if(stdDevRange[1]-stdDevRange[0] < 1e-10){
-            stdDevResolution = 1;
-        }
-        
-        // increments of the values in each step. resolution is taken -1 because N requested values give N-1 intervals
-        double meanStep = meanResolution > 1 ? (meanRange[1]-meanRange[0])/(meanResolution-1) : 0, 
-               stdDevStep = stdDevResolution > 1 ? (stdDevRange[1]-stdDevRange[0])/(stdDevResolution-1) : 0;
-        
-        CorrelationMatrix result = new CorrelationMatrix(null);
-        
-        // put all combinations of sample values along the two dimensions in a matrix
-        for (int i = 0; i < meanResolution; i++) {
-            
-            double currentMean = meanRange[0] + i*meanStep;
-            
-            // each column has the length of the standard deviation resolution
-            double[] meanValues = new double[stdDevResolution];
-            double[] stdDevValues = new double[stdDevResolution];
-            
-            for (int j = 0; j < stdDevResolution; j++) {
-                
-                double currentStdDev = stdDevRange[0] + j*stdDevStep;
-                
-                meanValues[j] = currentMean;
-                stdDevValues[j] = currentStdDev;
-                
-            }
-            ComplexSequence columnValues = ComplexSequence.create(meanValues, stdDevValues);
-            result.append(new CorrelationMatrix.Column(columnValues, currentMean));
-        }   
-System.out.println(String.format("value range sample: %s", result));
-        return result;
-    }
-    
     public void resetView(ActionEvent e) {
         correlogram.resetView();
         correlogram.drawContents();

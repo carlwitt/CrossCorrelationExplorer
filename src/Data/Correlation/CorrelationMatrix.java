@@ -132,7 +132,7 @@ public class CorrelationMatrix {
                     for(TimeSeries tsA : metadata.setA){
                         for (TimeSeries tsB : metadata.setB) {
                             processedCCs++;
-                            updateMessage(String.format("Retrieving windowed cross correlation between time series %s and %s.",tsA.id,tsB.id));
+                            updateMessage(String.format("Retrieving windowed cross correlation between time series %s and %s.", tsA.getId(), tsB.getId()));
                             updateProgress(processedCCs, partialResults.length);
                             
                             partialResults[freeSlot++] = CorrelogramStore.getResult(new CorrelogramMetadata(tsA, tsB, metadata.windowSize, metadata.naAction));

@@ -36,7 +36,7 @@ public class CorrelationTest extends DFTTest {
         TimeSeries expected = new TimeSeries(new double[]{1,3,1,11,15,1,-2});
         TimeSeries resultBrute = DFT.bruteForceCrossCorrelation(f,g);
         
-        resultBrute.id = expected.id;
+        resultBrute.id = expected.getId();
 //        System.out.println("DFT result:\n"+DFT.crossCorrelation(f, g, 7));
 //        System.out.println("BRUTE result:\n"+resultBrute);
         

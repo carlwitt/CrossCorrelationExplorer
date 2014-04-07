@@ -1,16 +1,15 @@
 package Data;
 
-import java.util.UUID;
 import javax.validation.constraints.NotNull;
 
 /**
  * Represents a series of changing values over time (pairs of X and Y values).
  * @author Carl Witt
  */
-public class TimeSeries implements Comparable<TimeSeries>{
+public class TimeSeries implements Comparable<TimeSeries> {
 
     /** One based unique number to access this time series in the data model {@link DataModel}. */
-    public int id;
+    protected int id;
 
     /** The coordinates of the points of the time series. 
      * X values are represented as real parts of complex numbers and Y values are represented as imaginary parts of complex numbers. */
@@ -78,14 +77,14 @@ public class TimeSeries implements Comparable<TimeSeries>{
     @Override
     public String toString() {
 //        return String.format("Time Series %d\n%s",id,values);
-        return String.format("Time Series %d",id);
+        return String.format("Time Series %d", getId());
 //        return "TimeSeries{" + "id=" + id + ", yValues=" + Arrays.toString(Arrays.copyOfRange(yValues, 0, 3)) + "... }";
     }
     
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 79 * hash + this.id;
+        hash = 79 * hash + this.getId();
         return hash;
     }
 
@@ -99,7 +98,7 @@ public class TimeSeries implements Comparable<TimeSeries>{
         }
         final TimeSeries other = (TimeSeries) obj;
         
-        if(other.id != this.id)
+        if(other.getId() != this.getId())
             return false;
         
         return true;
@@ -107,7 +106,9 @@ public class TimeSeries implements Comparable<TimeSeries>{
 
     @Override
     public int compareTo(TimeSeries t) {
-        return new Integer(this.id).compareTo(new Integer(t.id));
+        return new Integer(this.getId()).compareTo(new Integer(t.getId()));
     }
+
+    public int getId() { return id; }
     
 }

@@ -319,8 +319,8 @@ public class FileInputController implements Initializable {
         Object[] selectionCopy = loadedList.getSelectionModel().getSelectedItems().toArray();
         for (Object item : selectionCopy) {
             TimeSeries timeSeries = (TimeSeries) item;
-            availableTimeSeries.add(timeSeries.id); // insert sorted
-            sharedData.dataModel.timeSeries.remove(timeSeries.id);
+            availableTimeSeries.add(timeSeries.getId()); // insert sorted
+            sharedData.dataModel.timeSeries.remove(timeSeries.getId());
             sharedData.previewTimeSeries.remove(timeSeries);
             sharedData.correlationSetA.remove(timeSeries);
             sharedData.correlationSetB.remove(timeSeries);
