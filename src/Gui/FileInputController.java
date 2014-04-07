@@ -2,6 +2,7 @@ package Gui;
 
 import Data.*;
 import Data.Correlation.CorrelogramStore;
+import java.awt.Point;
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
@@ -215,11 +216,13 @@ public class FileInputController implements Initializable {
                 }
                 availableTimeSeries.addAll(toAdd);
                 
+                sharedData.setHighlightedCell(new Point(-2,-2));
+                
                 // TODO: remove test support
-                loadAllButton.fire();
-                sharedData.correlationSetA.add(sharedData.dataModel.get(1));
-                sharedData.correlationSetB.add(sharedData.dataModel.get(2));
-                sharedData.correlationSetB.add(sharedData.dataModel.get(3));
+//                loadAllButton.fire();
+//                sharedData.correlationSetA.add(sharedData.dataModel.get(1));
+//                sharedData.correlationSetB.add(sharedData.dataModel.get(2));
+//                sharedData.correlationSetB.add(sharedData.dataModel.get(3));
                 // /TODO
                 
                 progressLayer.hide();

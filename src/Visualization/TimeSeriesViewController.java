@@ -5,6 +5,7 @@ import Data.Correlation.CorrelationMatrix;
 
 import java.text.DecimalFormat;
 import java.util.*;
+import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
@@ -49,7 +50,13 @@ public class TimeSeriesViewController {
         
         timeSeriesChart.drawEachNthDataPointProperty().bind(detailSlider.valueProperty());
         
-        // listen to changes in zoom and pan 
+        sharedData.highlightedCellProperty().addListener(new ChangeListener() {
+            @Override public void changed(ObservableValue ov, Object t, Object t1) {
+                timeSeriesChart.drawContents();
+            }
+        });
+        
+        // listen to and report changes in zoom and pan 
         sharedData.visibleTimeRangeProperty().bindBidirectional(timeSeriesChart.axesRangesProperty());
         sharedData.visibleTimeRangeProperty().addListener(new ChangeListener() {
             @Override public void changed(ObservableValue ov, Object t, Object t1) {
