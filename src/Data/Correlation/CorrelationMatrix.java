@@ -20,6 +20,7 @@ public class CorrelationMatrix {
 
     /** Stores the input of the computation. */
     public CorrelogramMetadata metadata;
+    
     /** The column wise output of the computation. */
     List<Column> columns;
     
@@ -41,7 +42,7 @@ public class CorrelationMatrix {
     /** Creates a correlation matrix from a list of other time series by first computing the cross correlation for all of them and then computing the average and standard deviation. */
     public void compute(){
         
-        DFT.naAction = metadata.naAction;
+//        DFT.naAction = metadata.naAction;
         
         // check that all time series have the same length?
         
@@ -119,7 +120,7 @@ public class CorrelationMatrix {
                 
                 @Override protected CorrelationMatrix call() {
                     
-                    DFT.naAction = metadata.naAction;
+//                    DFT.naAction = metadata.naAction;
         
                     // check that all time series have the same length?
 
@@ -388,6 +389,9 @@ public class CorrelationMatrix {
                 return false;
             }
             if (!Arrays.equals(this.mean, other.mean)) {
+                return false;
+            }
+            if (!Arrays.equals(this.stdDev, other.stdDev)) {
                 return false;
             }
             return true;

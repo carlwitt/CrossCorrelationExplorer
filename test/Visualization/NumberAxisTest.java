@@ -79,44 +79,5 @@ public class NumberAxisTest {
                 
     }
     
-    /**
-     * Test of setTickOrigin method, of class NumberAxis.
-     */
-    @Test @Ignore
-    public void testSetTickOrigin() {
-        System.out.println("setTickOrigin");
-        double value = 0.0;
-        NumberAxis instance = new NumberAxis();
-        instance.setTickOrigin(value);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
 
-    /**
-     * Test of setTickUnit method, of class NumberAxis.
-     */
-    @Test @Ignore
-    public void testSetTickUnit() {
-        System.out.println("setTickUnit");
-        double value = 0.0;
-        NumberAxis instance = new NumberAxis();
-        instance.setTickUnit(value);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getRange method, of class NumberAxis.
-     */
-    @Test @Ignore
-    public void testGetRange() {
-        System.out.println("getRange");
-        NumberAxis instance = new NumberAxis();
-        double expResult = 0.0;
-        double result = instance.getRange();
-        assertEquals(expResult, result, 0.0);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-    
 }

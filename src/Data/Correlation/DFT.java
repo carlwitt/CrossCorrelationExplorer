@@ -4,7 +4,7 @@ import Data.ComplexSequence;
 import Data.Correlation.CorrelationMatrix.Column;
 import Data.TimeSeries;
 import com.google.common.base.Preconditions;
-import javax.validation.constraints.NotNull;
+import com.sun.istack.internal.NotNull;
 
 /**
  * Implements the Discrete Fourier Transform for double arrays.
@@ -23,7 +23,7 @@ public class DFT {
      * NA_FAIL will raise an error if NA values exist in the input.
      */
     public static enum NA_ACTION{
-//        NA_FAIL,                
+//        NA_FAIL,
         REPLACE_WITH_ZERO,
         LEAVE_UNCHANGED
     };
@@ -76,7 +76,7 @@ public class DFT {
         if( f.size() != g.size() ) 
             System.err.println("Input sequences to windowed cross correlation have to have the same length. ");
         
-        CorrelationMatrix result = new CorrelationMatrix(new CorrelogramMetadata(t1, t2, windowSize, DFT.NA_ACTION.LEAVE_UNCHANGED)); //result = ComplexSequence.create(new double[f.size()], new double[f.size()]);
+        CorrelationMatrix result = new CorrelationMatrix(new CorrelogramMetadata(t1, t2, windowSize, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED)); //result = ComplexSequence.create(new double[f.size()], new double[f.size()]);
         
         // iterate over all windows. Integer division N/windowSize automatically rounds up.
         for (int w = 0; w < f.length; w+=windowSize) {

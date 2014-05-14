@@ -1,4 +1,4 @@
-package Data;
+package Data.IO;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,8 +12,9 @@ import javafx.concurrent.Task;
 import org.apache.commons.io.FileUtils;
 
 /**
- * Abstracts from the way a number of time seriese is stored in a text file. 
- * Parses a number matrix from the string data and encapsulates the conventions on how to interpret these numbers (i.e. how x- and y-values are stored within the matrix).
+ * Abstracts from the way a number of time seriese is stored in a text file.
+ * This specific model parses a number matrix from the string data.
+ * It also encapsulates the conventions on how to interpret these numbers (i.e. how x- and y-values are stored within the matrix).
  * @author Carl Witt
  */
 public class FileModel {
@@ -31,7 +32,9 @@ public class FileModel {
         
     /** The separator to split up lines of text into pieces before parsing them. */
     public LineParser separator;
-    
+
+    /** Loads and parses a file asynchronously (doesn't block the UI).
+     * Parsing a few hundred MB can take a few seconds. */
     public final LoadFileService loadFileService = new LoadFileService();
             
     public FileModel(String filename, LineParser lineParser){

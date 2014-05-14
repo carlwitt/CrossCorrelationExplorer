@@ -2,8 +2,8 @@ package Data.Correlation;
 
 import Data.TimeSeries;
 import com.google.common.base.Joiner;
+import com.sun.istack.internal.NotNull;
 import java.util.ArrayList;
-import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Objects;
 
@@ -17,9 +17,9 @@ public class CorrelogramMetadata {
     /** The list of all time series for which the correlogram was computed. Invariant: the list must be sorted. */
     public List<TimeSeries> setA, setB;
     
-    DFT.NA_ACTION naAction;
+    CrossCorrelation.NA_ACTION naAction;
     
-    public CorrelogramMetadata(@NotNull TimeSeries seriesA, @NotNull TimeSeries seriesB, int windowSize, DFT.NA_ACTION naAction){
+    public CorrelogramMetadata(@NotNull TimeSeries seriesA, @NotNull TimeSeries seriesB, int windowSize, CrossCorrelation.NA_ACTION naAction){
         setA = new ArrayList<>(1);
         setA.add(seriesA);
         setB = new ArrayList<>(1);
@@ -27,7 +27,7 @@ public class CorrelogramMetadata {
         this.naAction = naAction;
         this.windowSize = windowSize;
     }
-    public CorrelogramMetadata(@NotNull List<TimeSeries> setA, @NotNull List<TimeSeries> setB, int windowSize, DFT.NA_ACTION naAction) {
+    public CorrelogramMetadata(@NotNull List<TimeSeries> setA, @NotNull List<TimeSeries> setB, int windowSize, CrossCorrelation.NA_ACTION naAction) {
         this.setA = setA;
         this.setB = setB;
         this.naAction = naAction;

@@ -17,6 +17,7 @@ import org.junit.Ignore;
  *
  * @author Carl Witt
  */
+@Ignore
 public class DFTTest {
 
     // bit reversed numbers from 0 to 7 (represented as 3 bit binary numbers)

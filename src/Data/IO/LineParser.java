@@ -1,4 +1,4 @@
-package Data;
+package Data.IO;
 
 import com.google.common.base.Splitter;
 import java.util.ArrayList;
@@ -35,7 +35,7 @@ public class LineParser {
 
     /**
      * Splits a string according to a delimiter string.
-     * @param line The string to split
+     * @param input The string to split
      * @return Array of strings which give the original string if glued with the delimiter string.
      */
     private String[] splitString(String delimiter, String input) {

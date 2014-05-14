@@ -17,6 +17,8 @@ import org.junit.Ignore;
  *
  * @author Carl Witt
  */
+
+@Ignore
 public class PerformanceTest extends DFTTest {
     
     

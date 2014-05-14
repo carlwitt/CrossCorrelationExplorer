@@ -4,12 +4,11 @@
 * and open the template in the editor.
 */
 
-package Data;
+package Data.IO;
 
-import Data.FileModel;
-import Data.LineParser;
+import Data.IO.FileModel;
+import Data.IO.LineParser;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javafx.concurrent.WorkerStateEvent;

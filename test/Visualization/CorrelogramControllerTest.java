@@ -8,6 +8,7 @@ package Visualization;
 
 import Data.Correlation.CorrelationMatrix;
 import Data.Correlation.CorrelogramMetadata;
+import Data.Correlation.CrossCorrelation;
 import Data.Correlation.DFT;
 import Data.SharedData;
 import Data.TimeSeries;
@@ -74,7 +75,7 @@ public class CorrelogramControllerTest {
         sharedData.correlationSetB.add(sharedData.dataModel.get(3));
         
         int windowSize = 1;
-        CorrelogramMetadata metadata = new CorrelogramMetadata(sharedData.correlationSetA, sharedData.correlationSetB, windowSize, DFT.NA_ACTION.LEAVE_UNCHANGED);
+        CorrelogramMetadata metadata = new CorrelogramMetadata(sharedData.correlationSetA, sharedData.correlationSetB, windowSize, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED);
         CorrelationMatrix correlationMatrix = new CorrelationMatrix(metadata);
         correlationMatrix.compute();
         sharedData.setcorrelationMatrix(correlationMatrix);
@@ -84,11 +85,11 @@ public class CorrelogramControllerTest {
         int stdDevResolution = 3;
         
         CorrelationMatrix expResult = new CorrelationMatrix(null);
-        expResult.append(new CorrelationMatrix.Column(new double[]{1,1,1}, new double[]{2,1,0}, 1));
-        expResult.append(new CorrelationMatrix.Column(new double[]{3.5,3.5,3.5}, new double[]{2,1,0}, 2));
-        expResult.append(new CorrelationMatrix.Column(new double[]{6,6,6}, new double[]{2,1,0}, 3));
+        expResult.append(new CorrelationMatrix.Column(new double[]{1,1,1}, new double[]{0,1,2}, 1));
+        expResult.append(new CorrelationMatrix.Column(new double[]{3.5,3.5,3.5}, new double[]{0,1,2}, 3.5));
+        expResult.append(new CorrelationMatrix.Column(new double[]{6,6,6}, new double[]{0,1,2}, 6));
         
-        CorrelationMatrix result = instance.valueRangeSample(meanResolution, stdDevResolution);
+        CorrelationMatrix result = instance.legend.valueRangeSample(meanResolution, stdDevResolution);
         assertEquals(expResult, result);
         System.out.println(result);
     }
@@ -107,7 +108,7 @@ public class CorrelogramControllerTest {
         sharedData.correlationSetB.add(sharedData.dataModel.get(1));
         
         int windowSize = 1;
-        CorrelogramMetadata metadata = new CorrelogramMetadata(sharedData.correlationSetA, sharedData.correlationSetB, windowSize, DFT.NA_ACTION.LEAVE_UNCHANGED);
+        CorrelogramMetadata metadata = new CorrelogramMetadata(sharedData.correlationSetA, sharedData.correlationSetB, windowSize, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED);
         CorrelationMatrix correlationMatrix = new CorrelationMatrix(metadata);
         correlationMatrix.compute();
         sharedData.setcorrelationMatrix(correlationMatrix);
@@ -117,23 +118,10 @@ public class CorrelogramControllerTest {
         int stdDevResolution = 3;
         
         CorrelationMatrix expResult = new CorrelationMatrix(null);
-        expResult.append(new CorrelationMatrix.Column(new double[]{1,1,1}, new double[]{0,0,0}, 1));
-        expResult.append(new CorrelationMatrix.Column(new double[]{1,1,1}, new double[]{0,0,0}, 2));
-        expResult.append(new CorrelationMatrix.Column(new double[]{1,1,1}, new double[]{0,0,0}, 3));
-        
-        CorrelationMatrix result = instance.valueRangeSample(meanResolution, stdDevResolution);
+        expResult.append(new CorrelationMatrix.Column(new double[]{1}, new double[]{0}, 1));
+
+        CorrelationMatrix result = instance.legend.valueRangeSample(meanResolution, stdDevResolution);
         assertEquals(expResult, result);
     }
-    
-    @Test @Ignore
-    public void testResetView() {
-        System.out.println("resetView");
-        ActionEvent e = null;
-        CorrelogramController instance = new CorrelogramController();
-        instance.resetView(e);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-    
     
 }

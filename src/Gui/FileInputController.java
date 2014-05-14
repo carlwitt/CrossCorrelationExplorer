@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.ResourceBundle;
 import java.util.TreeMap;
+
+import Data.IO.FileModel;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -21,7 +23,6 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Pane;
 import javafx.stage.FileChooser;
 import org.controlsfx.dialog.Dialogs;
 

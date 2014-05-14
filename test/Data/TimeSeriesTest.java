@@ -98,33 +98,4 @@ public class TimeSeriesTest {
         assertEquals(expResult, result);
     }
     
-    /**
-     * Test of isEmpty method, of class TimeSeries.
-     */
-    @Test
-    @Ignore
-    public void testIsEmpty() {
-        System.out.println("isEmpty");
-        TimeSeries instance = null;
-        boolean expResult = false;
-        boolean result = instance.isEmpty();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of toString method, of class TimeSeries.
-     */
-    @Test
-    @Ignore
-    public void testToString() {
-        System.out.println("toString");
-        TimeSeries instance = null;
-        String expResult = "";
-        String result = instance.toString();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
 }

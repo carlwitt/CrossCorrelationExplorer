@@ -1,6 +1,6 @@
 package Data;
 
-import javax.validation.constraints.NotNull;
+import com.sun.istack.internal.NotNull;
 
 /**
  * Represents a series of changing values over time (pairs of X and Y values).
@@ -40,9 +40,8 @@ public class TimeSeries implements Comparable<TimeSeries> {
         this.values = ComplexSequence.create(new double[d.length], d);
     }
 
-    public int getSize() {
-        return values.length;
-    }
+    /** Returns the number of x/y pairs in the time series. */
+    public int getSize() { return values.length; }
     
     public boolean contains(int id){
         return id >= 0 && id < values.re.length;
@@ -100,7 +99,21 @@ public class TimeSeries implements Comparable<TimeSeries> {
         
         if(other.getId() != this.getId())
             return false;
-        
+
+        return this.values.equals(other.values);
+
+    }
+
+    /** Like equals, but without taking the ID into consideration. */
+    public boolean equivalent(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final TimeSeries other = (TimeSeries) obj;
+
         return true;
     }
 

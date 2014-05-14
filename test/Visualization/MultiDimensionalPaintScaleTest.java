@@ -48,18 +48,6 @@ public class MultiDimensionalPaintScaleTest {
         instance.printPalettesJSON();
     }
     
-    @Test @Ignore
-    public void testInterpolate() {
-        System.out.println("interpolate");
-        double d = 0.0;
-        int dim = 0;
-        double expResult = 0.0;
-        double result = instance.interpolate(d, dim);
-        assertEquals(expResult, result, 0.0);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
     /**
      * Test that the boundary values return the boundary colors.
      */
