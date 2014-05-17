@@ -18,22 +18,22 @@ public class RuntimePrediction {
     }
     
     /** Average milliseconds per analytical step (the number of analytical steps for input size n is given by complexity(n)). */
-    double stepFactor;
+    private double stepFactor;
     /** Whether stepFactor was calculated yet. Lazy calibration. */
-    boolean calibrated = false;
+    private boolean calibrated = false;
     
     /** Saves the execution times by input size. */
-    public HashMap<Integer, Long> testRuns = new HashMap<Integer, Long>();
+    public final HashMap<Integer, Long> testRuns = new HashMap<>();
     
     /** The wrapper for the method to profile. */
-    RuntimePredictable testSubject;
+    private final RuntimePredictable testSubject;
     
     public RuntimePrediction(RuntimePredictable testSubject){
         this.testSubject = testSubject;
     }
     
     /** Determines stepFactor through a series of test computations. The calibration time can be limited. */
-    protected void calibrate(){
+    void calibrate(){
     // * @param maxMilliSeconds The maximum number of milliseconds to spend. Is ignored if negative. 
     // (Difficult because another thread terminating this one wouldn't allow to calculate the stepSize (a running average needs the number of total computations, which is unknown in the beginnging.)
     

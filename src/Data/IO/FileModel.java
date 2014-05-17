@@ -21,17 +21,17 @@ public class FileModel {
     
     /** A matrix representing all numbers in the file. The first dimension refers to rows and the second to columns. */
     double[][] rowValues;
-    double[] firstColumn; // cached first column of the matrix
+    private double[] firstColumn; // cached first column of the matrix
     
-    public static String DEFAULT_ENCODING = "UTF-8";
+    private static final String DEFAULT_ENCODING = "UTF-8";
     
     private final StringProperty filename = new SimpleStringProperty();
     public final void setFilename(String value) { filename.set(value); }
-    public final String getFilename() { return filename.get(); }
+    final String getFilename() { return filename.get(); }
     public final StringProperty filenameProperty() { return filename; }
         
     /** The separator to split up lines of text into pieces before parsing them. */
-    public LineParser separator;
+    private LineParser separator;
 
     /** Loads and parses a file asynchronously (doesn't block the UI).
      * Parsing a few hundred MB can take a few seconds. */

@@ -9,7 +9,7 @@ import com.sun.istack.internal.NotNull;
 public class TimeSeries implements Comparable<TimeSeries> {
 
     /** One based unique number to access this time series in the data model {@link DataModel}. */
-    protected int id;
+    private final int id;
 
     /** The coordinates of the points of the time series. 
      * X values are represented as real parts of complex numbers and Y values are represented as imaginary parts of complex numbers. */
@@ -104,22 +104,9 @@ public class TimeSeries implements Comparable<TimeSeries> {
 
     }
 
-    /** Like equals, but without taking the ID into consideration. */
-    public boolean equivalent(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final TimeSeries other = (TimeSeries) obj;
-
-        return true;
-    }
-
     @Override
     public int compareTo(TimeSeries t) {
-        return new Integer(this.getId()).compareTo(new Integer(t.getId()));
+        return new Integer(this.getId()).compareTo(t.getId());
     }
 
     public int getId() { return id; }

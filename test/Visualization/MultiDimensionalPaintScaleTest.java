@@ -14,7 +14,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import org.junit.Ignore;
 
 /**
  *
@@ -23,36 +22,26 @@ import org.junit.Ignore;
 public class MultiDimensionalPaintScaleTest {
     
     MultiDimensionalPaintScale instance = new MultiDimensionalPaintScale(12, 4);
-    
-    public MultiDimensionalPaintScaleTest() {
-    }
-    
-    @BeforeClass
-    public static void setUpClass() {
-    }
-    
-    @AfterClass
-    public static void tearDownClass() {
-    }
-    
-    @Before
-    public void setUp() {
-    }
-    
-    @After
-    public void tearDown() {
-    }
 
     @Test
     public void testComputePaletteBiPolar() {
         instance.printPalettesJSON();
     }
-    
+
+    @Test
+    public void testGetPaintForNaN() {
+
+        MultiDimensionalPaintScale scale = new MultiDimensionalPaintScale(12, 5);
+        scale.setLowerBounds(1d,10d);
+        scale.setUpperBounds(5d,100d);
+        System.out.println(scale.getPaint(3., Double.NaN));
+
+    }
     /**
      * Test that the boundary values return the boundary colors.
      */
     @Test
-    public void testGetPaint_doubleArr() {
+    public void testGetPaint() {
         System.out.println("getPaint");
         
         MultiDimensionalPaintScale scale = new MultiDimensionalPaintScale(12, 5);

@@ -12,31 +12,31 @@ import Visualization.Color.Datatype.ColorType;
 
 public class Color_manager extends ColorManager{ 
 	
-	protected int _number_of_colors;                                              /*!< Number of colors generated for one subpalette */
-	protected float _max_lightness;                                               /*!< Maximum value for lightness */
-	protected float _max_chroma;                                                  /*!< Maximum value for chroma */
-	protected float _max_hue;                                                     /*!< Maximum value for hue */
+	private final int _number_of_colors;                                              /*!< Number of colors generated for one subpalette */
+	private final float _max_lightness;                                               /*!< Maximum value for lightness */
+	private final float _max_chroma;                                                  /*!< Maximum value for chroma */
+	private final float _max_hue;                                                     /*!< Maximum value for hue */
     
-	protected float _lightness;                                                   /*!< Lightness value */
-	protected float _chroma;                                                      /*!< Chroma value */
-	protected float _hue;                                                         /*!< Hue value */
+	private float _lightness;                                                   /*!< Lightness value */
+	private float _chroma;                                                      /*!< Chroma value */
+	private float _hue;                                                         /*!< Hue value */
     
-	protected float _C;                                                           /*!< C value (implicit constant) */
-	protected float _B;                                                           /*!< B value (implicit constant) */
+	private final float _C;                                                           /*!< C value (implicit constant) */
+	private final float _B;                                                           /*!< B value (implicit constant) */
     
-	Color _p_0;                                                         /*!< 2D Bezier color p0 */
-	Color _p_1;                                                         /*!< 2D Bezier color p1 (most saturated color) */
-	Color _p_2;                                                         /*!< 2D Bezier color p2 */
+	private final Color _p_0;                                                         /*!< 2D Bezier color p0 */
+	private Color _p_1;                                                         /*!< 2D Bezier color p1 (most saturated color) */
+	private final Color _p_2;                                                         /*!< 2D Bezier color p2 */
     
-	Color _q_0;                                                         /*!< 2D Bezier color q0 */
-	Color _q_1;                                                         /*!< 2D Bezier color q1 */
-	Color _q_2;                                                         /*!< 2D Bezier color q2 */
+	private final Color _q_0;                                                         /*!< 2D Bezier color q0 */
+	private final Color _q_1;                                                         /*!< 2D Bezier color q1 */
+	private final Color _q_2;                                                         /*!< 2D Bezier color q2 */
     
-	public Vector<Vector<Color> > _color_palettes = new Vector<Vector<Color> >();                             /*!< Available color palettes */
-	public Vector<Color> _current_color_palette;                               /*!< Current color palette */
+	private final Vector<Vector<Color> > _color_palettes = new Vector<>();                             /*!< Available color palettes */
+	private Vector<Color> _current_color_palette;                               /*!< Current color palette */
     
-	Color _grid_color;                                                  /*!< Predefined color for grid lines (implicit constant) */
-	Color _polygon_color; 												/*!< Predefined color for polygonal lines (implicit constant) */
+	private final Color _grid_color;                                                  /*!< Predefined color for grid lines (implicit constant) */
+	private final Color _polygon_color; 												/*!< Predefined color for polygonal lines (implicit constant) */
 	
 	// Constructor
 	public Color_manager(int numberOfColors){
@@ -89,11 +89,11 @@ public class Color_manager extends ColorManager{
 	    _chroma = 100.0f;
 	}
 	*/
-	public float evaluateBezier2D(float b_0, float b_1, float b_2, float t){ 
+    float evaluateBezier2D(float b_0, float b_1, float b_2, float t){
 	    return (float)(((Math.pow((1.0f - t), 2.0f)) * b_0 + 2.0f * (1.0f - t) * t * b_1 + Math.pow(t, 2.0f) * b_2)); 
 	}
 
-	public float evaluateInverseBezier2D(float b_0, float b_1, float b_2, float v) 
+	float evaluateInverseBezier2D(float b_0, float b_1, float b_2, float v)
 	{ 
 	    return (b_0 - b_1 + (float)(Math.sqrt(Math.pow(b_1, 2.0f) - (b_0 * b_2) + (b_0 - 2.0f * b_1 + b_2) * v))) / (b_0 - 2.0f * b_1 + b_2); 
 	}
@@ -115,11 +115,8 @@ public class Color_manager extends ColorManager{
 	    return t;
 	}
 public Vector<Vector<Color>> getColorPalettes() { return _color_palettes; }
-	
-	public void RuntimeException(String message){
-		
-	}
-	public void setLightness(float lightness){
+
+    public void setLightness(float lightness){
 	    if(lightness > _max_lightness){
 	        Throwable ta = new Throwable("lightness is greater than maximum lightness!");
 	        ta.getMessage();
@@ -172,7 +169,7 @@ public Vector<Vector<Color>> getColorPalettes() { return _color_palettes; }
 	}
 
 	public Vector<Color> generateColorPalette(){
-	    Vector<Color> color_palette = new Vector<Color> ();
+	    Vector<Color> color_palette = new Vector<>();
 	    
 	    for(int i = 0; i < _number_of_colors; ++i)
 	    {            
@@ -222,7 +219,7 @@ public Vector<Vector<Color>> getColorPalettes() { return _color_palettes; }
 	public Vector<Color> reverse(Vector<Color> color_palette){
 		
 		int paletteSize = color_palette.size()-1;
-		Vector<Color> reversed = new Vector<Color>(paletteSize+1);
+		Vector<Color> reversed = new Vector<>(paletteSize+1);
 		reversed.clear();
 		
 		
@@ -234,10 +231,10 @@ public Vector<Vector<Color>> getColorPalettes() { return _color_palettes; }
 		
 		return reversed;
 	}
-	public Vector<Color> mergeTwoColorPalettes(Vector<Color> color_palette_1, Vector<Color> color_palette_2)
+	Vector<Color> mergeTwoColorPalettes(Vector<Color> color_palette_1, Vector<Color> color_palette_2)
 	{
 	    Vector<Color> merged_color_palette = color_palette_1;
-	    
+
 	    color_palette_2.removeElementAt(color_palette_2.size()-1);
 	  
 	    //reverse 
@@ -248,7 +245,7 @@ public Vector<Vector<Color>> getColorPalettes() { return _color_palettes; }
 	    return merged_color_palette;
 	}
 
-	public int generateColorPaletteOneColor(float hue){
+	int generateColorPaletteOneColor(float hue){
 	    setHue(hue);
 	    updateColorPoints();
 	    Vector<Color> color_palette = generateColorPalette();
@@ -256,7 +253,7 @@ public Vector<Vector<Color>> getColorPalettes() { return _color_palettes; }
 	    return appendColorPalette(color_palette);
 	}
 
-	public int generateColorPaletteTwoColors(float hue_1, float hue_2){
+	int generateColorPaletteTwoColors(float hue_1, float hue_2){
 	    Vector<Color> color_palette_1;
 	    Vector<Color> color_palette_2;
 	    Vector<Color> merged_color_palette;
@@ -336,7 +333,7 @@ public Vector<Vector<Color>> getColorPalettes() { return _color_palettes; }
 	    return color_id;
 	}
 
-	public Color normalizeRGBAColor(Color color){
+	Color normalizeRGBAColor(Color color){
 	    color.dimension_1 /= 255.0f;
 	    color.dimension_2 /= 255.0f;
 	    color.dimension_3 /= 255.0f;

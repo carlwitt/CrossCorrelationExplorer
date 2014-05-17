@@ -1,176 +1,151 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import java.lang.*?>
-<?import java.net.*?>
-<?import java.util.*?>
-<?import javafx.collections.*?>
 <?import javafx.geometry.*?>
-<?import javafx.scene.*?>
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
+<?import javafx.scene.text.Font?>
 
 <GridPane fx:id="computationInputPane" gridLinesVisible="false" maxWidth="1.7976931348623157E308" minHeight="0.0" prefHeight="119.0" prefWidth="1141.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.ComputationInputController">
-  <children>
-    <Label alignment="BOTTOM_LEFT" maxWidth="1.7976931348623157E308" prefWidth="300.0" text="Correlation Input Set A" textAlignment="LEFT" textFill="#00cc52" GridPane.columnIndex="0" GridPane.hgrow="ALWAYS" GridPane.rowIndex="0">
-      <font>
-        <Font name="System Bold" size="13.0" fx:id="x1" />
-      </font>
+  <Label alignment="BOTTOM_LEFT" maxWidth="1.7976931348623157E308" prefWidth="300.0" text="Correlation Input Set A" textAlignment="LEFT" textFill="#00cc52" GridPane.columnIndex="0" GridPane.hgrow="ALWAYS" GridPane.rowIndex="0">
+    <font>
+      <Font name="System Bold" size="13.0" fx:id="x1" />
+    </font>
+  </Label>
+  <ListView fx:id="setAList" maxWidth="1.7976931348623157E308" onKeyReleased="#setAListKeyTyped" prefHeight="-1.0" prefWidth="130.0" style="-fx-background-insets: 0;&#10;" GridPane.columnIndex="0" GridPane.rowIndex="1">
+    <tooltip>
+      <Tooltip text="Each time series in input set A will be cross correlated with each time series in input set B.&#10;Double clicking on a time series removes it." fx:id="inputSetToolTip" />
+    </tooltip>
+  </ListView>
+  <Label alignment="CENTER_LEFT" maxWidth="1.7976931348623157E308" prefWidth="300.0" text="Loaded Time Series" textAlignment="CENTER" GridPane.columnIndex="2" GridPane.hgrow="ALWAYS" GridPane.rowIndex="0" />
+  <ListView fx:id="loadedList" maxWidth="1.7976931348623157E308" onKeyReleased="#loadedListKeyTyped" prefHeight="-1.0" prefWidth="130.0" style="-fx-background-insets: 0;" GridPane.columnIndex="2" GridPane.rowIndex="1">
+    <tooltip>
+      <Tooltip text="Displays all time series that have been loaded in the file input tab.&#10;Use the left arrow key to add time series to correlation input set A and the right arrow key analogously." />
+    </tooltip>
+  </ListView>
+  <Label alignment="CENTER_LEFT" font="$x1" maxWidth="1.7976931348623157E308" prefWidth="300.0" text="Correlation Input Set B" textFill="#4333ff" GridPane.columnIndex="4" GridPane.rowIndex="0" />
+  <ListView fx:id="setBList" maxWidth="1.7976931348623157E308" onKeyReleased="#setBListKeyTyped" prefHeight="-1.0" prefWidth="130.0" style="-fx-background-insets: 0;" tooltip="$inputSetToolTip" GridPane.columnIndex="4" GridPane.rowIndex="1" />
+  <VBox alignment="TOP_CENTER" disable="false" fillWidth="true" prefHeight="223.0" prefWidth="101.0" spacing="3.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
+    <padding>
+      <Insets bottom="5.0" />
+    </padding>
+    <Label contentDisplay="LEFT" text="load">
+      <graphic>
+        <ImageView fitHeight="12.0" fitWidth="12.0" pickOnBounds="true" preserveRatio="true">
+          <Image url="@img/glyphicons_210_left_arrow.png" />
+        </ImageView>
+      </graphic>
     </Label>
-    <ListView fx:id="setAList" focusTraversable="true" maxWidth="1.7976931348623157E308" onKeyReleased="#setAListKeyTyped" prefHeight="-1.0" prefWidth="130.0" style="-fx-background-insets: 0;&#10;" GridPane.columnIndex="0" GridPane.rowIndex="1">
+    <HBox id="HBox" alignment="CENTER" spacing="5.0">
+      <Button fx:id="loadAllSetAButton" alignment="CENTER_LEFT" focusTraversable="false" minWidth="25.0" mnemonicParsing="false" onAction="#loadAll" prefWidth="34.0" text="all">
+        <font>
+          <Font size="11.0" fx:id="x2" />
+        </font>
+      </Button>
+      <Button fx:id="loadSelectedSetAButton" alignment="CENTER_LEFT" focusTraversable="false" font="$x2" mnemonicParsing="false" onAction="#loadSelected" prefWidth="67.0" text="selected" />
+    </HBox>
+    <Button fx:id="loadRandomSetAButton" alignment="CENTER_LEFT" contentDisplay="RIGHT" focusTraversable="false" font="$x2" mnemonicParsing="false" onAction="#loadRandom" prefWidth="228.0" text="random..." textAlignment="LEFT" />
+    <Label contentDisplay="RIGHT" text="unload">
+      <graphic>
+        <ImageView fitHeight="12.0" fitWidth="12.0" pickOnBounds="true" preserveRatio="true">
+          <Image url="@img/glyphicons_211_right_arrow.png" />
+        </ImageView>
+      </graphic>
+    </Label>
+    <HBox id="HBox" alignment="CENTER" spacing="5.0">
+      <Button fx:id="unloadSelectedSetAButton" alignment="CENTER_LEFT" focusTraversable="false" font="$x2" mnemonicParsing="false" onAction="#unloadSelected" prefWidth="89.0" text="selected" />
+      <Button fx:id="unloadAllSetAButton" alignment="CENTER_LEFT" focusTraversable="false" font="$x2" mnemonicParsing="false" onAction="#unloadAll" prefWidth="58.0" text="all" />
+    </HBox>
+  </VBox>
+  <VBox alignment="TOP_CENTER" disable="false" fillWidth="true" prefHeight="223.0" prefWidth="101.0" spacing="3.0" GridPane.columnIndex="3" GridPane.rowIndex="1">
+    <padding>
+      <Insets bottom="5.0" />
+    </padding>
+    <Label contentDisplay="RIGHT" text="load">
+      <graphic>
+        <ImageView fitHeight="12.0" fitWidth="12.0" pickOnBounds="true" preserveRatio="true">
+          <Image url="@img/glyphicons_211_right_arrow.png" />
+        </ImageView>
+      </graphic>
+    </Label>
+    <HBox id="HBox" alignment="CENTER" spacing="5.0">
+      <Button fx:id="loadSelectedSetBButton" alignment="CENTER_LEFT" focusTraversable="false" font="$x2" mnemonicParsing="false" onAction="#loadSelected" prefWidth="67.0" text="selected" />
+      <Button fx:id="loadAllSetBButton" alignment="CENTER_LEFT" focusTraversable="false" font="$x2" minWidth="25.0" mnemonicParsing="false" onAction="#loadAll" prefWidth="34.0" text="all" />
+    </HBox>
+    <Button fx:id="loadRandomSetBButton" alignment="CENTER_RIGHT" contentDisplay="RIGHT" focusTraversable="false" font="$x2" mnemonicParsing="false" onAction="#loadRandom" prefWidth="228.0" text="...random" textAlignment="LEFT" />
+    <Label contentDisplay="LEFT" text="unload">
+      <graphic>
+        <ImageView fitHeight="12.0" fitWidth="12.0" pickOnBounds="true" preserveRatio="true">
+          <Image url="@img/glyphicons_210_left_arrow.png" />
+        </ImageView>
+      </graphic>
+    </Label>
+    <HBox id="HBox" alignment="CENTER" spacing="5.0">
+      <Button fx:id="unloadAllSetBButton" alignment="CENTER_LEFT" focusTraversable="false" font="$x2" mnemonicParsing="false" onAction="#unloadAll" prefWidth="58.0" text="all" />
+      <Button id="unloadAllSetAButton" fx:id="unloadSelectedSetBButton" alignment="CENTER_LEFT" contentDisplay="LEFT" focusTraversable="false" font="$x2" graphicTextGap="0.0" mnemonicParsing="false" onAction="#unloadSelected" prefWidth="89.0" text="selected" />
+    </HBox>
+  </VBox>
+  <Label alignment="CENTER_LEFT" prefWidth="544.0" text="Handle NaN Values" GridPane.columnIndex="6" GridPane.rowIndex="0" />
+  <Label alignment="CENTER_LEFT" prefWidth="544.0" text="Limits" underline="false" visible="false" GridPane.columnIndex="5" GridPane.rowIndex="0" />
+  <GridPane GridPane.columnIndex="5" GridPane.rowIndex="1">
+    <columnConstraints>
+      <ColumnConstraints hgrow="SOMETIMES" maxWidth="118.0" minWidth="10.0" prefWidth="89.0" />
+      <ColumnConstraints hgrow="SOMETIMES" maxWidth="73.0" minWidth="10.0" prefWidth="61.0" />
+    </columnConstraints>
+    <rowConstraints>
+      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+    </rowConstraints>
+    <Label contentDisplay="RIGHT" text="Window size" wrapText="true" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="0">
       <tooltip>
-        <Tooltip text="Each time series in input set A will be cross correlated with each time series in input set B.&#10;Double clicking on a time series removes it." fx:id="inputSetToolTip" />
+        <Tooltip text="Defines the size of the windows in which the time series are shifted and cross correlated." />
       </tooltip>
-    </ListView>
-    <Label alignment="CENTER_LEFT" maxWidth="1.7976931348623157E308" prefWidth="300.0" text="Loaded Time Series" textAlignment="CENTER" GridPane.columnIndex="2" GridPane.hgrow="ALWAYS" GridPane.rowIndex="0" />
-    <ListView fx:id="loadedList" maxWidth="1.7976931348623157E308" onKeyReleased="#loadedListKeyTyped" prefHeight="-1.0" prefWidth="130.0" style="-fx-background-insets: 0;" GridPane.columnIndex="2" GridPane.rowIndex="1">
+    </Label>
+    <TextField fx:id="windowSizeText" alignment="TOP_RIGHT" prefWidth="45.0" text="20" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+    <Label text="window offset" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+    <TextField fx:id="baseWindowOffsetText" alignment="TOP_RIGHT" prefWidth="45.0" text="1" visible="true" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+    <Label contentDisplay="RIGHT" text="Time lag min" visible="true" wrapText="true" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="2">
       <tooltip>
-        <Tooltip text="Displays all time series that have been loaded in the file input tab.&#10;Use the left arrow key to add time series to correlation input set A and the right arrow key analogously." />
+        <Tooltip text="Defines the lower limit of the time lag range to compute in each window." />
       </tooltip>
-    </ListView>
-    <Label alignment="CENTER_LEFT" font="$x1" maxWidth="1.7976931348623157E308" prefWidth="300.0" text="Correlation Input Set B" textFill="#4333ff" GridPane.columnIndex="4" GridPane.rowIndex="0" />
-    <ListView fx:id="setBList" maxWidth="1.7976931348623157E308" onKeyReleased="#setBListKeyTyped" prefHeight="-1.0" prefWidth="130.0" style="-fx-background-insets: 0;" tooltip="$inputSetToolTip" GridPane.columnIndex="4" GridPane.rowIndex="1" />
-    <VBox alignment="TOP_CENTER" disable="false" fillWidth="true" prefHeight="223.0" prefWidth="101.0" spacing="3.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
-      <children>
-        <Label contentDisplay="LEFT" text="load">
-          <graphic>
-            <ImageView fitHeight="12.0" fitWidth="12.0" pickOnBounds="true" preserveRatio="true">
-              <image>
-                <Image url="@img/glyphicons_210_left_arrow.png" />
-              </image>
-            </ImageView>
-          </graphic>
-        </Label>
-        <HBox id="HBox" alignment="CENTER" spacing="5.0">
-          <children>
-            <Button fx:id="loadAllSetAButton" alignment="CENTER_LEFT" minWidth="25.0" mnemonicParsing="false" onAction="#loadAll" prefWidth="34.0" text="all">
-              <font>
-                <Font size="11.0" fx:id="x2" />
-              </font>
-            </Button>
-            <Button fx:id="loadSelectedSetAButton" alignment="CENTER_LEFT" font="$x2" mnemonicParsing="false" onAction="#loadSelected" prefWidth="67.0" text="selected" />
-          </children>
-        </HBox>
-        <Button fx:id="loadRandomSetAButton" alignment="CENTER_LEFT" contentDisplay="RIGHT" font="$x2" mnemonicParsing="false" onAction="#loadRandom" prefWidth="228.0" text="random..." textAlignment="LEFT" />
-        <Label contentDisplay="RIGHT" text="unload">
-          <graphic>
-            <ImageView fitHeight="12.0" fitWidth="12.0" pickOnBounds="true" preserveRatio="true">
-              <image>
-                <Image url="@img/glyphicons_211_right_arrow.png" />
-              </image>
-            </ImageView>
-          </graphic>
-        </Label>
-        <HBox id="HBox" alignment="CENTER" spacing="5.0">
-          <children>
-            <Button fx:id="unloadSelectedSetAButton" alignment="CENTER_LEFT" font="$x2" mnemonicParsing="false" onAction="#unloadSelected" prefWidth="89.0" text="selected" />
-            <Button fx:id="unloadAllSetAButton" alignment="CENTER_LEFT" font="$x2" mnemonicParsing="false" onAction="#unloadAll" prefWidth="58.0" text="all" />
-          </children>
-        </HBox>
-      </children>
-      <padding>
-        <Insets bottom="5.0" />
-      </padding>
-    </VBox>
-    <VBox alignment="TOP_CENTER" disable="false" fillWidth="true" prefHeight="223.0" prefWidth="101.0" spacing="3.0" GridPane.columnIndex="3" GridPane.rowIndex="1">
-      <children>
-        <Label contentDisplay="RIGHT" text="load">
-          <graphic>
-            <ImageView fitHeight="12.0" fitWidth="12.0" pickOnBounds="true" preserveRatio="true">
-              <image>
-                <Image url="@img/glyphicons_211_right_arrow.png" />
-              </image>
-            </ImageView>
-          </graphic>
-        </Label>
-        <HBox id="HBox" alignment="CENTER" spacing="5.0">
-          <children>
-            <Button fx:id="loadSelectedSetBButton" alignment="CENTER_LEFT" font="$x2" mnemonicParsing="false" onAction="#loadSelected" prefWidth="67.0" text="selected" />
-            <Button fx:id="loadAllSetBButton" alignment="CENTER_LEFT" font="$x2" minWidth="25.0" mnemonicParsing="false" onAction="#loadAll" prefWidth="34.0" text="all" />
-          </children>
-        </HBox>
-        <Button fx:id="loadRandomSetBButton" alignment="CENTER_RIGHT" contentDisplay="RIGHT" font="$x2" mnemonicParsing="false" onAction="#loadRandom" prefWidth="228.0" text="...random" textAlignment="LEFT" />
-        <Label contentDisplay="LEFT" text="unload">
-          <graphic>
-            <ImageView fitHeight="12.0" fitWidth="12.0" pickOnBounds="true" preserveRatio="true">
-              <image>
-                <Image url="@img/glyphicons_210_left_arrow.png" />
-              </image>
-            </ImageView>
-          </graphic>
-        </Label>
-        <HBox id="HBox" alignment="CENTER" spacing="5.0">
-          <children>
-            <Button fx:id="unloadAllSetBButton" alignment="CENTER_LEFT" font="$x2" mnemonicParsing="false" onAction="#unloadAll" prefWidth="58.0" text="all" />
-            <Button id="unloadAllSetAButton" fx:id="unloadSelectedSetBButton" alignment="CENTER_LEFT" contentDisplay="LEFT" font="$x2" graphicTextGap="0.0" mnemonicParsing="false" onAction="#unloadSelected" prefWidth="89.0" text="selected" />
-          </children>
-        </HBox>
-      </children>
-      <padding>
-        <Insets bottom="5.0" />
-      </padding>
-    </VBox>
-    <BorderPane prefHeight="103.0" prefWidth="180.0" GridPane.columnIndex="6" GridPane.rowIndex="1">
-      <bottom>
-        <Button id="openFileButton" fx:id="runButton" alignment="BOTTOM_CENTER" cancelButton="false" defaultButton="true" disable="true" font="$x2" mnemonicParsing="false" onAction="#compute" prefHeight="18.0" prefWidth="130.0" text="Run" textAlignment="LEFT" wrapText="false" BorderPane.alignment="CENTER" />
-      </bottom>
-      <center>
-        <VBox alignment="TOP_LEFT" prefHeight="80.0" prefWidth="341.0" spacing="10.0" BorderPane.alignment="TOP_LEFT">
-          <children>
-            <RadioButton id="fixedWidthSeparatorRadio" fx:id="nanSetToZeroRadio" alignment="TOP_LEFT" contentDisplay="RIGHT" graphicTextGap="8.0" mnemonicParsing="false" prefWidth="-1.0" selected="true" text="Set to Zero">
-              <font>
-                <Font size="13.0" fx:id="x3" />
-              </font>
-              <toggleGroup>
-                <ToggleGroup fx:id="nanStrategy" />
-              </toggleGroup>
-            </RadioButton>
-            <RadioButton id="characterSeparatorRadio" fx:id="nanLeaveRadio" alignment="TOP_LEFT" contentDisplay="RIGHT" disable="true" font="$x3" graphicTextGap="20.0" mnemonicParsing="false" prefWidth="-1.0" selected="false" text="Leave" toggleGroup="$nanStrategy" underline="false" />
-          </children>
-          <padding>
-            <Insets top="5.0" />
-          </padding>
-        </VBox>
-      </center>
-      <padding>
-        <Insets bottom="5.0" left="5.0" right="5.0" />
-      </padding>
-    </BorderPane>
-    <Label alignment="CENTER_LEFT" prefWidth="544.0" text="Handle NaN Values" GridPane.columnIndex="6" GridPane.rowIndex="0" />
-    <Label alignment="CENTER_LEFT" prefWidth="544.0" text="Limits" underline="false" visible="false" GridPane.columnIndex="5" GridPane.rowIndex="0" />
-    <GridPane GridPane.columnIndex="5" GridPane.rowIndex="1">
-      <children>
-        <Label contentDisplay="RIGHT" text="Time lag min" visible="false" wrapText="true" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="0">
-          <tooltip>
-            <Tooltip text="Defines the lower limit of the time lag range to compute in each window." />
-          </tooltip>
-        </Label>
-        <TextField id="windowSizeText" fx:id="timeLagMinText" alignment="TOP_RIGHT" prefWidth="45.0" text="-10" visible="false" GridPane.columnIndex="1" GridPane.rowIndex="0" />
-        <TextField id="windowSizeText" fx:id="timeLagMaxText" alignment="TOP_RIGHT" prefWidth="45.0" text="10" visible="false" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-        <Label contentDisplay="RIGHT" text="max" visible="false" wrapText="true" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="1">
-          <tooltip>
-            <Tooltip text="Defines the upper limit of the time lag range to compute in each window." />
-          </tooltip>
-        </Label>
-        <Label contentDisplay="RIGHT" text="Window size" wrapText="true" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="2">
-          <tooltip>
-            <Tooltip text="Defines the size of the windows in which the time series are shifted and cross correlated." />
-          </tooltip>
-        </Label>
-        <TextField fx:id="windowSizeText" alignment="TOP_RIGHT" prefWidth="45.0" text="20" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-      </children>
-      <columnConstraints>
-        <ColumnConstraints hgrow="SOMETIMES" maxWidth="118.0" minWidth="10.0" prefWidth="89.0" />
-        <ColumnConstraints hgrow="SOMETIMES" maxWidth="73.0" minWidth="10.0" prefWidth="61.0" />
-      </columnConstraints>
-      <rowConstraints>
-        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-      </rowConstraints>
-    </GridPane>
-  </children>
+    </Label>
+    <TextField fx:id="timeLagMinText" alignment="TOP_RIGHT" prefWidth="45.0" text="-10" visible="true" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+    <Label contentDisplay="RIGHT" text="max" visible="true" wrapText="true" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="3">
+      <tooltip>
+        <Tooltip text="Defines the upper limit of the time lag range to compute in each window." />
+      </tooltip>
+    </Label>
+    <TextField fx:id="timeLagMaxText" alignment="TOP_RIGHT" prefWidth="45.0" text="10" visible="true" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+  </GridPane>
+  <BorderPane prefHeight="103.0" prefWidth="180.0" GridPane.columnIndex="6" GridPane.rowIndex="1">
+    <bottom>
+      <Button id="openFileButton" fx:id="runButton" alignment="BOTTOM_CENTER" cancelButton="false" defaultButton="true" disable="true" focusTraversable="true" font="$x2" mnemonicParsing="false" onAction="#compute" prefHeight="18.0" prefWidth="130.0" text="Run" textAlignment="LEFT" wrapText="false" BorderPane.alignment="CENTER" />
+    </bottom>
+    <center>
+      <VBox alignment="TOP_LEFT" prefHeight="80.0" prefWidth="341.0" spacing="10.0" BorderPane.alignment="TOP_LEFT">
+        <padding>
+          <Insets top="5.0" />
+        </padding>
+        <RadioButton id="fixedWidthSeparatorRadio" fx:id="nanSetToZeroRadio" alignment="TOP_LEFT" contentDisplay="RIGHT" graphicTextGap="8.0" mnemonicParsing="false" prefWidth="-1.0" selected="true" text="Set to Zero">
+          <font>
+            <Font size="13.0" fx:id="x3" />
+          </font>
+          <toggleGroup>
+            <ToggleGroup fx:id="nanStrategy" />
+          </toggleGroup>
+        </RadioButton>
+        <RadioButton id="characterSeparatorRadio" fx:id="nanLeaveRadio" alignment="TOP_LEFT" contentDisplay="RIGHT" disable="true" font="$x3" graphicTextGap="20.0" mnemonicParsing="false" prefWidth="-1.0" selected="false" text="Leave" toggleGroup="$nanStrategy" underline="false" />
+      </VBox>
+    </center>
+    <padding>
+      <Insets bottom="5.0" left="5.0" right="5.0" />
+    </padding>
+  </BorderPane>
   <columnConstraints>
     <ColumnConstraints fillWidth="true" hgrow="ALWAYS" maxWidth="1.7976931348623157E308" minWidth="100.0" prefWidth="-1.0" />
     <ColumnConstraints hgrow="ALWAYS" maxWidth="101.0" minWidth="100.0" prefWidth="63.0" />

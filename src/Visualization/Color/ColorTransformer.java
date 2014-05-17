@@ -7,13 +7,13 @@ import java.lang.Float;
 import Visualization.Color.Datatype.*;
 
 
-public class ColorTransformer {
+class ColorTransformer {
 	//Color color;
 
-	public ColorTransformer(){};
-	
-	//Color color;
-	public static float dealNaN(float num){
+	public ColorTransformer(){}
+
+    //Color color;
+	private static float dealNaN(float num){
 		float dealed = num;
 		if(Float.isNaN(num)){
 			dealed = (float)0.0;
@@ -21,14 +21,14 @@ public class ColorTransformer {
 		return dealed;
 	}
 	
-	public static float dealInfinite(float num){
+	private static float dealInfinite(float num){
 		float dealed = num;
 		if(Float.isInfinite(num)){
 			dealed = (float)255.0;
 		}
 		return dealed;
 	}
-	public static Color rgba2xyz(Color color){
+	private static Color rgba2xyz(Color color){
         	if(color.type != ColorType.RGBA){
         		Throwable ta = new Throwable("expected color type is RGBA!");
     	    	ta.getMessage();
@@ -63,7 +63,7 @@ public class ColorTransformer {
 		return luv2lch(xyz2luv(rgba2xyz(color)));
 	}
     
-	public static Color xyz2rgba(Color color){
+	private static Color xyz2rgba(Color color){
         	if(color.type != ColorType.XYZ){
         		Throwable ta = new Throwable("expected color type is XYZ!");
     	    	ta.getMessage();
@@ -106,7 +106,7 @@ public class ColorTransformer {
         	return new Color(ColorType.RGBA, r, g, b);
 	}
     
-	public static Color xyz2luv(Color color){
+	private static Color xyz2luv(Color color){
         	if(color.type != ColorType.XYZ){	
         		Throwable ta = new Throwable("expected color type is XYZ!");
     	    	ta.getMessage();
@@ -145,7 +145,7 @@ public class ColorTransformer {
         	return new Color(ColorType.LUV, l, u, v);
     	}
 		
-	public static Color luv2xyz(Color color){
+	private static Color luv2xyz(Color color){
         if(color.type != ColorType.LUV){
         	Throwable ta = new Throwable("expected color type is LUV!");
     	    ta.getMessage();
@@ -180,7 +180,7 @@ public class ColorTransformer {
         	return new Color(ColorType.XYZ, x, y, z);
 	}
     
-	public static Color luv2lch(Color color){
+	private static Color luv2lch(Color color){
         if(color.type != ColorType.LUV){
         	Throwable ta = new Throwable("expected color type is LUV!");
     	    ta.getMessage();
@@ -203,7 +203,7 @@ public class ColorTransformer {
 		return new Color(ColorType.LCH, l, c, h);
 	}
     
-	public static Color lch2luv(Color color){
+	private static Color lch2luv(Color color){
         	if(color.type != ColorType.LCH){
         		Throwable ta = new Throwable("expected color type is LCH!");
     	    	ta.getMessage();

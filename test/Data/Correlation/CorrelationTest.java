@@ -21,31 +21,6 @@ import org.junit.Test;
 @Ignore
 public class CorrelationTest extends DFTTest {
 
-    @Test
-    /** Tests the brute force correlation computation. */
-    public void testBruteForceCC(){
-        System.out.println("bruteForceCC");
-        
-        // input
-        TimeSeries f = new TimeSeries(new double[]{ 2, 3,-1, 1, 0, 0, 0});
-        TimeSeries g = new TimeSeries(new double[]{ 0, 0, 0, 1, 4, 2,-1});
-
-        // output
-        TimeSeries initialF = new TimeSeries(new double[]{ 2, 3,-1, 1, 0, 0, 0});
-        TimeSeries initialG = new TimeSeries(new double[]{ 0, 0, 0, 1, 4, 2,-1});
-        TimeSeries expected = new TimeSeries(new double[]{1,3,1,11,15,1,-2});
-        TimeSeries resultBrute = DFT.bruteForceCrossCorrelation(f,g);
-        
-//        System.out.println("DFT result:\n"+DFT.correlationCoefficient(f, g, 7));
-//        System.out.println("BRUTE result:\n"+resultBrute);
-        
-        // check results are correct
-        assertTrue(expected.equivalent(resultBrute));
-        
-        // check initial data is not altered
-        assertTrue(initialF.equivalent(f));
-        assertTrue(initialG.equivalent(g));
-    }
 
     @Test
     // A unit impulse at t = 0 and a unit impulse at t = 1 correlate with value one at lag tau = 1 and zero elsewhere
@@ -78,9 +53,9 @@ public class CorrelationTest extends DFTTest {
         System.out.println("windowedCrossCorrelation");
         TimeSeries f = new TimeSeries(new double[]{1, 0, 0, 0, 1, 0, 0});
         TimeSeries g = new TimeSeries(new double[]{1, 0, 0, 0, 0, 1, 0});
-        CorrelationMatrix expected = new CorrelationMatrix(new CorrelogramMetadata(f, g, 4, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED));
-        expected.append(new Column(ComplexSequence.create(new double[]{1, 0, 0, 0}, new double[4]), 0));
-        expected.append(new Column(ComplexSequence.create(new double[]{0, 1, 0}, new double[3]), 4));
+        CorrelationMatrix expected = new CorrelationMatrix(new CorrelationMetadata(f, g, 4, -2, 2, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED, 1));
+        expected.append(new Column(ComplexSequence.create(new double[]{1, 0, 0, 0}, new double[4]), 0, 0));
+        expected.append(new Column(ComplexSequence.create(new double[]{0, 1, 0}, new double[3]), 4, 0));
         CorrelationMatrix result = DFT.crossCorrelation(f, g, 4);
         assertEquals(expected, result);
     }

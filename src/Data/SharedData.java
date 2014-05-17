@@ -3,10 +3,9 @@ package Data;
 import Data.Correlation.CorrelationMatrix;
 import java.awt.Point;
 import java.util.Observable;
-import javafx.beans.property.IntegerProperty;
+
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -20,14 +19,14 @@ import javafx.geometry.Rectangle2D;
 public class SharedData extends Observable {
 
     /** The globally available time series. */
-    public DataModel dataModel = new DataModel();
+    public final DataModel dataModel = new DataModel();
     
     /** each time series in input set A will be cross correlated with each time series in input set B */
-    public ObservableList<TimeSeries> correlationSetA = FXCollections.observableArrayList(), 
-                                      correlationSetB = FXCollections.observableArrayList();
+    public final ObservableList<TimeSeries> correlationSetA = FXCollections.observableArrayList();
+    public final ObservableList<TimeSeries> correlationSetB = FXCollections.observableArrayList();
     
     /** time series for which a preview shall be rendered (e.g. selected in the loaded series list) */
-    public ObservableList<TimeSeries> previewTimeSeries = FXCollections.observableArrayList();
+    public final ObservableList<TimeSeries> previewTimeSeries = FXCollections.observableArrayList();
     
     /** Represents the current min/max time lag. The minimum is stored in getX() the maximum is stored in getY() */
     private final ObjectProperty<Point2D> timeLagBounds = new ReadOnlyObjectWrapper<>(new Point2D(-10,10));
@@ -60,6 +59,11 @@ public class SharedData extends Observable {
         int x = getHighlightedCell().x;
         if(x < 0 || x >= getCorrelationMatrix().getResultItems().size()) return null;
         return getCorrelationMatrix().getResultItems().get(x);
+    }
+
+    /** Returns the length of all time series. Is assummed to be equal for all time series. */
+    public int getTimeSeriesLength(){
+        return correlationSetA.get(0).getDataItems().length;
     }
     
     

@@ -32,7 +32,7 @@ public class TimeSeriesChart extends CanvasChart {
     
     private final IntegerProperty drawEachNthDataPoint = new SimpleIntegerProperty(1);
     public final void setDrawEachNthDataPoint(int step){ drawEachNthDataPoint.set(step); }
-    public final int getDrawEachNthDataPoint(){ return drawEachNthDataPoint.get(); }
+    final int getDrawEachNthDataPoint(){ return drawEachNthDataPoint.get(); }
     public final IntegerProperty drawEachNthDataPointProperty(){ return drawEachNthDataPoint; }
 
     public TimeSeriesChart(){
@@ -57,22 +57,23 @@ public class TimeSeriesChart extends CanvasChart {
 
         Column activeColumn = sharedData.getActiveColumn();
         if(activeColumn != null){
-            double activeWindowMin = activeColumn.windowXOffset;
+            double activeWindowMin = activeColumn.windowStartIndex;
             int activeColumnLength = activeColumn.mean.length;
             double activeWindowMax = activeWindowMin + activeColumnLength;
-            int activeTimeLag = CorrelationMatrix.splitLag(sharedData.getHighlightedCell().y, activeColumnLength);
 
             gc.setStroke(Color.YELLOW);
             gc.strokeRect(xAxis.toScreen(activeWindowMin), 0, xAxis.toScreen(activeWindowMax)-xAxis.toScreen(activeWindowMin), getHeight());
         }
-        
-        Random randomColors = new Random(0);
+
+
+        // draw each set
         Color setBColor = Color.web("#4333ff").deriveColor(0, 1, 1, 0.5);
         for (Map.Entry<Color, ObservableList<TimeSeries>> coloredSet : seriesSets.entrySet()) {
-            // slightly different stroke width for each set
+
             gc.setStroke(coloredSet.getKey());
-            gc.setLineWidth(randomColors.nextDouble()+1);
-            
+            gc.setLineWidth(1.5);
+
+            // draw each time series
             for (TimeSeries ts : coloredSet.getValue()) {
                 
                 ComplexSequence data = ts.getDataItems();
@@ -80,17 +81,17 @@ public class TimeSeriesChart extends CanvasChart {
                 
                 boolean nextIsInWindow = false, lastIsInWindow = false; // whether the next/last point are within a highlight window (shifted by time lag and wrapped)
                 boolean xIsWrapped = false, lastXIsWrapped = false;
-                for (int i = 1 * step; i < data.re.length; i += step) {
+                for (int i = step; i < data.re.length; i += step) {
                     
                     double x = data.re[i];
                     double y = data.im[i];
                     
                     // shift only those in correlation set B
                     if(coloredSet.getKey().equals(setBColor) && activeColumn != null){
-                        double activeWindowMin = activeColumn.windowXOffset;
+                        double activeWindowMin = activeColumn.windowStartIndex;
                         int activeColumnLength = activeColumn.mean.length;
                         double activeWindowMax = activeWindowMin + activeColumnLength;
-                        int activeTimeLag = CorrelationMatrix.splitLag(sharedData.getHighlightedCell().y, activeColumnLength);
+                        int activeTimeLag = sharedData.getHighlightedCell().y;
                         if(x >= activeWindowMin && x <= activeWindowMax){
                             x -= activeTimeLag;
                             xIsWrapped = x < activeWindowMin || x > activeWindowMax;

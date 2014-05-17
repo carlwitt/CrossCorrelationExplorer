@@ -1,128 +1,134 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.net.*?>
-<?import java.util.*?>
-<?import javafx.collections.*?>
-<?import javafx.geometry.*?>
-<?import javafx.scene.*?>
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
-<?import javafx.scene.image.*?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.*?>
-
-<GridPane fx:id="filePane" gridLinesVisible="false" maxWidth="1.7976931348623157E308" minHeight="0.0" prefHeight="119.0" prefWidth="-1.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.FileInputController">
-  <children>
-    <Label alignment="CENTER" prefWidth="667.0" text="Input file" textAlignment="LEFT" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-    <Label alignment="CENTER" prefWidth="544.0" text="Data Separator" GridPane.columnIndex="1" GridPane.rowIndex="0" />
-    <ListView fx:id="availableList" focusTraversable="true" prefHeight="-1.0" prefWidth="130.0" style="-fx-background-insets: 0;&#10;" GridPane.columnIndex="2" GridPane.rowIndex="1" />
-    <ListView fx:id="loadedList" prefHeight="-1.0" prefWidth="130.0" style="-fx-background-insets: 0;" GridPane.columnIndex="4" GridPane.rowIndex="1" />
-    <VBox alignment="TOP_CENTER" disable="false" fillWidth="true" prefHeight="223.0" prefWidth="101.0" spacing="3.0" GridPane.columnIndex="3" GridPane.rowIndex="1">
-      <children>
+<?import javafx.scene.text.Font?>
+<GridPane fx:id="filePane" gridLinesVisible="false" maxWidth="1.7976931348623157E308" minHeight="0.0" prefHeight="119.0"
+          prefWidth="-1.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2"
+          fx:controller="Gui.FileInputController">
+    <columnConstraints>
+        <ColumnConstraints hgrow="SOMETIMES" maxWidth="150.0" minWidth="10.0" prefWidth="197.0"/>
+        <ColumnConstraints fillWidth="false" hgrow="SOMETIMES" maxWidth="150.0" minWidth="10.0" prefWidth="151.0"/>
+        <ColumnConstraints hgrow="ALWAYS" maxWidth="1.7976931348623157E308" minWidth="10.0" percentWidth="-1.0"
+                           prefWidth="-1.0"/>
+        <ColumnConstraints hgrow="SOMETIMES" maxWidth="100.0" minWidth="10.0" prefWidth="100.0"/>
+        <ColumnConstraints fillWidth="true" hgrow="ALWAYS" maxWidth="1.7976931348623157E308" minWidth="10.0"
+                           percentWidth="-1.0" prefWidth="-1.0"/>
+    </columnConstraints>
+    <rowConstraints>
+        <RowConstraints maxHeight="22.0" prefHeight="22.0" vgrow="SOMETIMES"/>
+        <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" prefHeight="149.0" vgrow="SOMETIMES"/>
+    </rowConstraints>
+    <Label alignment="CENTER" prefWidth="667.0" text="Input file" textAlignment="LEFT" GridPane.columnIndex="0"
+           GridPane.rowIndex="0"/>
+    <Label alignment="CENTER" prefWidth="544.0" text="Data Separator" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+    <ListView fx:id="availableList" focusTraversable="true" prefHeight="-1.0" prefWidth="130.0"
+              style="-fx-background-insets: 0;&#10;" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+    <ListView fx:id="loadedList" prefHeight="-1.0" prefWidth="130.0" style="-fx-background-insets: 0;"
+              GridPane.columnIndex="4" GridPane.rowIndex="1"/>
+    <VBox alignment="TOP_CENTER" disable="false" fillWidth="true" prefHeight="223.0" prefWidth="101.0" spacing="3.0"
+          GridPane.columnIndex="3" GridPane.rowIndex="1">
+        <padding>
+            <Insets bottom="5.0"/>
+        </padding>
         <Label contentDisplay="RIGHT" text="load">
-          <graphic>
-            <ImageView fitHeight="12.0" fitWidth="12.0" pickOnBounds="true" preserveRatio="true">
-              <image>
-                <Image url="@img/glyphicons_211_right_arrow.png" />
-              </image>
-            </ImageView>
-          </graphic>
+            <graphic>
+                <ImageView fitHeight="12.0" fitWidth="12.0" pickOnBounds="true" preserveRatio="true">
+                    <Image url="@img/glyphicons_211_right_arrow.png"/>
+                </ImageView>
+            </graphic>
         </Label>
         <HBox id="HBox" alignment="CENTER" spacing="5.0">
-          <children>
-            <Button alignment="CENTER_LEFT" mnemonicParsing="false" onAction="#loadSelected" prefWidth="67.0" text="selected">
-              <font>
-                <Font size="11.0" fx:id="x2" />
-              </font>
+            <Button alignment="CENTER_LEFT" mnemonicParsing="false" onAction="#loadSelected" prefWidth="67.0"
+                    text="selected">
+                <font>
+                    <Font size="11.0" fx:id="x2"/>
+                </font>
             </Button>
-            <Button fx:id="loadAllButton" alignment="CENTER_LEFT" font="$x2" minWidth="25.0" mnemonicParsing="false" onAction="#loadAll" prefWidth="34.0" text="all" />
-          </children>
+            <Button fx:id="loadAllButton" alignment="CENTER_LEFT" font="$x2" minWidth="25.0" mnemonicParsing="false"
+                    onAction="#loadAll" prefWidth="34.0" text="all"/>
         </HBox>
-        <Button alignment="CENTER_LEFT" contentDisplay="RIGHT" font="$x2" mnemonicParsing="false" onAction="#loadRandom" prefWidth="228.0" text="random..." textAlignment="LEFT" />
+        <Button alignment="CENTER_LEFT" contentDisplay="RIGHT" font="$x2" mnemonicParsing="false"
+                onAction="#loadRandom" prefWidth="228.0" text="random..." textAlignment="LEFT"/>
         <Label text="unload">
-          <graphic>
-            <ImageView fitHeight="12.0" fitWidth="12.0" pickOnBounds="true" preserveRatio="true">
-              <image>
-                <Image url="@img/glyphicons_210_left_arrow.png" />
-              </image>
-            </ImageView>
-          </graphic>
+            <graphic>
+                <ImageView fitHeight="12.0" fitWidth="12.0" pickOnBounds="true" preserveRatio="true">
+                    <Image url="@img/glyphicons_210_left_arrow.png"/>
+                </ImageView>
+            </graphic>
         </Label>
         <HBox id="HBox" alignment="CENTER" spacing="5.0">
-          <children>
-            <Button alignment="CENTER_LEFT" font="$x2" mnemonicParsing="false" onAction="#unloadAll" prefWidth="58.0" text="all" />
-            <Button alignment="CENTER_LEFT" font="$x2" mnemonicParsing="false" onAction="#unloadSelected" prefWidth="89.0" text="selected" />
-          </children>
+            <Button alignment="CENTER_LEFT" font="$x2" mnemonicParsing="false" onAction="#unloadAll" prefWidth="58.0"
+                    text="all"/>
+            <Button alignment="CENTER_LEFT" font="$x2" mnemonicParsing="false" onAction="#unloadSelected"
+                    prefWidth="89.0" text="selected"/>
         </HBox>
-      </children>
-      <padding>
-        <Insets bottom="5.0" />
-      </padding>
     </VBox>
-    <Label alignment="CENTER" maxWidth="1.7976931348623157E308" prefWidth="300.0" text="Available Time Series in File" textAlignment="CENTER" GridPane.columnIndex="2" GridPane.hgrow="ALWAYS" GridPane.rowIndex="0" />
-    <Label alignment="CENTER" maxWidth="1.7976931348623157E308" prefWidth="300.0" text="Loaded for Working" GridPane.columnIndex="4" GridPane.rowIndex="0" />
+    <Label alignment="CENTER" maxWidth="1.7976931348623157E308" prefWidth="300.0" text="Available Time Series in File"
+           textAlignment="CENTER" GridPane.columnIndex="2" GridPane.hgrow="ALWAYS" GridPane.rowIndex="0"/>
+    <Label alignment="CENTER" maxWidth="1.7976931348623157E308" prefWidth="300.0" text="Loaded for Working"
+           GridPane.columnIndex="4" GridPane.rowIndex="0"/>
     <BorderPane prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="0" GridPane.rowIndex="1">
-      <bottom>
-        <Button fx:id="openFileButton" alignment="BOTTOM_CENTER" font="$x2" mnemonicParsing="false" onAction="#selectFile" prefHeight="10.0" prefWidth="200.0" text="Select…" textAlignment="LEFT" wrapText="false" />
-      </bottom>
-      <center>
-        <Label fx:id="selectedFileLabel" alignment="TOP_CENTER" prefHeight="68.79998779296875" prefWidth="140.0" text="" textOverrun="LEADING_ELLIPSIS" wrapText="true" />
-      </center>
-      <padding>
-        <Insets bottom="5.0" left="5.0" right="5.0" />
-      </padding>
+        <bottom>
+            <Button fx:id="openFileButton" alignment="BOTTOM_CENTER" font="$x2" mnemonicParsing="false"
+                    onAction="#selectFile" prefHeight="10.0" prefWidth="200.0" text="Select…" textAlignment="LEFT"
+                    wrapText="false"/>
+        </bottom>
+        <center>
+            <Label fx:id="selectedFileLabel" alignment="TOP_CENTER" prefHeight="68.79998779296875" prefWidth="140.0"
+                   text="" textOverrun="LEADING_ELLIPSIS" wrapText="true"/>
+        </center>
+        <padding>
+            <Insets bottom="5.0" left="5.0" right="5.0"/>
+        </padding>
     </BorderPane>
     <BorderPane prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
-      <bottom>
-        <Button id="openFileButton" fx:id="loadButton" alignment="BOTTOM_CENTER" defaultButton="true" disable="true" font="$x2" mnemonicParsing="false" onAction="#loadFile" prefHeight="10.0" prefWidth="303.0" text="Load" textAlignment="LEFT" wrapText="false" />
-      </bottom>
-      <center>
-        <VBox alignment="TOP_CENTER" prefHeight="240.0" prefWidth="162.0" spacing="2.0">
-          <children>
-            <RadioButton fx:id="fixedWidthSeparatorRadio" contentDisplay="RIGHT" font="$x2" graphicTextGap="8.0" mnemonicParsing="false" prefWidth="400.0" selected="true" text="Fixed Width">
-              <graphic>
-                <TextField fx:id="fixedWidthSeparatorText" prefWidth="40.0" promptText="" style="" text="16" />
-              </graphic>
-              <toggleGroup>
-                <ToggleGroup fx:id="separatorSelection" />
-              </toggleGroup>
-              <tooltip>
-                <Tooltip autoHide="true" style="" text="Use a fixed number of characters to separate text file rows into single numbers." />
-              </tooltip>
-            </RadioButton>
-            <RadioButton fx:id="tabSeparatorRadio" font="$x2" mnemonicParsing="false" prefWidth="372.0" selected="false" text="Tab" toggleGroup="$separatorSelection">
-              <tooltip>
-                <Tooltip text="Split lines into number strings along each tab character." />
-              </tooltip>
-            </RadioButton>
-            <RadioButton fx:id="characterSeparatorRadio" contentDisplay="RIGHT" font="$x2" graphicTextGap="20.0" mnemonicParsing="false" prefWidth="307.0" selected="false" text="Character" toggleGroup="$separatorSelection" underline="false">
-              <graphic>
-                <TextField fx:id="characterSeparatorText" editable="true" prefWidth="40.0" promptText="" />
-              </graphic>
-              <tooltip>
-                <Tooltip text="Split lines into number strings along specified character." />
-              </tooltip>
-            </RadioButton>
-          </children>
-          <padding>
-            <Insets />
-          </padding>
-        </VBox>
-      </center>
-      <padding>
-        <Insets bottom="5.0" left="5.0" right="5.0" />
-      </padding>
+        <bottom>
+            <Button id="openFileButton" fx:id="loadButton" alignment="BOTTOM_CENTER" defaultButton="true" disable="true"
+                    font="$x2" mnemonicParsing="false" onAction="#loadFile" prefHeight="10.0" prefWidth="303.0"
+                    text="Load" textAlignment="LEFT" wrapText="false"/>
+        </bottom>
+        <center>
+            <VBox alignment="TOP_CENTER" prefHeight="240.0" prefWidth="162.0" spacing="2.0">
+                <padding>
+                    <Insets/>
+                </padding>
+                <RadioButton fx:id="fixedWidthSeparatorRadio" contentDisplay="RIGHT" font="$x2" graphicTextGap="8.0"
+                             mnemonicParsing="false" prefWidth="400.0" selected="true" text="Fixed Width">
+                    <graphic>
+                        <TextField fx:id="fixedWidthSeparatorText" prefWidth="40.0" promptText="" style="" text="16"/>
+                    </graphic>
+                    <toggleGroup>
+                        <ToggleGroup fx:id="separatorSelection"/>
+                    </toggleGroup>
+                    <tooltip>
+                        <Tooltip autoHide="true" style=""
+                                 text="Use a fixed number of characters to separate text file rows into single numbers."/>
+                    </tooltip>
+                </RadioButton>
+                <RadioButton fx:id="tabSeparatorRadio" font="$x2" mnemonicParsing="false" prefWidth="372.0"
+                             selected="false" text="Tab" toggleGroup="$separatorSelection">
+                    <tooltip>
+                        <Tooltip text="Split lines into number strings along each tab character."/>
+                    </tooltip>
+                </RadioButton>
+                <RadioButton fx:id="characterSeparatorRadio" contentDisplay="RIGHT" font="$x2" graphicTextGap="20.0"
+                             mnemonicParsing="false" prefWidth="307.0" selected="false" text="Character"
+                             toggleGroup="$separatorSelection" underline="false">
+                    <graphic>
+                        <TextField fx:id="characterSeparatorText" editable="true" prefWidth="40.0" promptText=""/>
+                    </graphic>
+                    <tooltip>
+                        <Tooltip text="Split lines into number strings along specified character."/>
+                    </tooltip>
+                </RadioButton>
+            </VBox>
+        </center>
+        <padding>
+            <Insets bottom="5.0" left="5.0" right="5.0"/>
+        </padding>
     </BorderPane>
-  </children>
-  <columnConstraints>
-    <ColumnConstraints hgrow="SOMETIMES" maxWidth="150.0" minWidth="10.0" prefWidth="197.0" />
-    <ColumnConstraints fillWidth="false" hgrow="SOMETIMES" maxWidth="150.0" minWidth="10.0" prefWidth="151.0" />
-    <ColumnConstraints hgrow="ALWAYS" maxWidth="1.7976931348623157E308" minWidth="10.0" percentWidth="-1.0" prefWidth="-1.0" />
-    <ColumnConstraints hgrow="SOMETIMES" maxWidth="100.0" minWidth="10.0" prefWidth="100.0" />
-    <ColumnConstraints fillWidth="true" hgrow="ALWAYS" maxWidth="1.7976931348623157E308" minWidth="10.0" percentWidth="-1.0" prefWidth="-1.0" />
-  </columnConstraints>
-  <rowConstraints>
-    <RowConstraints maxHeight="22.0" prefHeight="22.0" vgrow="SOMETIMES" />
-    <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" prefHeight="149.0" vgrow="SOMETIMES" />
-  </rowConstraints>
 </GridPane>

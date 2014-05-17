@@ -10,7 +10,7 @@ import Visualization.Color.Datatype.Color;
  * @author juanzi
  *
  */
-public class ColorManager {
+class ColorManager {
 
 
 //! An object of the class is responsible for managing the display colors.
@@ -19,34 +19,34 @@ public class ColorManager {
 */
   
     
-	protected int _number_of_colors;                                              /*!< Number of colors generated for one subpalette */
-	protected float _max_lightness;                                               /*!< Maximum value for lightness */
-	protected float _max_chroma;                                                  /*!< Maximum value for chroma */
-	protected float _max_hue;                                                     /*!< Maximum value for hue */
+	private int _number_of_colors;                                              /*!< Number of colors generated for one subpalette */
+	private float _max_lightness;                                               /*!< Maximum value for lightness */
+	private float _max_chroma;                                                  /*!< Maximum value for chroma */
+	private float _max_hue;                                                     /*!< Maximum value for hue */
     
-	protected float _lightness;                                                   /*!< Lightness value */
-	protected float _chroma;                                                      /*!< Chroma value */
+	private float _lightness;                                                   /*!< Lightness value */
+	private float _chroma;                                                      /*!< Chroma value */
 	protected float _hue;                                                         /*!< Hue value */
     
-	protected float _C;                                                           /*!< C value (implicit constant) */
-	protected float _B;                                                           /*!< B value (implicit constant) */
+	private float _C;                                                           /*!< C value (implicit constant) */
+	private float _B;                                                           /*!< B value (implicit constant) */
     
-	Color _p_0;                                                         /*!< 2D Bezier color p0 */
-	Color _p_1;                                                         /*!< 2D Bezier color p1 (most saturated color) */
-	Color _p_2;                                                         /*!< 2D Bezier color p2 */
+	private Color _p_0;                                                         /*!< 2D Bezier color p0 */
+	private Color _p_1;                                                         /*!< 2D Bezier color p1 (most saturated color) */
+	private Color _p_2;                                                         /*!< 2D Bezier color p2 */
     
-	Color _q_0;                                                         /*!< 2D Bezier color q0 */
-	Color _q_1;                                                         /*!< 2D Bezier color q1 */
-	Color _q_2;                                                         /*!< 2D Bezier color q2 */
+	private Color _q_0;                                                         /*!< 2D Bezier color q0 */
+	private Color _q_1;                                                         /*!< 2D Bezier color q1 */
+	private Color _q_2;                                                         /*!< 2D Bezier color q2 */
     
-	Vector<Vector<Color> > _color_palettes;                             /*!< Available color palettes */
-	Vector<Color> _current_color_palette;                               /*!< Current color palette */
+	private Vector<Vector<Color> > _color_palettes;                             /*!< Available color palettes */
+	private Vector<Color> _current_color_palette;                               /*!< Current color palette */
     
-	Color _grid_color;                                                  /*!< Predefined color for grid lines (implicit constant) */
-	Color _polygon_color; 												/*!< Predefined color for polygonal lines (implicit constant) */
+	private Color _grid_color;                                                  /*!< Predefined color for grid lines (implicit constant) */
+	private Color _polygon_color; 												/*!< Predefined color for polygonal lines (implicit constant) */
 	
 	// constructor
-	public ColorManager(){}
+    ColorManager(){}
 	
 	
     //! Method responsible for initializing the 2D Bezier colors.

@@ -20,9 +20,6 @@ import javafx.scene.layout.Pane;
  */
 public class MainWindowController implements Initializable {
 
-    // data that all views use in common (e.g. the time series)
-    private SharedData sharedData;
-    
     // progress display layer
     @FXML private Pane progressPane;
     @FXML private ProgressBar progressBar;
@@ -38,14 +35,14 @@ public class MainWindowController implements Initializable {
     @FXML private CorrelogramController correlationViewController;
     
     
-    protected ProgressLayer progressLayer;
+    private ProgressLayer progressLayer;
     /**
      * Called after the controls have been parsed from the XML. Sets up logic and components that could not be set up using the GUI builder.
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        
-        sharedData = new SharedData();
+
+        SharedData sharedData = new SharedData();
         
         progressLayer = new ProgressLayer();
         progressLayer.overlay = progressPane;
@@ -77,17 +74,18 @@ public class MainWindowController implements Initializable {
 //                
 //            }
 //        });
-//        fileInputController.fileModel.setFilename("/Users/macbookdata/inputDataExcerpt.txt");
+          fileInputController.fileModel.setFilename("/Users/macbookdata/IdeaProjects/CrossCorrelationExplorer/data/simpleNumbers.txt");
+//        fileInputController.fileModel.setFilename("./data/inputData.txt");
 //        fileInputController.fileModel.setFilename("/Users/macbookdata/lianhua_realisations.txt");
 //        fileInputController.fileModel.setFilename("/Users/macbookdata/dongge_realisations.txt");
 //        fileInputController.fileModel.setFilename("/Users/macbookdata/inputDataSimple.txt");
 //        fileInputController.fileModel.setFilename("/Users/macbookdata/inputDataTab.txt");
         
-//        fileInputController.loadButton.fire();
+        fileInputController.loadButton.fire();
 
         // Todo: remove test support
-//        inputTabPane.getSelectionModel().select(1);
-        
+        inputTabPane.getSelectionModel().select(1);
+
     }
     
 }

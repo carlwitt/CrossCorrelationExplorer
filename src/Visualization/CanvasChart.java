@@ -26,14 +26,15 @@ import javafx.scene.transform.Translate;
  * TODO: much of the hassle aligning the canvas to the axes stems from the fact that axis labels grow to the right, thus pushing the axis to right when increasing precision. Custom axes rendering code should be written (using the scene graph to profit from simplified interaction, e.g. via picking)
  * @author Carl Witt
  */
-public abstract class CanvasChart extends AnchorPane {
+abstract class CanvasChart extends AnchorPane {
     
     /** This is used to draw the data. Much faster than adding all the data elements to the scene graph. */
-    public Canvas chartCanvas;
+    public final Canvas chartCanvas;
     
-    protected AnchorPane canvasPane;
+    private AnchorPane canvasPane;
     
-    protected NumberAxis xAxis, yAxis;
+    NumberAxis xAxis;
+    NumberAxis yAxis;
     /** This field summarizes the current x- and y-axis bounds. The x-axis lower bound and range is stored in minX and width, and 
      * the y-axis lower bound and range is stored in minY and height. Listening to changes in this property is simpler and faster than listening
      * for all four (x and y, lower and upper) properties.
@@ -41,17 +42,18 @@ public abstract class CanvasChart extends AnchorPane {
      * ! This field is currently updated manually! I.e. when changing the axis bounds, it is the developers duty to update this field as well.
      * On the other hand, the axis bounds listen to the axisRanges object and adapt their bounds automatically when the object has changed. (see constructor)
      */
-    protected ObjectProperty<Rectangle2D> axesRanges = new SimpleObjectProperty<>();
+    final ObjectProperty<Rectangle2D> axesRanges = new SimpleObjectProperty<>();
 
     /** Toggles for basic interaction; */
-    public boolean allowScroll = true, allowZoom = true;
+    boolean allowScroll = true;
+    boolean allowZoom = true;
     
     /** The position where the mouse was when the drag (pan gesture) started. Allows for live panning. */
-    Point2D dragStartMousePositionSC;
+    private Point2D dragStartMousePositionSC;
     /** The axis lower and upper bounds when the pan gesture was started. Allows for live panning. */
-    Rectangle2D dragStartAxisBoundsDC;
+    private Rectangle2D dragStartAxisBoundsDC;
     
-    public CanvasChart(){
+    CanvasChart(){
         
         xAxis = new NumberAxis();
         yAxis = new NumberAxis();
@@ -104,10 +106,10 @@ public abstract class CanvasChart extends AnchorPane {
     }
     
     /** Core rendering routine. Draws the chart data. */
-    public abstract void drawContents();
+    protected abstract void drawContents();
     
     /** @return An affine transformation that transforms points in data space (e.g. year/temperature) into coordinates on the canvas */
-    protected Affine dataToScreen() {
+    Affine dataToScreen() {
         Transform translate = new Translate(-xAxis.getLowerBound(), -yAxis.getLowerBound());
         double sx = chartCanvas.getWidth() / (xAxis.getUpperBound() -xAxis.getLowerBound());
         double sy = chartCanvas.getHeight() / (yAxis.getUpperBound() -yAxis.getLowerBound());
@@ -119,7 +121,7 @@ public abstract class CanvasChart extends AnchorPane {
     
     // pan --------------------------------------------------------------------
     
-    EventHandler<MouseEvent> recordDragStartPosition = new EventHandler<MouseEvent>() {
+    private final EventHandler<MouseEvent> recordDragStartPosition = new EventHandler<MouseEvent>() {
         @Override
         public void handle(MouseEvent t) {
             if(allowScroll && t.getButton() == MouseButton.PRIMARY){
@@ -130,7 +132,7 @@ public abstract class CanvasChart extends AnchorPane {
     };
     
     
-    EventHandler<MouseEvent> panViaMouseDrag = new EventHandler<MouseEvent>() {
+    private final EventHandler<MouseEvent> panViaMouseDrag = new EventHandler<MouseEvent>() {
         @Override
         public void handle(MouseEvent t) {
             
@@ -164,7 +166,7 @@ public abstract class CanvasChart extends AnchorPane {
     
     // zoom --------------------------------------------------------------------
     
-    EventHandler<ScrollEvent> zoomWithMouseWheel = new EventHandler<ScrollEvent>() {
+    private final EventHandler<ScrollEvent> zoomWithMouseWheel = new EventHandler<ScrollEvent>() {
         
         @Override
         public void handle(ScrollEvent t) {
@@ -203,7 +205,7 @@ public abstract class CanvasChart extends AnchorPane {
     // element positioning  ----------------------------------------------------
     
     // resizes the canvas elements and positions them
-    ChangeListener<Bounds> resizeComponents = new ChangeListener<Bounds>() {
+    private final ChangeListener<Bounds> resizeComponents = new ChangeListener<Bounds>() {
         
         @Override
         public void changed(ObservableValue<? extends Bounds> ov, Bounds t, Bounds t1) {

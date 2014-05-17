@@ -36,10 +36,10 @@ import javafx.util.converter.NumberStringConverter;
 public class NumberAxis extends Canvas {
     
     /** The axis label that is displayed below the tick marks and tick labels. */
-    protected String label;
+    private String label;
 
     /** Defines whether the axis is rendered horizontally or vertically. */
-    protected boolean isHorizontal = true;
+    private boolean isHorizontal = true;
     
     /** Translates data domain coordinates into screen coordinates. */
     private Affine dataToScreen;
@@ -54,14 +54,14 @@ public class NumberAxis extends Canvas {
         MANUAL   
     }
     /** How to find the data values at which to place tick marks. */
-    protected TICK_GENERATION_METHOD tickPositionType = TICK_GENERATION_METHOD.AUTO;
-    protected Font tickLabelFont = new Font(10d);
+    private TICK_GENERATION_METHOD tickPositionType = TICK_GENERATION_METHOD.AUTO;
+    private final Font tickLabelFont = new Font(10d);
     /** Converts numbers to tick label strings. */
-    NumberStringConverter tickLabelFormatter = new NumberStringConverter(Locale.ENGLISH);
+    private NumberStringConverter tickLabelFormatter = new NumberStringConverter(Locale.ENGLISH);
     
     /** Specifies the minimum distance between two successive ticks. 
      * E.g. set to one for an axis that displays years to avoid tick marks at 1940.5 */
-    protected double minTickUnit = Double.NEGATIVE_INFINITY;
+    private double minTickUnit = Double.NEGATIVE_INFINITY;
 
     public NumberAxis(){
     
@@ -76,7 +76,7 @@ public class NumberAxis extends Canvas {
     /**
      * @return an affine transform that can be used to convert between data and screen coordinates.
      */
-    protected Affine computeDataToScreen() {
+    Affine computeDataToScreen() {
 
         double offsetX, offsetY;    // translate
         double scaleX, scaleY;
@@ -114,7 +114,6 @@ public class NumberAxis extends Canvas {
     /**
      * Transforms a screen coordinate along the axis into a data coordinate position. 
      * @param value The pixel coordinate (usually in range [0, width])
-     * @return 
      */
     public double fromScreen(double value){
         try {
@@ -206,7 +205,7 @@ public class NumberAxis extends Canvas {
      * @param g The graphics context to draw on.
      * @param value The data coordinates value to put a tick mark on.
      */
-    protected void drawTickMark(GraphicsContext g, double value){
+    void drawTickMark(GraphicsContext g, double value){
         
         double tickMarkLength = 3;
         g.setLineWidth(1);
@@ -320,15 +319,15 @@ public class NumberAxis extends Canvas {
         return niceStep;
     }
 
-    
+
+    private final FontLoader fontLoader = com.sun.javafx.tk.Toolkit.getToolkit().getFontLoader();
     /**
      * Computes the width and height of string. Used to align tick labels.
      * @param string The string to draw.
      * @param font The font name and font size in which the string is drawn.
      * @return The width (x component) and height (y component) of the string if plotted.
      */
-    FontLoader fontLoader = com.sun.javafx.tk.Toolkit.getToolkit().getFontLoader();
-    protected Point2D renderedTextSize(String string, Font font){
+    Point2D renderedTextSize(String string, Font font){
         return new Point2D(fontLoader.computeStringWidth(string, font),fontLoader.getFontMetrics(font).getLineHeight());
     }
     
@@ -359,7 +358,7 @@ public class NumberAxis extends Canvas {
     
     /** Defines a value (data coordinates) that is used to derive the set of tick marks. */
     private final DoubleProperty tickOrigin = new SimpleDoubleProperty(0);
-    public double getTickOrigin() { return tickOrigin.get(); }
+    double getTickOrigin() { return tickOrigin.get(); }
     public DoubleProperty tickOriginProperty() { return tickOrigin; }
     public void setTickOrigin(double value) { tickOrigin.set(value); }
 

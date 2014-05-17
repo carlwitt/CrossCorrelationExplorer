@@ -1,7 +1,5 @@
 package Visualization;
 
-import Data.ComplexSequence;
-import Data.Correlation.CorrelationMatrix;
 import Data.SharedData;
 import java.text.DecimalFormat;
 import javafx.beans.value.ChangeListener;
@@ -24,12 +22,12 @@ import javafx.util.converter.NumberStringConverter;
 public class CorrelogramController {
 
     /** Data that is shared between views to implement linked views. */
-    SharedData sharedData;          
+    private SharedData sharedData;
 
     protected MultiDimensionalPaintScale paintScale;
     
-    protected Correlogram correlogram = new Correlogram(new MultiDimensionalPaintScale(1200, 400));
-    protected CorrelogramLegend legend = new CorrelogramLegend(new MultiDimensionalPaintScale(1200, 400));
+    private final Correlogram correlogram = new Correlogram(new MultiDimensionalPaintScale(1200, 400));
+    protected final CorrelogramLegend legend = new CorrelogramLegend(new MultiDimensionalPaintScale(1200, 400));
     
     @FXML VBox correlogramView;
     @FXML StackPane correlogramPane;
@@ -98,8 +96,8 @@ public class CorrelogramController {
     } // set shared data
     
     // report changes in the correlogram axis bounds to sync the time series view
-    ChangeListener<Object> pushCorrelogramNavigation = new ChangeListener<Object>() {
-        @Override public void changed(ObservableValue<? extends Object> ov, Object t, Object t1) {
+    private final ChangeListener<Object> pushCorrelogramNavigation = new ChangeListener<Object>() {
+        @Override public void changed(ObservableValue<?> ov, Object t, Object t1) {
 
             Rectangle2D oldTimeSeriesBounds = sharedData.getVisibleTimeRange();
 

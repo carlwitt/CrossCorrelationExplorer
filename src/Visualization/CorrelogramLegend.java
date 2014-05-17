@@ -2,6 +2,7 @@ package Visualization;
 
 import Data.ComplexSequence;
 import Data.Correlation.CorrelationMatrix;
+import Data.Correlation.CorrelogramStore;
 import Data.SharedData;
 import com.sun.javafx.tk.FontLoader;
 import java.awt.Point;
@@ -13,7 +14,6 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Point2D;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.image.PixelWriter;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
@@ -27,21 +27,26 @@ import javafx.util.converter.NumberStringConverter;
  */
 public class CorrelogramLegend extends CanvasChart {
     
-    double xValueMin, xValueMax, yValueMin, yValueMax;
-    double xTickUnit, yTickUnit;
+    private double xValueMin;
+    private double xValueMax;
+    private double yValueMin;
+    private double yValueMax;
+    private double xTickUnit;
+    private double yTickUnit;
 
     /** These values are shown explicitly in the legend using a small cross mark. 
      * Used to make reading the correlogram easier by displaying the mean and std dev under the mouse pointer. */
-    Double highlightMean, highlightStdDev;
-    NumberStringConverter legendTipConverter = new NumberStringConverter(Locale.ENGLISH);
+    private Double highlightMean;
+    private Double highlightStdDev;
+    private final NumberStringConverter legendTipConverter = new NumberStringConverter(Locale.ENGLISH);
     
     /** The number of colors used to encode the mean dimension in the correlation matrix. */
     private final int meanColorResolution = 13;
     /** The number of colors used to encode the standard deviation dimension in the correlation matrix. */
     private final int standardDeviationColorResolution = 4;
     
-    SharedData sharedData;
-    private Font legendTipFont = new Font(10);
+    private SharedData sharedData;
+    private final Font legendTipFont = new Font(10);
     
     public CorrelogramLegend(MultiDimensionalPaintScale paintScale){
         this.paintScale = paintScale;
@@ -64,7 +69,7 @@ public class CorrelogramLegend extends CanvasChart {
             }
         });
         
-        // show the exact value of the currently highlighted cell
+        // when the use hovers over a correlogram cell, extract the mean and standard deviation of this cell for display in the legend (legendTip)
         sharedData.highlightedCellProperty().addListener(new ChangeListener() {
             @Override public void changed(ObservableValue ov, Object t, Object t1) {
                 Point activeCell = (Point) t1;
@@ -72,10 +77,9 @@ public class CorrelogramLegend extends CanvasChart {
                 if(activeCell.x >= 0 && activeCell.x < sharedData.getCorrelationMatrix().getResultItems().size() ){
                     CorrelationMatrix.Column activeColumn = sharedData.getCorrelationMatrix().getResultItems().get(activeCell.x);
                     // check whether the row exists
-                    if(activeCell.y > 0 && activeCell.y < activeColumn.mean.length){
+                    if(activeCell.y >= 0 && activeCell.y < activeColumn.mean.length){
                         highlightMean = activeColumn.mean[activeCell.y];
                         highlightStdDev = activeColumn.stdDev[activeCell.y];
-//System.out.println(String.format("highlight mean %s stddev %s", highlightMean, highlightStdDev));
                         drawContents();
                     }
                 }
@@ -87,14 +91,16 @@ public class CorrelogramLegend extends CanvasChart {
     
     /** This contains the sample values to display when rendering the legend. */
     private final ObjectProperty<CorrelationMatrix> valueRangeSample = new SimpleObjectProperty<>();
-    public CorrelationMatrix getValueRangeSample(){return valueRangeSample.get();}
+    CorrelationMatrix getValueRangeSample(){return valueRangeSample.get();}
     public ObjectProperty<CorrelationMatrix> valueRangeProperty(){return valueRangeSample;}
-    public void setValueRangeSample(CorrelationMatrix m){
+    void setValueRangeSample(CorrelationMatrix m){
         
         valueRangeSample.set(m);
-        
-        paintScale.setLowerBounds(m.getMeanMinValue(), m.getStdDevMinValue());
-        paintScale.setUpperBounds(m.getMeanMaxValue(), m.getStdDevMaxValue());
+
+        // center mean zero at the middle of the axis
+        double meanRangeMax = Math.max(Math.abs(m.getMeanMinValue()), Math.abs(m.getMeanMaxValue()));
+        paintScale.setLowerBounds(-meanRangeMax, m.getStdDevMinValue());
+        paintScale.setUpperBounds(meanRangeMax, m.getStdDevMaxValue());
         
         // adjust display bounds
         xValueMin = m.getMeanMinValue();
@@ -113,8 +119,11 @@ public class CorrelogramLegend extends CanvasChart {
     }
     
     // encodes 2D values in a single color
-    MultiDimensionalPaintScale paintScale;
+    private MultiDimensionalPaintScale paintScale;
 
+    /**
+     * Draws the legend and the
+     */
     @Override public void drawContents() {
 
         GraphicsContext gc = chartCanvas.getGraphicsContext2D();
@@ -132,10 +141,12 @@ public class CorrelogramLegend extends CanvasChart {
         List<CorrelationMatrix.Column> columns = matrix.getResultItems();
 
         // configure paintscale
-        paintScale.setLowerBounds(matrix.getMeanMinValue(), matrix.getStdDevMinValue());
-        paintScale.setUpperBounds(matrix.getMeanMaxValue(), matrix.getStdDevMaxValue());
+        // center mean zero at the middle of the axis
+        double meanRangeMax = Math.max(Math.abs(matrix.getMeanMinValue()), Math.abs(matrix.getMeanMaxValue()));
+        paintScale.setLowerBounds(-meanRangeMax, matrix.getStdDevMinValue());
+        paintScale.setUpperBounds(meanRangeMax, matrix.getStdDevMaxValue());
 
-        // for each column of the matrix (or, equivalently, for each time window)
+        // for each column of the matrix (or, equivalently, for each distinct mean value)
         for (int i = 0; i < columns.size(); i++) {
             CorrelationMatrix.Column column = columns.get(i);
             
@@ -159,12 +170,6 @@ public class CorrelogramLegend extends CanvasChart {
                 gc.fillRect(ulc.getX(), ulc.getY(), brc.getX() - ulc.getX(), ulc.getY() - brc.getY());
                 gc.strokeRect(ulc.getX(), ulc.getY(), brc.getX() - ulc.getX(), ulc.getY() - brc.getY());
 
-//System.out.println(String.format(
-//        "translate data block (%s,%s) (%s, %s) to "
-//      + "%s, %s m=%s s=%s to color %s",
-//        minX, minY, minX+width, minY+height, 
-//        ulc, brc, column.mean[lag], column.stdDev[lag], gc.getFill()));
-                
             }
         }
         drawLegendTip(gc, dataToScreen);
@@ -174,34 +179,51 @@ public class CorrelogramLegend extends CanvasChart {
 
     }
 
+    /**
+     * Highlights the position of a certain mean and standard deviation by drawing a cross and rendering the values as text.
+     * @param gc canvas to draw on
+     * @param dataToScreen transformation between legend (mean, std dev) and screen coordinates
+     */
     private void drawLegendTip(GraphicsContext gc, Affine dataToScreen) {
-        // draw mean, standard deviation that is under the mouse cursor
-        if(highlightMean != null && highlightStdDev != null){
-            double crossSize = 5;
-            gc.save();
-            gc.setFont(legendTipFont);
-            gc.setStroke(Color.BLACK);
-            gc.setLineWidth(1);
-            Point2D sc = dataToScreen.transform(highlightMean, highlightStdDev);
-            gc.strokeLine(sc.getX()-crossSize, sc.getY(), sc.getX()+crossSize, sc.getY());
-            gc.strokeLine(sc.getX(), sc.getY()-crossSize, sc.getX(), sc.getY()+crossSize);
-            String label = String.format("μ = %s, σ = %s", legendTipConverter.toString(highlightMean), legendTipConverter.toString(highlightStdDev));
-            Point2D labelSize = renderedTextSize(label, legendTipFont);
-            
-            double xOffset = sc.getX() < getWidth()/2 ? 
-                    crossSize :                         // right
-                    - crossSize - labelSize.getX(),     // left
-                    yOffset = sc.getY() < getHeight()/2 ?
-                    crossSize + labelSize.getY() :      // bottom
-                    - crossSize;                          // top
-            
-            gc.setStroke(Color.WHITE); gc.setLineWidth(2);
-            gc.strokeText(label, sc.getX()+xOffset, sc.getY()+yOffset);
-            gc.setStroke(Color.BLACK); gc.setLineWidth(1);
-            gc.strokeText(label, sc.getX()+xOffset, sc.getY()+yOffset);
-            gc.restore();
-//System.out.println(String.format("%s %s", label, sc));
-        }
+
+        // handle null and NaN
+        if(highlightMean == null || highlightStdDev == null) return;
+        String meanString = Double.isNaN(highlightMean) ? "Not a Number" : legendTipConverter.toString(highlightMean);
+        String stdDevString = Double.isNaN(highlightStdDev) ? "Not a Number" : legendTipConverter.toString(highlightStdDev);
+
+        // cross size in pixels
+        double crossSize = 5;
+        gc.save();
+        gc.setFont(legendTipFont);
+        gc.setStroke(Color.BLACK);
+        gc.setLineWidth(1);
+
+        // compute position in legend
+        highlightMean = Double.isNaN(highlightMean) ? 0 : highlightMean;
+        highlightStdDev = Double.isNaN(highlightStdDev) ? 0 : highlightStdDev;
+        Point2D sc = dataToScreen.transform(highlightMean, highlightStdDev);
+
+        // draw crosshair
+        gc.strokeLine(sc.getX()-crossSize, sc.getY(), sc.getX()+crossSize, sc.getY());
+        gc.strokeLine(sc.getX(), sc.getY()-crossSize, sc.getX(), sc.getY()+crossSize);
+
+        // position label relative to the crosshair (left/right, top/bottom) where the most space is available
+
+        String label = String.format("μ = %s, σ = %s", meanString, stdDevString);
+        Point2D labelSize = renderedTextSize(label, legendTipFont);
+
+        double xOffset = sc.getX() < getWidth()/2 ?
+                crossSize :                         // right
+                - crossSize - labelSize.getX();     // left
+        double yOffset = sc.getY() < getHeight()/2 ?
+                crossSize + labelSize.getY() :      // bottom
+                - crossSize;                        // top
+
+        gc.setStroke(Color.WHITE); gc.setLineWidth(2);
+        gc.strokeText(label, sc.getX()+xOffset, sc.getY()+yOffset);
+        gc.setStroke(Color.BLACK); gc.setLineWidth(1);
+        gc.strokeText(label, sc.getX()+xOffset, sc.getY()+yOffset);
+        gc.restore();
     }
 
     /** 
@@ -214,17 +236,10 @@ public class CorrelogramLegend extends CanvasChart {
         
         CorrelationMatrix m = sharedData.getCorrelationMatrix();
         if(m == null) return null;
-        
-//        if(meanResolution < 2){
-//            meanResolution = 2;
-//            System.err.println("Number of mean value samples must be at least two.");
-//        }
-//        if(stdDevResolution < 2){
-//            stdDevResolution = 2;
-//            System.err.println("Number of mean value samples must be at least two.");
-//        }
-        
-        double[] meanRange = new double[]{m.getMeanMinValue(), m.getMeanMaxValue()};
+
+        // center mean zero at the middle of the axis
+        double meanRangeMax = Math.max(Math.abs(m.getMeanMinValue()), Math.abs(m.getMeanMaxValue()));
+        double[] meanRange = new double[]{-meanRangeMax, meanRangeMax};
         double[] stdDevRange = new double[]{m.getStdDevMinValue(), m.getStdDevMaxValue()};
         
         // if the lower bound equals the upper bound, use only one return value in that dimension
@@ -249,7 +264,7 @@ public class CorrelogramLegend extends CanvasChart {
             // each column has the length of the standard deviation resolution
             double[] meanValues = new double[stdDevResolution];
             double[] stdDevValues = new double[stdDevResolution];
-            
+
             for (int j = 0; j < stdDevResolution; j++) {
                 
                 double currentStdDev = stdDevRange[0] + j*stdDevStep;
@@ -259,7 +274,7 @@ public class CorrelogramLegend extends CanvasChart {
                 
             }
             ComplexSequence columnValues = ComplexSequence.create(meanValues, stdDevValues);
-            result.append(new CorrelationMatrix.Column(columnValues, currentMean));
+            result.append(new CorrelationMatrix.Column(columnValues, i, i));
         }   
 //System.out.println(String.format("value range sample: %s", result));
         return result;
@@ -295,15 +310,15 @@ public class CorrelogramLegend extends CanvasChart {
     public void setPaintScale(MultiDimensionalPaintScale paintScale) {
         this.paintScale = paintScale;
     }
-    
+
+    private final FontLoader fontLoader = com.sun.javafx.tk.Toolkit.getToolkit().getFontLoader();
     /**
      * Computes the width and height of string. Used to align tick labels.
      * @param string The string to draw.
      * @param font The font name and font size in which the string is drawn.
      * @return The width (x component) and height (y component) of the string if plotted.
      */
-    FontLoader fontLoader = com.sun.javafx.tk.Toolkit.getToolkit().getFontLoader();
-    protected Point2D renderedTextSize(String string, Font font){
+    Point2D renderedTextSize(String string, Font font){
         return new Point2D(fontLoader.computeStringWidth(string, font),fontLoader.getFontMetrics(font).getLineHeight());
     }
     

@@ -5,17 +5,8 @@
 package Data;
 
 import Data.ComplexSequence;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import org.junit.Ignore;
 
 /**
  *
@@ -23,9 +14,9 @@ import org.junit.Ignore;
  */
 public class ComplexSequenceTest {
     
-    ComplexSequence decRe = ComplexSequence.create(new double[]{6,5,4,3,2,1}, new double[6]);
-    ComplexSequence incIm = ComplexSequence.create(new double[6], new double[]{-1,0,1,2,3,4});
-    ComplexSequence single = ComplexSequence.create(new double[]{-11}, new double[]{11});
+    final ComplexSequence decRe = ComplexSequence.create(new double[]{6,5,4,3,2,1}, new double[6]);
+    final ComplexSequence incIm = ComplexSequence.create(new double[6], new double[]{-1,0,1,2,3,4});
+    final ComplexSequence single = ComplexSequence.create(new double[]{-11}, new double[]{11});
         
     /**
      * Test of roundPrecision method, of class ComplexSequence.

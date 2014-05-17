@@ -1,6 +1,5 @@
 package Data;
 
-import java.util.Arrays;
 import java.util.TreeMap;
 import javafx.collections.FXCollections;
 import javafx.collections.MapChangeListener;
@@ -16,7 +15,7 @@ public class DataModel extends TreeMap<Integer, TimeSeries> {
     /** Contains the mappings between integer IDs (1-based) and the time series object references */
     public final ObservableMap<Integer, TimeSeries> timeSeries = FXCollections.observableMap(this);
     /** This observable list contains the indices of all currently loaded time series. It can be used to monitor the currently loaded time series via a simply integer list view display (no conversion between time series and their indices necessary). */
-    private ObservableList<TimeSeries> loadedSeries = FXCollections.observableArrayList();
+    private final ObservableList<TimeSeries> loadedSeries = FXCollections.observableArrayList();
     
     public DataModel(){
         timeSeries.addListener(new MapChangeListener<Integer, TimeSeries>() {

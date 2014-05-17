@@ -20,11 +20,11 @@ import java.awt.Color;
  *  In particular the HSL color space makes it easier change the Tone or Shade
  *  of a color by adjusting the luminance value.
  */
-public class HSLColor
+class HSLColor
 {
-	private Color rgb;
-	private float[] hsl;
-	private float alpha;
+	private final Color rgb;
+	private final float[] hsl;
+	private final float alpha;
 
 	/**
 	 *  Create a HSLColor object using an RGB Color object.
@@ -59,7 +59,7 @@ public class HSLColor
 	 *  @param l     the Lumanance percentage between 0 - 100
 	 *  @param alpha the alpha value between 0 - 1
 	 */
-	public HSLColor(float h, float s, float l, float alpha)
+    private HSLColor(float h, float s, float l, float alpha)
 	{
 		hsl = new float[] {h, s, l};
 		this.alpha = alpha;
@@ -84,7 +84,7 @@ public class HSLColor
 	 *  @param hsl  array containing HSL values
 	 *  @param alpha the alpha value between 0 - 1
 	 */
-	public HSLColor(float[] hsl, float alpha)
+    private HSLColor(float[] hsl, float alpha)
 	{
 		this.hsl = hsl;
 		this.alpha = alpha;
@@ -247,7 +247,7 @@ public class HSLColor
 	 *
 	 *  @return an array containing the 3 HSL values.
 	 */
-	public static float[] fromRGB(Color color)
+	private static float[] fromRGB(Color color)
 	{
 		//  Get RGB values in the range 0 - 1
 
@@ -280,7 +280,7 @@ public class HSLColor
 
 		//  Calculate the Saturation
 
-		float s = 0;
+		float s;
 
 		if (max == min)
 			s = 0;
@@ -318,7 +318,7 @@ public class HSLColor
 	 *
 	 *  @return the RGB Color object
 	 */
-	public static Color toRGB(float[] hsl, float alpha)
+	private static Color toRGB(float[] hsl, float alpha)
 	{
 		return toRGB(hsl[0], hsl[1], hsl[2], alpha);
 	}
@@ -332,7 +332,7 @@ public class HSLColor
 	 *
 	 *  @return the RGB Color object
 	 */
-	public static Color toRGB(float h, float s, float l)
+	private static Color toRGB(float h, float s, float l)
 	{
 		return toRGB(h, s, l, 1.0f);
 	}
@@ -347,7 +347,7 @@ public class HSLColor
 	 *
 	 *  @return the RGB Color object
 	 */
-	public static Color toRGB(float h, float s, float l, float alpha)
+	private static Color toRGB(float h, float s, float l, float alpha)
 	{
 		if (s <0.0f || s > 100.0f)
 		{
@@ -374,7 +374,7 @@ public class HSLColor
 		s /= 100f;
 		l /= 100f;
 
-		float q = 0;
+		float q;
 
 		if (l < 0.5)
 			q = l * (1 + s);

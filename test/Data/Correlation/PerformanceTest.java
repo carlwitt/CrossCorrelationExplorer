@@ -5,12 +5,9 @@
 package Data.Correlation;
 
 import Data.Correlation.DFT;
-import Data.ComplexSequence;
-import Data.Correlation.CorrelationMatrix.Column;
 import Data.TimeSeries;
 import java.util.Random;
 import org.junit.Test;
-import static org.junit.Assert.*;
 import org.junit.Ignore;
 
 /**

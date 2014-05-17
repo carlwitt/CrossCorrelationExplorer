@@ -1,49 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.net.*?>
-<?import java.util.*?>
-<?import javafx.collections.*?>
-<?import javafx.geometry.*?>
-<?import javafx.scene.*?>
-<?import javafx.scene.canvas.*?>
-<?import javafx.scene.chart.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.image.*?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.Tooltip?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.shape.*?>
-<?import javafx.scene.text.*?>
-
-<VBox fx:id="correlogramView" prefHeight="326.9999000000025" prefWidth="1119.0" style="-fx-background-color: gainsboro;" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Visualization.CorrelogramController">
-  <children>
-    <StackPane fx:id="correlogramPane" alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="-1.0" prefWidth="-1.0" style="/*-fx-background-color:white;*/" VBox.vgrow="ALWAYS" />
-    <StackPane fx:id="legendPane" maxHeight="160.0" maxWidth="1.7976931348623157E308" prefHeight="160.0" prefWidth="-1.0" style="/*-fx-background-color:blue;*/" VBox.vgrow="NEVER">
-      <children>
-        <Button cancelButton="false" contentDisplay="GRAPHIC_ONLY" defaultButton="false" graphicTextGap="0.0" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" onAction="#resetView" prefHeight="20.0" prefWidth="20.0" style=";" text="" translateX="-20.0" StackPane.alignment="BOTTOM_LEFT">
-          <graphic>
-            <ImageView fitHeight="14.0" fitWidth="14.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" smooth="false">
-              <image>
-                <Image url="@../Gui/img/glyphicons_214_resize_small.png" />
-              </image>
-            </ImageView>
-          </graphic>
-          <tooltip>
-            <Tooltip text="Reset correlogram view" />
-          </tooltip>
+<VBox fx:id="correlogramView" prefHeight="326.9999000000025" prefWidth="1119.0" style="-fx-background-color: gainsboro;"
+      styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2"
+      fx:controller="Visualization.CorrelogramController">
+    <StackPane fx:id="correlogramPane" alignment="CENTER" maxHeight="1.7976931348623157E308"
+               maxWidth="1.7976931348623157E308" prefHeight="-1.0" prefWidth="-1.0"
+               style="/*-fx-background-color:white;*/" VBox.vgrow="ALWAYS"/>
+    <StackPane fx:id="legendPane" maxHeight="160.0" maxWidth="1.7976931348623157E308" prefHeight="160.0"
+               prefWidth="-1.0" style="/*-fx-background-color:blue;*/" VBox.vgrow="NEVER">
+        <Button cancelButton="false" contentDisplay="GRAPHIC_ONLY" defaultButton="false" graphicTextGap="0.0"
+                maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false"
+                onAction="#resetView" prefHeight="20.0" prefWidth="20.0" style=";" text="" translateX="-20.0"
+                StackPane.alignment="BOTTOM_LEFT">
+            <graphic>
+                <ImageView fitHeight="14.0" fitWidth="14.0" mouseTransparent="true" pickOnBounds="true"
+                           preserveRatio="true" smooth="false">
+                    <Image url="@../Gui/img/glyphicons_214_resize_small.png"/>
+                </ImageView>
+            </graphic>
+            <tooltip>
+                <Tooltip text="Reset correlogram view"/>
+            </tooltip>
         </Button>
-        <ToggleButton fx:id="linkWithTimeSeriesViewToggle" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" selected="true" text="" translateX="-20.0" translateY="-20.0" StackPane.alignment="BOTTOM_LEFT">
-          <graphic>
-            <ImageView fitHeight="14.0" fitWidth="14.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" smooth="false">
-              <image>
-                <Image url="@../Gui/img/glyphicons_050_link.png" />
-              </image>
-            </ImageView>
-          </graphic>
-          <tooltip>
-            <Tooltip text="Link horizontal zoom and pan with time series view" />
-          </tooltip>
+        <ToggleButton fx:id="linkWithTimeSeriesViewToggle" maxHeight="20.0" maxWidth="20.0" minHeight="20.0"
+                      minWidth="20.0" mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" selected="true"
+                      text="" translateX="-20.0" translateY="-20.0" StackPane.alignment="BOTTOM_LEFT">
+            <graphic>
+                <ImageView fitHeight="14.0" fitWidth="14.0" mouseTransparent="true" pickOnBounds="true"
+                           preserveRatio="true" smooth="false">
+                    <Image url="@../Gui/img/glyphicons_050_link.png"/>
+                </ImageView>
+            </graphic>
+            <tooltip>
+                <Tooltip text="Link horizontal zoom and pan with time series view"/>
+            </tooltip>
         </ToggleButton>
-      </children>
     </StackPane>
-  </children>
 </VBox>

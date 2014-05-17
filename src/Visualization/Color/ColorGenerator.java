@@ -7,7 +7,7 @@ import Visualization.Color.Datatype.*;
  * @author juanzi
  *
  */
-public class ColorGenerator {
+class ColorGenerator {
 	
 	private static float color_contr(float h, float rgba_1, float rgba_2, float rgba_3){
 	float u_r = (4.0f * 0.95047f) / (0.95047f + 15.0f + 3.0f * 1.08883f);

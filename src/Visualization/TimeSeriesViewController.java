@@ -5,7 +5,7 @@ import Data.Correlation.CorrelationMatrix;
 
 import java.text.DecimalFormat;
 import java.util.*;
-import javafx.beans.InvalidationListener;
+
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
@@ -24,12 +24,12 @@ import javafx.util.converter.NumberStringConverter;
  */
 public class TimeSeriesViewController {
     
-    SharedData sharedData;          // data that is shared between the views
+    private SharedData sharedData;          // data that is shared between the views
     
     /** maps a color to each set of time series (for instance the time series in correlation set A, in correlation set B and temporary time series for preview). */
-    HashMap<Color, ObservableList<TimeSeries>> seriesSets = new HashMap<>();
+    private final HashMap<Color, ObservableList<TimeSeries>> seriesSets = new HashMap<>();
     
-    Visualization.TimeSeriesChart timeSeriesChart = new Visualization.TimeSeriesChart();
+    private final Visualization.TimeSeriesChart timeSeriesChart = new Visualization.TimeSeriesChart();
     
     /** controls the level of detail with which time series are drawn.
      * this is important since rendering all series with all points takes very long and is not the main purpose of the software. */
@@ -127,7 +127,7 @@ public class TimeSeriesViewController {
         
     }
     
-    protected void updateTickUnits(){
+    void updateTickUnits(){
         double xRange = timeSeriesChart.xAxis.getUpperBound() - timeSeriesChart.xAxis.getLowerBound(),
                yRange = timeSeriesChart.yAxis.getUpperBound() - timeSeriesChart.yAxis.getLowerBound();
         
@@ -139,7 +139,7 @@ public class TimeSeriesViewController {
     }
     
     /** Adapts tick units and labels. Adapts level of detail slider */
-    ChangeListener<Number> axisRangeChanged = new ChangeListener<Number>() {
+    private final ChangeListener<Number> axisRangeChanged = new ChangeListener<Number>() {
         @Override public void changed(ObservableValue<? extends Number> ov, Number t, Number t1) {
             
             // adjust axes level of detail

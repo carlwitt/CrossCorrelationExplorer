@@ -7,9 +7,9 @@
 package Data;
 
 import Data.TimeSeries;
-import Data.DataModel;
+
 import java.util.Arrays;
-import java.util.Collection;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.MapChangeListener;
@@ -21,7 +21,6 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import static org.junit.Assert.*;
 import org.junit.Ignore;
 
 /**

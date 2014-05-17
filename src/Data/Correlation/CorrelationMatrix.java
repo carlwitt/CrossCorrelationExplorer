@@ -3,7 +3,6 @@ package Data.Correlation;
 import Global.RuntimeConfiguration;
 
 import Data.ComplexSequence;
-import Data.Correlation.CorrelationMatrix.Column;
 import Data.TimeSeries;
 import com.google.common.base.Joiner;
 import java.util.ArrayList;
@@ -11,22 +10,26 @@ import java.util.Arrays;
 import java.util.List;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
+
 /**
- * 
- * TODO: clean up methods that have been introduced to fit the JFreeChart interfaces
+ * The Correlation Matrix aggregates and stores the results of a windowed cross correlation between two sets of time series.
+ * Each matrix is comprised of a list of {@link Data.Correlation.CorrelationMatrix.Column}s.
+ *
  * @author Carl Witt
  */
 public class CorrelationMatrix {
 
     /** Stores the input of the computation. */
-    public CorrelogramMetadata metadata;
+    public final CorrelationMetadata metadata;
     
     /** The column wise output of the computation. */
     List<Column> columns;
     
     /** Minimum and maximum correlation mean across all columns of the matrix. */
-    Double minMean, maxMean;
-    Double minStdDev, maxStdDev;
+    private Double minMean;
+    private Double maxMean;
+    private Double minStdDev;
+    private Double maxStdDev;
     
     public final ComputeService computeService = new ComputeService();
     
@@ -34,7 +37,7 @@ public class CorrelationMatrix {
      * Sets the metadata for a correlation matrix, WITHOUT computing the actual contents (because the data structure is used in different ways).
      * @param metadata The input time series, window size, NaN value handling strategy, etc.
      */
-    public CorrelationMatrix(CorrelogramMetadata metadata) {
+    public CorrelationMatrix(CorrelationMetadata metadata) {
         this.columns = new ArrayList<>();
         this.metadata = metadata;
     }
@@ -52,7 +55,7 @@ public class CorrelationMatrix {
         long before = System.currentTimeMillis();
         for(TimeSeries tsA : metadata.setA){
             for (TimeSeries tsB : metadata.setB) {
-                partialResults[freeSlot++] = CorrelogramStore.getResult(new CorrelogramMetadata(tsA, tsB, metadata.windowSize, metadata.naAction));
+                partialResults[freeSlot++] = CorrelogramStore.getResult(new CorrelationMetadata(tsA, tsB, metadata.windowSize, metadata.tauMin, metadata.tauMax, metadata.naAction, metadata.baseWindowOffset));
 //if(RuntimeConfiguration.VERBOSE) System.out.println(String.format("%d/%d ",freeSlot,partialResults.length));//,partialResults[freeSlot-1]
             }
         }
@@ -94,7 +97,7 @@ public class CorrelationMatrix {
             }
             
             ComplexSequence windowValues = ComplexSequence.create(means,stdDevs);
-            this.columns.add(new Column(windowValues, window.windowXOffset));
+            this.columns.add(new Column(windowValues, window.windowStartIndex, partialResults[0].columns.get(windowIdx).tauMin));
             
         }
         if(RuntimeConfiguration.VERBOSE){
@@ -136,7 +139,7 @@ public class CorrelationMatrix {
                             updateMessage(String.format("Retrieving windowed cross correlation between time series %s and %s.", tsA.getId(), tsB.getId()));
                             updateProgress(processedCCs, partialResults.length);
                             
-                            partialResults[freeSlot++] = CorrelogramStore.getResult(new CorrelogramMetadata(tsA, tsB, metadata.windowSize, metadata.naAction));
+                            partialResults[freeSlot++] = CorrelogramStore.getResult(new CorrelationMetadata(tsA, tsB, metadata.windowSize, metadata.tauMin, metadata.tauMax, metadata.naAction, metadata.baseWindowOffset));
 //if(RuntimeConfiguration.VERBOSE) System.out.println(String.format("%d/%d ",freeSlot,partialResults.length));//,partialResults[freeSlot-1]
                         }
                     }
@@ -184,7 +187,7 @@ public class CorrelationMatrix {
                         }
 
                         ComplexSequence windowValues = ComplexSequence.create(means,stdDevs);
-                        _columns.add(new Column(windowValues, window.windowXOffset));
+                        _columns.add(new Column(windowValues, window.windowStartIndex, partialResults[0].getItembyID(windowIdx).tauMin));
 
                     }
                     if(RuntimeConfiguration.VERBOSE){
@@ -206,77 +209,55 @@ public class CorrelationMatrix {
             
         }
     }
-    
-    public double getMinX(){
-        return columns.get(0).windowXOffset;
+
+    /** @return the index of the first time series value where the first column (time window) starts. */
+    int getStartOffsetInTimeSeries(){
+        if(columns.size() == 0)return 0; // the matrix can have no columns if the winodw size exceeds the length of the time series
+        return columns.get(0).windowStartIndex;
     }
-    public double getMaxX(){
+    /** @return the index of the last time series value of the last column (time window). */
+    int getEndOffsetInTimeSeries(){
+        if(columns.size() == 0)return 0; // the matrix can have no columns if the winodw size exceeds the length of the time series
         Column lastColumn = columns.get(columns.size()-1);
-        return lastColumn.windowXOffset + lastColumn.mean.length;
+        return lastColumn.windowStartIndex + lastColumn.tauMin + lastColumn.mean.length - 1;
+    }
+
+    /** @return the first point in time covered by the matrix. */
+    public double getStartXValueInTimeSeries(){
+        return metadata.setA.get(0).getDataItems().re[getStartOffsetInTimeSeries()];
+    }
+    /** @return the last point in time covered by the matrix. */
+    public double getEndXValueInTimeSeries(){
+        return metadata.setA.get(0).getDataItems().re[getEndOffsetInTimeSeries()];
     }
     
     @Override public String toString(){
         return "Correlation Matrix\n"+Joiner.on("\n").join(columns);
     }
-    
+
+    /** @return the number of columns (=windows) in the matrix. */
     public int getSize() { return columns.size(); }
 
+    /** @return the columns (=windows) in the matrix. */
     public List<Column> getResultItems() { return columns; }
 
     public void append(Column c) { columns.add(c); }
     
-    public CorrelogramMetadata getMetadata(){ return metadata; }
+    public CorrelationMetadata getMetadata(){ return metadata; }
     
     public Column getItembyID(int id) { return columns.get(id); }
-    
-    public double getMean(int window, int timeLag){
-        return columns.get(window).mean[timeLag]; //  == Double.NaN ? 0 : columns.get(window).mean[timeLag];
+
+    /** @return the smallest lag used on any column. */
+    public int minLag(){
+        if(columns.size()==0)return 0;
+        return columns.get(columns.size()-1).tauMin;
     }
-    public double getStdDev(int window, int timeLag){
-        return columns.get(window).stdDev[timeLag]; //  == Double.NaN ? 0 : columns.get(window).mean[timeLag];
+    /** @return the largest lag used on any column */
+    public int maxLag(){
+        if(columns.size()==0)return 0;
+        return columns.get(0).tauMin + columns.get(0).mean.length - 1;
     }
-    
-    
-    
-    /**
-     * Interprets the last half of the possible time lags as negative lags.
-     * A time series of length 6 can be shifted by six different time lags.
-     * lag    0  1  2  3  4  5
-     * split  0  1  2  3 -2 -1
-     * So the largest time lag is equivalent to time lag -1, second last equals -2, etc.
-     * @param timeLag a time lag in range [0..N-1] 
-     * @param numElements the length of the column
-     * @return a time lag in range [-floor(N/2)..ceil((N-1)/2)]
-     */
-    public static int splitLag(int timeLag, int numElements){
-        int splitPoint = (int) Math.ceil(0.5 * (numElements-1));
-        return timeLag > splitPoint ? timeLag - numElements : timeLag;
-    }
-    public static int minLag(int numElements){
-        return (int) -Math.floor(0.5 * (numElements-1));
-    }
-    public static int maxLag(int numElements){
-        return (int) Math.floor(0.5 * numElements);
-    }
-    
-    /** @return the smallest lag (given that the last half of the lags is displayed as negative lags). */
-        public int getMinY(){
-            // lags with tau != 0
-    //        int realLags = getItemCount(0) - 1;
-    //        int positiveLags = (int) Math.ceil(realLags/2.);
-    //        int negativeLags = realLags - positiveLags;
-    //        return -negativeLags;
-            int N = columns.get(0).mean.length;
-            return minLag(N);
-//            return 0;
-        }
-        /** @return the largest lag (given that the last half of the lags is displayed as negative lags). */
-        public int getMaxY(){
-            int N = columns.get(0).mean.length;
-            return maxLag(N);
-//            return columns.get(0).mean.length;
-        }    
-    
+
     public int getItemCount(int window) {
         return columns.get(window).mean.length;
     }
@@ -327,36 +308,42 @@ public class CorrelationMatrix {
     /** Represents one aggregated cross-correlation result within a time window */
     public static class Column  {
 
-        /** Holds the data for this column as sequence of complex numbers. 
+        /**
+         * Holds the data for this column as sequence of complex numbers.
          * The real values are the means and the imaginary values are the standard deviations. 
          */
         private final ComplexSequence values;
         
         /** Aliases for clearer code. Points to the data stored in the values field.
-         * Using the aliases, references to re and im cna be avoided. */
-        public double[] mean;
-        public double[] stdDev;
+         * Using the aliases, references to re and im can be avoided. */
+        public final double[] mean;
+        public final double[] stdDev;
         
         /** Each columns represents the results of a window of the x-axis. This is the x-value where the window starts (where it ends follows from the column length). */
-        public final double windowXOffset;
+        public final int windowStartIndex;
+
+        public final int tauMin;
         
         /**
          * Takes two arrays to represent 2D values (or pairs) as entries of the column
          * @param mean The first dimension of the result values (correlation mean)
          * @param stdDev The second dimension of the result values (correlation standard deviation)
-         * @param windowXOffset see {@link Column#windowXOffset} 
+         * @param windowStartIndex see {@link Data.Correlation.CorrelationMatrix.Column#windowStartIndex}
+         * @param tauMin
          */
-        public Column(double[] mean, double[] stdDev, double windowXOffset) {
+        public Column(double[] mean, double[] stdDev, int windowStartIndex, int tauMin) {
+            this.tauMin = tauMin;
             this.values = ComplexSequence.create(mean, stdDev);
             this.mean = values.re;
             this.stdDev = values.im;
-            this.windowXOffset = windowXOffset;
+            this.windowStartIndex = windowStartIndex;
         }
-        public Column(ComplexSequence cs, double windowXOffset){
+        public Column(ComplexSequence cs, int windowStartIndex, int tauMin){
             this.values = cs;
+            this.tauMin = tauMin;
             this.mean = cs.re;
             this.stdDev = cs.im;
-            this.windowXOffset = windowXOffset;
+            this.windowStartIndex = windowStartIndex;
         }
         
         public double getMeanMin(){ return values.getMin(ComplexSequence.Part.REAL);}
@@ -385,25 +372,29 @@ public class CorrelationMatrix {
                 return false;
             }
             final Column other = (Column) obj;
-            if(this.windowXOffset != other.windowXOffset){
+            if(this.windowStartIndex != other.windowStartIndex){
                 return false;
             }
-            if (!Arrays.equals(this.mean, other.mean)) {
-                return false;
-            }
-            if (!Arrays.equals(this.stdDev, other.stdDev)) {
-                return false;
-            }
+            if(this.tauMin != other.tauMin) return false;
+
+            for (int i = 0; i < this.mean.length; i++)
+                if(Math.abs(this.mean[i]-other.mean[i])>1e-5) return false;
+            for (int i = 0; i < this.stdDev.length; i++)
+                if(Math.abs(this.stdDev[i]-other.stdDev[i])>1e-5) return false;
+//            if (!Arrays.equals(this.mean, other.mean)) return false;
+//            if (!Arrays.equals(this.stdDev, other.stdDev)) return false;
             return true;
         }
 
+        public int getSize() {
+            return values.size();
+        }
     }
 
     
     @Override
     public int hashCode() {
-        int hash = 3;
-        return hash;
+        return 3;
     }
 
     @Override

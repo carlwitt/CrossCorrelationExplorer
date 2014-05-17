@@ -16,8 +16,8 @@ public class LineParser {
     
     private final LineParser.SplitMethod splitMethod;
     
-    public final int columnWidth;
-    public final String separator;
+    private final int columnWidth;
+    private final String separator;
     private final Splitter stringSplitter;
     
     public LineParser(int columnWidth) {
@@ -51,8 +51,7 @@ public class LineParser {
     public double[] splitToDouble(String line) {
         Iterable<String> pieces = stringSplitter.trimResults().split(line); // omitEmptyStrings() would leave gaps in the time series where there should be NaN
         ArrayList<Double> result = new ArrayList<>();
-        for (Iterator<String> it = pieces.iterator(); it.hasNext();) {
-            String trimmedNumber = it.next();
+        for (String trimmedNumber : pieces) {
             try {
                 double parsed = Double.parseDouble(trimmedNumber);
                 result.add(parsed);
@@ -62,8 +61,8 @@ public class LineParser {
         }
         // convert array list to primitive array (.toArray works only for Double)
         double[] result2 = new double[result.size()];
-        for (int i = 0; i < result.size(); result2[i] = result.get(i++)) {
-            ;
+        for (int i = 0; i < result.size(); i++) {
+            result2[i] = result.get(i);
         }
         return result2;
     }

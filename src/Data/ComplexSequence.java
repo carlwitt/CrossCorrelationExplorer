@@ -17,11 +17,11 @@ public class ComplexSequence implements List<Double> {
     /** The precision used to check if two complex sequences are the same. */
     public static final double EQ_COMPARISON_THRESHOLD = 1E-6;
     
-    public static enum Part{REAL, IMAGINARY};
-    
+    public static enum Part{REAL, IMAGINARY}
+
     /** Real and imaginary parts. */
-    public double[] re;
-    public double[] im;
+    public final double[] re;
+    public final double[] im;
     
     public final int length;
     private double[] realMinMax;
@@ -62,7 +62,7 @@ public class ComplexSequence implements List<Double> {
         this.length = imaginaryValues.length;
     }
     
-    public static double[] calcMinMax(double[] array){
+    private static double[] calcMinMax(double[] array){
         
         if(array.length == 0)
             return new double[]{Double.NaN, Double.NaN};
@@ -218,7 +218,7 @@ public class ComplexSequence implements List<Double> {
         
         if(other.im == null && im != null 
                 || im == null && other.im != null 
-                || im.length != other.im.length) return false;
+                || im != null && other.im != null && im.length != other.im.length) return false;
         for (int i = 0; i < im.length; i++)
             if( Math.abs(other.im[i]-im[i]) > EQ_COMPARISON_THRESHOLD ) return false;
         return true;

@@ -39,16 +39,16 @@ public class FileInputController implements Initializable {
     
     // contains shared data between the linked views (data model, selections, brushed, etc.)
     // is set by the main controller on startup
-    SharedData sharedData;
+    private SharedData sharedData;
     
     // time series available in the loaded file. partitioned into available (in file) and loaded (in data model) time series.
-    ObservableList<Integer> availableTimeSeries = FXCollections.observableArrayList();
-    ObservableList<TimeSeries> loadedTimeSeries;
+    private final ObservableList<Integer> availableTimeSeries = FXCollections.observableArrayList();
+    private ObservableList<TimeSeries> loadedTimeSeries;
     
     // data file input
     private File file = null;
-    FileChooser fileChooser = new FileChooser();
-    FileModel fileModel = new FileModel(null, null);
+    private final FileChooser fileChooser = new FileChooser();
+    final FileModel fileModel = new FileModel(null, null);
     
     // progress display layer controls (must be set from parent controller, because it blocks the entire input pane)
     ProgressLayer progressLayer;
@@ -154,7 +154,7 @@ public class FileInputController implements Initializable {
         // activate radio option when focussing the input
         // when selecting a separator radio option, propagate the focus to the input field
         characterSeparatorRadio.focusedProperty().addListener(new ChangeListener<Object>() {
-            @Override public void changed(ObservableValue<? extends Object> ov, Object t, Object t1) {
+            @Override public void changed(ObservableValue<?> ov, Object t, Object t1) {
                 characterSeparatorText.requestFocus();
             }
         });
@@ -220,12 +220,11 @@ public class FileInputController implements Initializable {
                 sharedData.setHighlightedCell(new Point(-2,-2));
                 
                 // TODO: remove test support
-//                loadAllButton.fire();
-//                sharedData.correlationSetA.add(sharedData.dataModel.get(1));
-//                sharedData.correlationSetB.add(sharedData.dataModel.get(2));
+                loadAllButton.fire();
+                sharedData.correlationSetA.add(sharedData.dataModel.get(1));
+                sharedData.correlationSetB.add(sharedData.dataModel.get(2));
 //                sharedData.correlationSetB.add(sharedData.dataModel.get(3));
-                // /TODO
-                
+
                 progressLayer.hide();
             }
         });

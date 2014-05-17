@@ -7,20 +7,17 @@
 package Visualization;
 
 import Data.Correlation.CorrelationMatrix;
-import Data.Correlation.CorrelogramMetadata;
+import Data.Correlation.CorrelationMetadata;
 import Data.Correlation.CrossCorrelation;
-import Data.Correlation.DFT;
 import Data.SharedData;
 import Data.TimeSeries;
 import javafx.embed.swing.JFXPanel;
-import javafx.event.ActionEvent;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import org.junit.Ignore;
 
 /**
  *
@@ -75,7 +72,7 @@ public class CorrelogramControllerTest {
         sharedData.correlationSetB.add(sharedData.dataModel.get(3));
         
         int windowSize = 1;
-        CorrelogramMetadata metadata = new CorrelogramMetadata(sharedData.correlationSetA, sharedData.correlationSetB, windowSize, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED);
+        CorrelationMetadata metadata = new CorrelationMetadata(sharedData.correlationSetA, sharedData.correlationSetB, windowSize, -2, 2, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED, 1);
         CorrelationMatrix correlationMatrix = new CorrelationMatrix(metadata);
         correlationMatrix.compute();
         sharedData.setcorrelationMatrix(correlationMatrix);
@@ -85,9 +82,9 @@ public class CorrelogramControllerTest {
         int stdDevResolution = 3;
         
         CorrelationMatrix expResult = new CorrelationMatrix(null);
-        expResult.append(new CorrelationMatrix.Column(new double[]{1,1,1}, new double[]{0,1,2}, 1));
-        expResult.append(new CorrelationMatrix.Column(new double[]{3.5,3.5,3.5}, new double[]{0,1,2}, 3.5));
-        expResult.append(new CorrelationMatrix.Column(new double[]{6,6,6}, new double[]{0,1,2}, 6));
+        expResult.append(new CorrelationMatrix.Column(new double[]{1,1,1}, new double[]{0,1,2}, 0, 0));
+        expResult.append(new CorrelationMatrix.Column(new double[]{3.5,3.5,3.5}, new double[]{0,1,2}, 1, 0));
+        expResult.append(new CorrelationMatrix.Column(new double[]{6,6,6}, new double[]{0,1,2}, 2, 0));
         
         CorrelationMatrix result = instance.legend.valueRangeSample(meanResolution, stdDevResolution);
         assertEquals(expResult, result);
@@ -108,7 +105,7 @@ public class CorrelogramControllerTest {
         sharedData.correlationSetB.add(sharedData.dataModel.get(1));
         
         int windowSize = 1;
-        CorrelogramMetadata metadata = new CorrelogramMetadata(sharedData.correlationSetA, sharedData.correlationSetB, windowSize, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED);
+        CorrelationMetadata metadata = new CorrelationMetadata(sharedData.correlationSetA, sharedData.correlationSetB, windowSize, -2, 2, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED, 1);
         CorrelationMatrix correlationMatrix = new CorrelationMatrix(metadata);
         correlationMatrix.compute();
         sharedData.setcorrelationMatrix(correlationMatrix);
@@ -118,7 +115,7 @@ public class CorrelogramControllerTest {
         int stdDevResolution = 3;
         
         CorrelationMatrix expResult = new CorrelationMatrix(null);
-        expResult.append(new CorrelationMatrix.Column(new double[]{1}, new double[]{0}, 1));
+        expResult.append(new CorrelationMatrix.Column(new double[]{1}, new double[]{0}, 1, 0));
 
         CorrelationMatrix result = instance.legend.valueRangeSample(meanResolution, stdDevResolution);
         assertEquals(expResult, result);

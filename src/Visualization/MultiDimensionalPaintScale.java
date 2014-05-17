@@ -9,33 +9,37 @@ import java.util.Vector;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 /**
- * Converts value pairs into colors. The first dimension is encoded as a hue value, 
- * the second is encoded by decreasing saturation of the color used in the first dimension.
+ * Converts value pairs into colors. The first dimension is encoded as a hue value, the second is encoded as decreasing saturation.
+ * Inspected project phase 2 (16.5.2014).
  * @author Carl Witt
  */
 public class MultiDimensionalPaintScale 
 {
     
-    /** The two colors that define the range between which colors are interpolated.<br>
+    /**
+     * The two colors that define the range between which colors are interpolated.<br>
      * If the palette is bipolar, the interpolation will be primary color ... white ... secondary color.<br>
-     * If the palette is not bipolar, the interpolation will be primary color ... white */
-    protected Color primaryColor = Color.BLUE, secondaryColor = Color.RED;
+     * If the palette is not bipolar, the interpolation will be primary color ... white
+     */
+    private Color primaryColor = Color.BLUE,
+                  secondaryColor = Color.RED;
 
-    /** Whether the palette is a bipolar color palette. */
-    protected boolean biPolar = true;
+    /** Whether the palette is a bipolar or a unipolar color palette. */
+    private boolean biPolar = true;
     
-    protected Double[] lowerBounds = new Double[2], upperBounds = new Double[2];
+    private Double[] lowerBounds = new Double[2];
+    private Double[] upperBounds = new Double[2];
     
-    /** How many base hue values are used to encode the first dimension. */
-    protected int colorDepth;
+    /** How many discrete hue values are used to encode the first dimension. */
+    private int hueDepth;
     /** How many saturation steps are used to encode the second dimension. */
-    protected int saturationDepth;
-    /** The computed colors. First dimension refers to base color, second to saturation. */
+    private int saturationDepth;
+    /** The computed colors. First dimension refers to saturation, second to hue. */
     private Color colors[][];
     
-    public MultiDimensionalPaintScale(int colorDepth, int saturationDepth){
+    public MultiDimensionalPaintScale(int hueDepth, int saturationDepth){
         
-        this.colorDepth = colorDepth;// == null ? DEFAULT_COLOR_DEPTH : colorDepth;
+        this.hueDepth = hueDepth;// == null ? DEFAULT_COLOR_DEPTH : hueDepth;
         this.saturationDepth  = saturationDepth; //== null ? DEFAULT_SAT_DEPTH : saturationDepth;
 
         compute();
@@ -43,7 +47,7 @@ public class MultiDimensionalPaintScale
     }
     
     /** Uses the state of the palette (primary and secondary color, resolution, bipolar or not) to compute the colors. */
-    protected final void compute(){
+    final void compute(){
         
         // use the color manager to generate an optically optimized gradient between colors
         Color_manager colorManager;
@@ -51,25 +55,26 @@ public class MultiDimensionalPaintScale
         
         if(this.biPolar){
             // even color depth with bipolar scale is not allowed because the color manager always generates two-color scales with an odd number of colors
-            if( colorDepth % 2 == 0 ){ colorDepth++; }
+            if( hueDepth % 2 == 0 ){ hueDepth++; }
             
-            colorManager = new Color_manager((int)Math.ceil((colorDepth+1)/2.f)); 
+            colorManager = new Color_manager((int)Math.ceil((hueDepth +1)/2.f));
             colorManager.addColorPalette(new float[]{
                 (float)primaryColor.getHue(), 
                 (float)secondaryColor.getHue()
             });
             palette = colorManager.getColorPalettes().get(0);
         } else {
-            colorManager = new Color_manager(colorDepth); 
+            colorManager = new Color_manager(hueDepth);
             colorManager.addColorPalette(new float[]{
                 (float)primaryColor.getHue()
             });
             palette = colorManager.reverse(colorManager.getColorPalettes().get(0));
         }
 
-        colors = new Color[this.saturationDepth][this.colorDepth];
+        // allocate new space
+        colors = new Color[this.saturationDepth][this.hueDepth];
         
-        for (int i = 0; i < colorDepth; i++) {
+        for (int i = 0; i < hueDepth; i++) {
             
             for (int j = 0; j < saturationDepth; j++) {
                 Datatype.Color color = palette.get(i);
@@ -77,36 +82,37 @@ public class MultiDimensionalPaintScale
                 // the factor (in range 0..1) by which the saturation is multiplied compared to the base color
                 // the following gives stronger decay in the beginning and a softer decay in the end leading to a visually more continuous saturation loss
                 double satPercent = (double)j/(saturationDepth-1);
-                double saturationReduction = -Math.log(0.45*satPercent+1/Math.E);// 1.f - 0.85 * ( (float)j/(saturationDepth-1) );
+                double saturationReduction = -Math.log(0.45*satPercent+1/Math.E);// some arbitrary function that gives a smooth fallof
                 
                 colors[j][i] = Color
                         .rgb((int)color.dimension_1,(int)color.dimension_2,(int)color.dimension_3)
-                        .deriveColor(0, saturationReduction, 1, 1); // leave all unchanged except saturation
+                        .deriveColor(0, saturationReduction, 1, 1); // reduce saturation
             }
         }
     }
 
-    protected double interpolate(double d, int dim){
+    double interpolate(double d, int dim){
         double offset = d - lowerBounds[dim];
         double range = upperBounds[dim] - lowerBounds[dim];
         return range < 1e-10 ? offset : offset / range;
     }
     
-    int HUE_DIM = 0;
-    int SAT_DIM = 1;
+
     /**
      * Returns the associated color
-     * @param x The value in the first dimension.
-     * @param y The value in the second dimension.
      * @return A color encoding the value pair.
      */
     Paint getPaint(Double... d) {
-        
-        float saturationPercent = (float) interpolate(d[SAT_DIM], SAT_DIM);
-        float huePercent = (float) interpolate(d[HUE_DIM], HUE_DIM);
+
+        if(Double.isNaN(d[0]) || Double.isNaN(d[1])) return Color.GRAY;
+
+        int hueDim = 0, saturationDim = 1;
+
+        float saturationPercent = (float) interpolate(d[saturationDim], saturationDim);
+        float huePercent = (float) interpolate(d[hueDim], hueDim);
         
         int satIndex = Math.round((saturationDepth-1) * saturationPercent);
-        int hueIndex = Math.round((colorDepth-1) * huePercent);
+        int hueIndex = Math.round((hueDepth -1) * huePercent);
         
         if(huePercent > 1 || saturationPercent > 1 || huePercent < 0 || saturationPercent < 0)
         System.out.println(String.format(
@@ -136,9 +142,9 @@ public class MultiDimensionalPaintScale
         System.out.println("[");
         
         for (int row = 0; row < saturationDepth; row++) {
-            ArrayList<String> colorCodes = new ArrayList<String>();
+            ArrayList<String> colorCodes = new ArrayList<>();
             
-            for (int col = 0; col < colorDepth; col++) {
+            for (int col = 0; col < hueDepth; col++) {
                 Color color = colors[row][col];
                 colorCodes.add(String.format("[%s,%s,%s]",(int)(color.getRed()*255), (int)(color.getGreen()*255), (int)(color.getBlue()*255)));
             }
@@ -183,9 +189,9 @@ public class MultiDimensionalPaintScale
         compute();
     }
 
-    public int getColorDepth() { return colorDepth; }
-    public void setColorDepth(int colorDepth) {
-        this.colorDepth = colorDepth;
+    public int getHueDepth() { return hueDepth; }
+    public void setHueDepth(int hueDepth) {
+        this.hueDepth = hueDepth;
         compute();
     }
 

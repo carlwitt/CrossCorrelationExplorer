@@ -1,12 +1,9 @@
 package Gui;
 
 import Data.*;
-import Data.Correlation.CorrelationMatrix;
-import Data.Correlation.CorrelogramMetadata;
-import Data.Correlation.CorrelogramStore;
-import Data.Correlation.DFT;
+import Data.Correlation.*;
+
 import java.net.URL;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.ResourceBundle;
@@ -38,10 +35,10 @@ public class ComputationInputController implements Initializable {
     
     // contains shared data between the linked views (data model, selections, brushed, etc.)
     // is set by the main controller on startup
-    SharedData sharedData;
+    private SharedData sharedData;
     
     // time series for computation input. set A and set B are cross correlated (in cross-product manner) and the available series is a view on the data model
-    ObservableList<TimeSeries> loadedTimeSeries;
+    private ObservableList<TimeSeries> loadedTimeSeries;
     
     ProgressLayer progressLayer;
     
@@ -59,6 +56,7 @@ public class ComputationInputController implements Initializable {
     @FXML private RadioButton nanLeaveRadio;
     
     @FXML private TextField windowSizeText;
+    @FXML private TextField baseWindowOffsetText;
     @FXML private TextField timeLagMinText;
     @FXML private TextField timeLagMaxText;
     
@@ -95,26 +93,26 @@ public class ComputationInputController implements Initializable {
         });
         
         // bind min/max time lag input 
-        timeLagMinText.textProperty().bindBidirectional(sharedData.timeLagBoundsProperty(), new StringConverter<Point2D>() {
-            @Override public String toString(Point2D t) {
-                return "" + t.getX();
-            }
-            @Override public Point2D fromString(String string) {
-                Point2D currentBounds = sharedData.getTimeLagBounds();
-                try{ return new Point2D(Double.parseDouble(string), currentBounds.getY()); }
-                catch(NumberFormatException e) { return currentBounds; }
-            }
-        });
-        timeLagMaxText.textProperty().bindBidirectional(sharedData.timeLagBoundsProperty(), new StringConverter<Point2D>() {
-            @Override public String toString(Point2D t) {
-                return "" + t.getY();
-            }
-            @Override public Point2D fromString(String string) {
-                Point2D currentBounds = sharedData.getTimeLagBounds();
-                try{ return new Point2D(currentBounds.getX(), Double.parseDouble(string)); }
-                catch(NumberFormatException e) { return currentBounds; }
-            }
-        });
+//        timeLagMinText.textProperty().bindBidirectional(sharedData.timeLagBoundsProperty(), new StringConverter<Point2D>() {
+//            @Override public String toString(Point2D t) {
+//                return "" + t.getX();
+//            }
+//            @Override public Point2D fromString(String string) {
+//                Point2D currentBounds = sharedData.getTimeLagBounds();
+//                try{ return new Point2D(Double.parseDouble(string), currentBounds.getY()); }
+//                catch(NumberFormatException e) { return currentBounds; }
+//            }
+//        });
+//        timeLagMaxText.textProperty().bindBidirectional(sharedData.timeLagBoundsProperty(), new StringConverter<Point2D>() {
+//            @Override public String toString(Point2D t) {
+//                return "" + t.getY();
+//            }
+//            @Override public Point2D fromString(String string) {
+//                Point2D currentBounds = sharedData.getTimeLagBounds();
+//                try{ return new Point2D(currentBounds.getX(), Double.parseDouble(string)); }
+//                catch(NumberFormatException e) { return currentBounds; }
+//            }
+//        });
         
         // enable computation run button only if both sets contain at least one element
         ListChangeListener<TimeSeries> checkNonEmpty = new ListChangeListener<TimeSeries>() {
@@ -154,20 +152,35 @@ public class ComputationInputController implements Initializable {
     
     public void compute(){
     
-        // window size
+        // parse values from text inputs
         int windowSize = Integer.parseInt(windowSizeText.getText());
+        int baseWindowOffset = (int) Double.parseDouble(baseWindowOffsetText.getText());
+        int tauMin = (int) Double.parseDouble(timeLagMinText.getText());
+        int tauMax = (int) Double.parseDouble(timeLagMaxText.getText());
+
+        // the window size must be at least two (otherwise, the pearson correlation coefficient is undefined)
+        // and at most the length of the time series (otherwise the correlation matrix will have no columns)
+        // TODO: inform the user if the window size is invalid
+        windowSize = Math.min(sharedData.getTimeSeriesLength(), Math.max(2, windowSize));
+
+
+        // display the parsed values
         windowSizeText.setText(""+windowSize); // to display what was parsed
+//        baseWindowOffsetText.setText(""+baseWindowOffset); // to display what was parsed
+//        timeLagMinText.setText(""+tauMin); // to display what was parsed
+//        timeLagMaxText.setText(""+tauMax); // to display what was parsed
+
         
         // NaN handle strategy
         Toggle selectedNanStrategy = nanStrategy.getSelectedToggle();
-        DFT.NA_ACTION naAction = DFT.NA_ACTION.LEAVE_UNCHANGED;
+        CrossCorrelation.NA_ACTION naAction = CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED;
         if(selectedNanStrategy == nanLeaveRadio){
-            naAction = DFT.NA_ACTION.LEAVE_UNCHANGED;
+            naAction = CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED;
         } else if(selectedNanStrategy == nanSetToZeroRadio){
-            naAction = DFT.NA_ACTION.REPLACE_WITH_ZERO;
+            naAction = CrossCorrelation.NA_ACTION.REPLACE_WITH_ZERO;
         }
         
-        CorrelogramMetadata metadata = new CorrelogramMetadata(sharedData.correlationSetA, sharedData.correlationSetB, windowSize, naAction);
+        CorrelationMetadata metadata = new CorrelationMetadata(sharedData.correlationSetA, sharedData.correlationSetB, windowSize, tauMin, tauMax, naAction, baseWindowOffset);
         
         // get result from cache or execute an asynchronuous compute service
         CorrelationMatrix result;
@@ -186,6 +199,7 @@ public class ComputationInputController implements Initializable {
                 @Override public void handle(WorkerStateEvent t) {
                     progressLayer.hide();
                     sharedData.setcorrelationMatrix(service.getValue());
+                    System.out.println("Columns in the matrix: "+service.getValue().getSize());
                 }
             });
             
@@ -270,7 +284,7 @@ public class ComputationInputController implements Initializable {
         }
         loadSelected(sourceView, targetList);
     }
-    public void loadSelected(ListView<TimeSeries> sourceView, ObservableList<TimeSeries> targetList){
+    void loadSelected(ListView<TimeSeries> sourceView, ObservableList<TimeSeries> targetList){
         // make a copy of the selection, because removing list items changes the selection
         Object[] selectionCopy = sourceView.getSelectionModel().getSelectedItems().toArray();
         
@@ -310,7 +324,7 @@ public class ComputationInputController implements Initializable {
         unloadSelected(sourceView);
     }
     // removes the selected time series
-    public void unloadSelected(ListView<TimeSeries> sourceView){
+    void unloadSelected(ListView<TimeSeries> sourceView){
         // make a copy of the selection, because removing list items changes the selection
         Object[] selectionCopy = sourceView.getSelectionModel().getSelectedItems().toArray();
         for (Object item : selectionCopy) {
