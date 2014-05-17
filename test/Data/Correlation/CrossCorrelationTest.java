@@ -12,7 +12,7 @@ public class CrossCorrelationTest {
     @Test
     public void testCrossCorrelationNaive(){
 
-        int windowSize = 4, taumin = -1, tauMax = 2;
+        int windowSize = 4, baseWindowOffset = 2, taumin = -1, tauMax = 2;
         TimeSeries tsA = new TimeSeries(new double[]{10,2,3,4,10,6,7,8,9});
         TimeSeries tsB = new TimeSeries(new double[]{3,0,6,4,2,1,5,-8,7});
 
@@ -23,7 +23,7 @@ public class CrossCorrelationTest {
         };
 
 
-        CorrelationMatrix result = CrossCorrelation.naiveCrossCorrelation(new CorrelationMetadata(tsA, tsB, windowSize, taumin, tauMax, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED, 2));
+        CorrelationMatrix result = CrossCorrelation.naiveCrossCorrelation(new CorrelationMetadata(tsA, tsB, windowSize, taumin, tauMax, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED, baseWindowOffset));
         for (int i = 0; i < 3; i++) {
             assertArrayEquals(expected[i].mean, result.getItembyID(i).mean, 1e-15);
             assertEquals(expected[i].tauMin, result.getItembyID(i).tauMin);
