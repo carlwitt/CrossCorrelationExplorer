@@ -1,7 +1,6 @@
 package Data.Correlation;
 
 import Data.ComplexSequence;
-import Data.Correlation.CorrelationMatrix.Column;
 import Data.TimeSeries;
 import com.google.common.base.Preconditions;
 import com.sun.istack.internal.NotNull;
@@ -101,7 +100,7 @@ public class DFT {
 //            int numOutputValues = resultWindow.getSize();
 //            int zerosToRemove = numOutputValues - numInputValues;
             ComplexSequence useValues = ComplexSequence.create(resultWindow.getDataItems(),0,numInputValues-1);
-            result.append(new Column(ComplexSequence.create(useValues.im), w, 0));
+            result.append(result.new Column(ComplexSequence.create(useValues.im), w, 0));
         }
         return result;
     }

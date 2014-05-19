@@ -159,7 +159,7 @@ public class CrossCorrelation {
             for (int i = 0; i < means.length; i++) means[i] = correlationCoefficients.get(i);
             // create 0 values standard deviation array
             double[] stdDevs = new double[means.length];
-            CorrelationMatrix.Column column = new CorrelationMatrix.Column(means, stdDevs, baseWindowFrom, minTau);
+            CorrelationMatrix.Column column = result.new Column(means, stdDevs, baseWindowFrom, minTau);
             result.append(column);
 
             baseWindowFrom += metadata.baseWindowOffset;

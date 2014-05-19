@@ -1,9 +1,6 @@
 package Data;
 
 import Data.Correlation.CorrelationMatrix;
-import java.awt.Point;
-import java.util.Observable;
-
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleObjectProperty;
@@ -11,6 +8,9 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
+
+import java.awt.*;
+import java.util.Observable;
 
 /**
  * Stores the data that is shared between the different views. 
@@ -54,7 +54,7 @@ public class SharedData extends Observable {
     public Point getHighlightedCell() { return highlightedCell.get(); }
     public void setHighlightedCell(Point value) { highlightedCell.set(value); }
 
-    public CorrelationMatrix.Column getActiveColumn() {
+    public CorrelationMatrix.Column getHighlightedColumn() {
         if(getCorrelationMatrix() == null) return null;
         int x = getHighlightedCell().x;
         if(x < 0 || x >= getCorrelationMatrix().getResultItems().size()) return null;

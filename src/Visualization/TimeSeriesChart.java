@@ -5,9 +5,6 @@ import Data.Correlation.CorrelationMatrix;
 import Data.Correlation.CorrelationMatrix.Column;
 import Data.SharedData;
 import Data.TimeSeries;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.ObservableList;
@@ -17,6 +14,9 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import javafx.scene.transform.Affine;
 import javafx.scene.transform.Translate;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Used to draw the time series. Supports basic aggregation by drawing only each N-th data point.
@@ -53,22 +53,40 @@ public class TimeSeriesChart extends CanvasChart {
         Affine dataToScreen = dataToScreen();
         
         // simple complexity reduction: display only every n-th point
-        final int step = Math.max(1, getDrawEachNthDataPoint());
+        final int step = Math.max(1, getDrawEachNthDataPoint());    // step is at least one
 
-        Column activeColumn = sharedData.getActiveColumn();
-        if(activeColumn != null){
-            double activeWindowMin = activeColumn.windowStartIndex;
-            int activeColumnLength = activeColumn.mean.length;
-            double activeWindowMax = activeWindowMin + activeColumnLength;
+        // highlight time window (selected by mouse hover from the correlogram)
+        // time series value indices that are within the bounds of the currently highlighted window
+        // the value at highlightWindowTo is not in the window, but the displayed window extends up to it
+        int highlightTimeLag = 0, highlightWindowFrom = Integer.MAX_VALUE, highlightWindowTo = Integer.MAX_VALUE;
 
+        Column highlightedColumn = sharedData.getHighlightedColumn();
+        CorrelationMatrix matrix = sharedData.getCorrelationMatrix();
+        if(highlightedColumn != null && matrix != null && matrix.metadata.setA.size() > 0){
+
+            // find highlight window parameters
+            int windowSize = matrix.metadata.windowSize;
+            highlightWindowFrom = highlightedColumn.windowStartIndex;
+            highlightWindowTo = highlightWindowFrom + windowSize;
+            highlightTimeLag = highlightedColumn.tauMin + sharedData.getHighlightedCell().y; // render time series in set B in the highlighted window shifted by this lag
+            // draw the window
+            TimeSeries representativeTimeSeries = matrix.metadata.setA.get(0);
+            double[] xValues = representativeTimeSeries.getDataItems().re;
             gc.setStroke(Color.YELLOW);
-            gc.strokeRect(xAxis.toScreen(activeWindowMin), 0, xAxis.toScreen(activeWindowMax)-xAxis.toScreen(activeWindowMin), getHeight());
+            double widthOnScreen = xAxis.toScreen(xValues[highlightWindowTo]) - xAxis.toScreen(xValues[highlightWindowFrom]);
+            gc.strokeRect(
+                    xAxis.toScreen(xValues[highlightWindowFrom]), 0,
+                    widthOnScreen, getHeight());
         }
 
 
         // draw each set
         Color setBColor = Color.web("#4333ff").deriveColor(0, 1, 1, 0.5);
         for (Map.Entry<Color, ObservableList<TimeSeries>> coloredSet : seriesSets.entrySet()) {
+
+            // whether to render the time series shifted by the selected lag in the highlight window
+            // shift only those in correlation set B
+            boolean drawShift  = coloredSet.getKey().equals(setBColor) && highlightTimeLag < Integer.MAX_VALUE;
 
             gc.setStroke(coloredSet.getKey());
             gc.setLineWidth(1.5);
@@ -77,43 +95,50 @@ public class TimeSeriesChart extends CanvasChart {
             for (TimeSeries ts : coloredSet.getValue()) {
                 
                 ComplexSequence data = ts.getDataItems();
-                Point2D nextPoint, lastPoint = dataToScreen.transform(new Point2D(data.re[0], data.im[0]));
-                
-                boolean nextIsInWindow = false, lastIsInWindow = false; // whether the next/last point are within a highlight window (shifted by time lag and wrapped)
-                boolean xIsWrapped = false, lastXIsWrapped = false;
+                Point2D curPoint, prevPoint = dataToScreen.transform(new Point2D(data.re[0], data.im[0]));
+
+                // whether the current point in the currently highlighted window (where time series are shifted by the highlighted lag)
+                boolean inWindow = false;
+
+                // render a given number of points
+                int nextPointIdx = step;
+                int xShift = 0;
                 for (int i = step; i < data.re.length; i += step) {
-                    
-                    double x = data.re[i];
-                    double y = data.im[i];
-                    
-                    // shift only those in correlation set B
-                    if(coloredSet.getKey().equals(setBColor) && activeColumn != null){
-                        double activeWindowMin = activeColumn.windowStartIndex;
-                        int activeColumnLength = activeColumn.mean.length;
-                        double activeWindowMax = activeWindowMin + activeColumnLength;
-                        int activeTimeLag = sharedData.getHighlightedCell().y;
-                        if(x >= activeWindowMin && x <= activeWindowMax){
-                            x -= activeTimeLag;
-                            xIsWrapped = x < activeWindowMin || x > activeWindowMax;
-                            if(x < activeWindowMin) x+= activeColumnLength;
-                            if(x > activeWindowMax) x-= activeColumnLength;
-                            nextIsInWindow = true;
-                        } else {
-                            nextIsInWindow = false;
-                            xIsWrapped = false;
-                        }
+
+                    // the index of the point that will be rendered as the next point
+
+                    // if the renderer enters the highlighted window
+                    if(drawShift && !inWindow && i >= highlightWindowFrom+1 && i <= highlightWindowTo){
+
+                        inWindow = true;
+                        // the next point to be displayed must be shifted
+                        nextPointIdx += highlightTimeLag;
+                        xShift = highlightTimeLag;
+                        // also shift the previous point
+                        int prevPointIdx = Math.max(0, nextPointIdx-step);
+                        prevPoint = dataToScreen.transform(new Point2D(data.re[prevPointIdx-xShift], data.im[prevPointIdx]));
                     }
-                    nextPoint = dataToScreen.transform(new Point2D(x, y));
-                    // only connect dots outside the highlighted window
-                    // or inside the highlighted window but not across the border
-                    if(!lastIsInWindow && !nextIsInWindow || lastIsInWindow && nextIsInWindow ){
-                        if(!lastXIsWrapped && !xIsWrapped || lastXIsWrapped && xIsWrapped)
-                            gc.strokeLine(lastPoint.getX(), lastPoint.getY(), nextPoint.getX(), nextPoint.getY());
+                    // if the renderer leaves the highlighted window
+                    if(drawShift && inWindow && i > highlightWindowTo){
+
+                        inWindow = false;
+                        // unshift current point
+                        nextPointIdx -= highlightTimeLag;
+                        xShift = 0;
+                        // unshift previous point
+                        int prevPointIdx = nextPointIdx-step;
+                        prevPoint = dataToScreen.transform(new Point2D(data.re[prevPointIdx], data.im[prevPointIdx]));
                     }
-                        
-                    lastPoint = nextPoint;
-                    lastXIsWrapped = xIsWrapped;
-                    lastIsInWindow = nextIsInWindow;
+
+                    double x = data.re[nextPointIdx-xShift];
+                    double y = data.im[nextPointIdx];
+                    curPoint = dataToScreen.transform(new Point2D(x, y));
+
+                    // connect current data point to previous data point with a line
+                    gc.strokeLine(prevPoint.getX(), prevPoint.getY(), curPoint.getX(), curPoint.getY());
+
+                    prevPoint = curPoint;
+                    nextPointIdx += step;
                 }
             }
         }
@@ -199,7 +224,8 @@ public class TimeSeriesChart extends CanvasChart {
             yRange = 1;
                     
         }
-        axesRanges.set(new Rectangle2D(sharedData.dataModel.getMinX(), sharedData.dataModel.getMinY(), xRange, yRange));
+        Rectangle2D newVisibleRange = new Rectangle2D(sharedData.dataModel.getMinX(), sharedData.dataModel.getMinY(), xRange, yRange);
+        axesRanges.set(newVisibleRange);
         drawContents();
     }
     

@@ -39,6 +39,9 @@
                 </StackPane>
             </StackPane>
         </AnchorPane>
+
+        <!--Time Series View-->
+
         <AnchorPane prefHeight="-1.0" prefWidth="200.0" style="-fx-background-color: gainsboro;">
             <Text rotate="270.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Time Series View" translateX="0.0"
                   AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="-45.0" AnchorPane.topAnchor="50.0"/>
@@ -46,6 +49,9 @@
                         AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="0.0"
                         AnchorPane.topAnchor="0.0"/>
         </AnchorPane>
+
+        <!--Correlogram View-->
+
         <AnchorPane prefHeight="-1.0" prefWidth="200.0" style="-fx-background-color: gainsboro;">
             <Text fontSmoothingType="GRAY" rotate="270.0" smooth="true" strikethrough="false" strokeType="OUTSIDE"
                   strokeWidth="0.0" text="Correlation View" translateX="0.0" AnchorPane.bottomAnchor="0.0"

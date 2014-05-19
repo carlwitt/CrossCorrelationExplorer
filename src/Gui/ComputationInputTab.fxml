@@ -1,14 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import javafx.geometry.*?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.*?>
 <?import javafx.scene.text.Font?>
-
 <GridPane fx:id="computationInputPane" gridLinesVisible="false" maxWidth="1.7976931348623157E308" minHeight="0.0" prefHeight="119.0" prefWidth="1141.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.ComputationInputController">
   <Label alignment="BOTTOM_LEFT" maxWidth="1.7976931348623157E308" prefWidth="300.0" text="Correlation Input Set A" textAlignment="LEFT" textFill="#00cc52" GridPane.columnIndex="0" GridPane.hgrow="ALWAYS" GridPane.rowIndex="0">
     <font>
@@ -106,21 +102,21 @@
         <Tooltip text="Defines the size of the windows in which the time series are shifted and cross correlated." />
       </tooltip>
     </Label>
-    <TextField fx:id="windowSizeText" alignment="TOP_RIGHT" prefWidth="45.0" text="20" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+    <TextField fx:id="windowSizeText" alignment="TOP_RIGHT" prefWidth="45.0" text="200" GridPane.columnIndex="1" GridPane.rowIndex="0" />
     <Label text="window offset" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-    <TextField fx:id="baseWindowOffsetText" alignment="TOP_RIGHT" prefWidth="45.0" text="1" visible="true" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+    <TextField fx:id="baseWindowOffsetText" alignment="TOP_RIGHT" prefWidth="45.0" text="70" visible="true" GridPane.columnIndex="1" GridPane.rowIndex="1" />
     <Label contentDisplay="RIGHT" text="Time lag min" visible="true" wrapText="true" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="2">
       <tooltip>
         <Tooltip text="Defines the lower limit of the time lag range to compute in each window." />
       </tooltip>
     </Label>
-    <TextField fx:id="timeLagMinText" alignment="TOP_RIGHT" prefWidth="45.0" text="-10" visible="true" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+    <TextField fx:id="timeLagMinText" alignment="TOP_RIGHT" prefWidth="45.0" text="-100" visible="true" GridPane.columnIndex="1" GridPane.rowIndex="2" />
     <Label contentDisplay="RIGHT" text="max" visible="true" wrapText="true" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="3">
       <tooltip>
         <Tooltip text="Defines the upper limit of the time lag range to compute in each window." />
       </tooltip>
     </Label>
-    <TextField fx:id="timeLagMaxText" alignment="TOP_RIGHT" prefWidth="45.0" text="10" visible="true" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+    <TextField fx:id="timeLagMaxText" alignment="TOP_RIGHT" prefWidth="45.0" text="100" visible="true" GridPane.columnIndex="1" GridPane.rowIndex="3" />
   </GridPane>
   <BorderPane prefHeight="103.0" prefWidth="180.0" GridPane.columnIndex="6" GridPane.rowIndex="1">
     <bottom>

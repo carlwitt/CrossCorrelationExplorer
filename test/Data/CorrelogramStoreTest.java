@@ -4,17 +4,16 @@
  */
 package Data;
 
-import Data.Correlation.*;
+import Data.Correlation.CorrelationMatrix;
+import Data.Correlation.CorrelationMetadata;
+import Data.Correlation.CorrelogramStore;
+import Data.Correlation.CrossCorrelation;
 import com.google.common.collect.Lists;
+import org.junit.*;
 
 import java.util.List;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+
 import static org.junit.Assert.*;
-import org.junit.Ignore;
 
 /**
  *
@@ -36,21 +35,21 @@ public class CorrelogramStoreTest {
         
         dataModel.put(1, a);
         dataModel.put(2, b);
-        
-        List<CorrelationMatrix.Column> matrix1 = Lists.newArrayList(
-                new CorrelationMatrix.Column(new double[]{1.,4.,7.}, new double[]{11.,44.,77.}, 0, 0),
-                new CorrelationMatrix.Column(new double[]{2.,5.,8.}, new double[]{22.,55.,88.}, 3, 0),
-                new CorrelationMatrix.Column(new double[]{3.,6.,9.}, new double[]{33.,66.,99.}, 6, 0)
-        );
+
         c1 = new CorrelationMatrix(new CorrelationMetadata(a, b, 0, -2, 2, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED, 1));
+        List<CorrelationMatrix.Column> matrix1 = Lists.newArrayList(
+                c1.new Column(new double[]{1.,4.,7.}, new double[]{11.,44.,77.}, 0, 0),
+                c1.new Column(new double[]{2.,5.,8.}, new double[]{22.,55.,88.}, 3, 0),
+                c1.new Column(new double[]{3.,6.,9.}, new double[]{33.,66.,99.}, 6, 0)
+        );
         c1.append(matrix1.get(0));
         c1.append(matrix1.get(1));
         c1.append(matrix1.get(2));
 
         c2 = new CorrelationMatrix(new CorrelationMetadata(a, b, 8, -2, 2, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED, 1));
-        c2.append(new CorrelationMatrix.Column(new double[]{1.,0.,0.}, new double[]{111.,444.,777.}, 0, 0));
-        c2.append(new CorrelationMatrix.Column(new double[]{0.,1.,0.}, new double[]{222.,555.,888.}, 3, 0));
-        c2.append(new CorrelationMatrix.Column(new double[]{0.,0.,1.}, new double[]{333.,666.,999.}, 6, 0));
+        c2.append(c2.new Column(new double[]{1.,0.,0.}, new double[]{111.,444.,777.}, 0, 0));
+        c2.append(c2.new Column(new double[]{0.,1.,0.}, new double[]{222.,555.,888.}, 3, 0));
+        c2.append(c2.new Column(new double[]{0.,0.,1.}, new double[]{333.,666.,999.}, 6, 0));
     }
 
     @BeforeClass

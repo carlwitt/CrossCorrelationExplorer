@@ -1,15 +1,18 @@
 package Data.IO;
 
-import java.io.File;
-import java.io.IOException;
-
-import java.util.List;
-import java.util.function.Predicate;
+import Data.DataModel;
+import Data.TimeSeries;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import org.apache.commons.io.FileUtils;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * Abstracts from the way a number of time seriese is stored in a text file.
@@ -72,6 +75,32 @@ public class FileModel {
             result[row] = rowValues[row][index];
         }
         return result;
+    }
+
+    public void persist(DataModel data, String targetPath) throws IOException {
+
+//        ArrayList<Double> lineValues = new ArrayList<>(data.size()+1); // all time series and their common x values
+        ArrayList<String> lines = new ArrayList<>(data.getTimeSeriesLength()+1);
+
+        TimeSeries firstTimeSeries = data.firstEntry().getValue();
+        for (int i = 0; i < data.getTimeSeriesLength(); i++) {
+//            lineValues.clear();
+//            lineValues.add(data.firstEntry().getValue().getDataItems().re[i]);
+            String line = "";
+
+            line += String.format("%-16s", firstTimeSeries.getDataItems().re[i]);
+
+            for(TimeSeries ts : data.values()){
+                //lineValues.add(ts.getDataItems().get(i));
+                line += String.format("%-16s", ts.getDataItems().get(i));
+            }
+
+            lines.add(line);
+
+        }
+
+        FileUtils.writeLines(new File(targetPath), lines);
+
     }
     
     // -------------------------------------------------------------------------

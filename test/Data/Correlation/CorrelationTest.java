@@ -5,14 +5,12 @@
 package Data.Correlation;
 
 import Data.ComplexSequence;
-import Data.Correlation.CorrelationMatrix.Column;
 import Data.TimeSeries;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import org.junit.Ignore;
 import org.junit.Test;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 /**
  *
@@ -54,8 +52,8 @@ public class CorrelationTest extends DFTTest {
         TimeSeries f = new TimeSeries(new double[]{1, 0, 0, 0, 1, 0, 0});
         TimeSeries g = new TimeSeries(new double[]{1, 0, 0, 0, 0, 1, 0});
         CorrelationMatrix expected = new CorrelationMatrix(new CorrelationMetadata(f, g, 4, -2, 2, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED, 1));
-        expected.append(new Column(ComplexSequence.create(new double[]{1, 0, 0, 0}, new double[4]), 0, 0));
-        expected.append(new Column(ComplexSequence.create(new double[]{0, 1, 0}, new double[3]), 4, 0));
+        expected.append(expected.new Column(ComplexSequence.create(new double[]{1, 0, 0, 0}, new double[4]), 0, 0));
+        expected.append(expected.new Column(ComplexSequence.create(new double[]{0, 1, 0}, new double[3]), 4, 0));
         CorrelationMatrix result = DFT.crossCorrelation(f, g, 4);
         assertEquals(expected, result);
     }

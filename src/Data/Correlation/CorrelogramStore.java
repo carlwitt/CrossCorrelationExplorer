@@ -1,7 +1,7 @@
 package Data.Correlation;
 
-import Data.TimeSeries;
 import Global.RuntimeConfiguration;
+
 import java.util.Collection;
 import java.util.HashMap;
 
@@ -48,7 +48,6 @@ public class CorrelogramStore {
             // 1-against-1 correlations are done directly using the DFT module
             if(metadata.setA.size() == 1 && metadata.setB.size() == 1){
                 result = CrossCorrelation.naiveCrossCorrelation(metadata);
-                System.out.println(result);
             } else{ // complex requests require aggregation which takes place in the correlation matrix (which tries to reuse 1-against-1 correlations from the correlogram store)
                 result = new CorrelationMatrix(metadata);
                 result.compute();

@@ -4,13 +4,9 @@
  */
 package Data;
 
-import Data.TimeSeries;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.*;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  *
@@ -57,7 +53,7 @@ public class TimeSeriesTest {
 //        TimeSeries expResult = new TimeSeries(0, null, new double[]{1.,2.,3.,4.});
 //        instance.append(4.);
 //        assertEquals(expResult, instance);
-//        assertTrue(instance.getMaxItem() == 4.);
+//        assertTrue(instance.getMaxX() == 4.);
 //    }
 
     /**
@@ -73,24 +69,24 @@ public class TimeSeriesTest {
     }
     
     /**
-     * Test of getMinItem method, of class TimeSeries.
+     * Test of getMinY method, of class TimeSeries.
      */
     @Test
     public void testGetMinItem() {
-        System.out.println("getMinItem");
+        System.out.println("getMinY");
         Double expResult = 1.;
-        Object result = instance.getMinItem();
+        Object result = instance.getMinY();
         assertEquals(expResult, result);
     }
 
     /**
-     * Test of getMaxItem method, of class TimeSeries.
+     * Test of getMaxX method, of class TimeSeries.
      */
     @Test
     public void testGetMaxItem() {
-        System.out.println("getMaxItem");
+        System.out.println("getMaxX");
         Double expResult = 4.;
-        Object result = instance.getMaxItem();
+        Object result = instance.getMaxX();
         assertEquals(expResult, result);
     }
     

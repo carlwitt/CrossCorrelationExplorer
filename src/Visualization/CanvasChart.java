@@ -65,7 +65,12 @@ abstract class CanvasChart extends AnchorPane {
         axesRangesProperty().addListener(new ChangeListener() {
             @Override
             public void changed(ObservableValue ov, Object t, Object t1) {
+//                if(t1 == null){
+//                    if(t == null) return;
+//                    t1 = t;
+//                }
                 Rectangle2D newRanges = (Rectangle2D) t1;
+
                 xAxis.setLowerBound(newRanges.getMinX());
                 xAxis.setUpperBound(newRanges.getMaxX());
                 yAxis.setLowerBound(newRanges.getMinY());

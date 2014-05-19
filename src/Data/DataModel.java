@@ -1,10 +1,11 @@
 package Data;
 
-import java.util.TreeMap;
 import javafx.collections.FXCollections;
 import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
+
+import java.util.TreeMap;
 
 /**
  * Stores time series and aggregated data on them.
@@ -38,40 +39,59 @@ public class DataModel extends TreeMap<Integer, TimeSeries> {
         return firstEntry().getValue().getDataItems().re.length;
     }
 
+    /** @return the smallest x value among all time series. It is assumed that it is the same for each time series. */
     public double getMinX() {
-        double min = Double.POSITIVE_INFINITY;
-        for (TimeSeries ts : values()) {
-            for (int i = 0; i < ts.getDataItems().re.length; i++) {
-                min = Math.min(min, Double.isNaN(ts.getDataItems().im[i]) ? Double.POSITIVE_INFINITY : ts.getDataItems().re[i]);
-            }
-        }
-        return min;
+
+        TimeSeries anyTimeSeries = firstEntry().getValue();
+        if(anyTimeSeries.getSize() == 0) return 0;
+        return anyTimeSeries.getDataItems().re[0];
+
+        // the use of this method was to ignore NaN Y-values when determining the minimum X value.
+//            for (int i = 0; i < ts.getDataItems().re.length; i++) {
+//                min = Math.min(min, Double.isNaN(ts.getDataItems().im[i]) ? Double.POSITIVE_INFINITY : ts.getDataItems().re[i]);
+//            }
     }
 
-    public double getMinY() {
-        double min = Double.POSITIVE_INFINITY;
-        for (TimeSeries ts : values()) {
-            min = Math.min(min, ts.getDataItems().getMin(ComplexSequence.Part.IMAGINARY));
-        }
-        return min;
-    }
-
+    /** @return the largest x value among all time series. It is assumed that it is the same for each time series. */
     public double getMaxX() {
-        double max = Double.NEGATIVE_INFINITY;
-        for (TimeSeries ts : values()) {
-            for (int i = 0; i < ts.getDataItems().re.length; i++) {
-                max = Math.max(max, Double.isNaN(ts.getDataItems().im[i]) ? Double.NEGATIVE_INFINITY : ts.getDataItems().re[i]);
+
+        TimeSeries anyTimeSeries = firstEntry().getValue();
+        if(anyTimeSeries.getSize() == 0) return 0;
+        return anyTimeSeries.getDataItems().re[anyTimeSeries.getDataItems().re.length-1];
+
+        // the use of this method was to ignore NaN Y-values when determining the minimum X value.
+//        for (TimeSeries ts : values()) {
+//            for (int i = 0; i < ts.getDataItems().re.length; i++) {
+//                max = Math.max(max, Double.isNaN(ts.getDataItems().im[i]) ? Double.NEGATIVE_INFINITY : ts.getDataItems().re[i]);
+//            }
+//        }
+    }
+
+    /** These cache the minimum and maximum Y value of the current dataset. Are invalidated (set to null) when time series are added or removed. */
+    Double minY = null, maxY = null;
+    public double getMinY() {
+        // compute if not cached
+        if(minY == null){
+            minY = Double.POSITIVE_INFINITY;
+            for (TimeSeries ts : values()) {
+                minY = Math.min(minY, ts.getDataItems().getMin(ComplexSequence.Part.IMAGINARY));
             }
+
         }
-        return max;
+        return minY;
     }
 
     public double getMaxY() {
-        double max = Double.NEGATIVE_INFINITY;
-        for (TimeSeries ts : values()) {
-            max = Math.max(max, ts.getDataItems().getMax(ComplexSequence.Part.IMAGINARY));
+        // compute if not cached
+        if(maxY == null){
+            maxY = Double.NEGATIVE_INFINITY;
+            for (TimeSeries ts : values()) {
+                maxY = Math.max(maxY, ts.getDataItems().getMax(ComplexSequence.Part.IMAGINARY));
+            }
+
         }
-        return max;
+
+        return maxY;
     }
 
     public ObservableList<TimeSeries> getObservableLoadedSeries() {

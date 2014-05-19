@@ -6,20 +6,20 @@
 
 package Data.IO;
 
-import Data.IO.FileModel;
-import Data.IO.LineParser;
-import java.io.IOException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import Data.DataModel;
+import Data.TimeSeries;
 import javafx.concurrent.WorkerStateEvent;
 import javafx.embed.swing.JFXPanel;
 import javafx.event.EventHandler;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
+import org.apache.commons.io.FileUtils;
 import org.junit.Test;
-import static org.junit.Assert.*;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 /**
  *
@@ -38,30 +38,12 @@ public class FileModelTest {
         new LineParser(";"),
         new LineParser(16),
     };
-    
-    ExecutorService taskExecutor;
-    
+
+    // initializes the java fx framework (because the test uses services)
     public FileModelTest() {
         new JFXPanel();
     }
-    
-    @BeforeClass
-    public static void setUpClass() {
-    }
-    
-    @AfterClass
-    public static void tearDownClass() {
-    }
-    
-    @Before
-    public void setUp() {
-        taskExecutor = Executors.newFixedThreadPool(4);
-    }
-    
-    @After
-    public void tearDown() {
-    }
-    
+
     /**
      * Test of getTimeSeriesLength method, of class FileModel.
      */
@@ -70,7 +52,7 @@ public class FileModelTest {
         
         System.out.println("getTimeSeriesLength");
         
-        final int expectedLength[] = new int[]{3,3,10};
+        final int expectedLength[] = new int[]{12,3,10};
         
         for (int i = 0; i < 3; i++) {
             final FileModel model = new FileModel(files[i], separators[i]);
@@ -93,12 +75,12 @@ public class FileModelTest {
     public void testGetNumberOfTimeSeries() {
         System.out.println("getNumberOfTimeSeries");
         
-        final int expectedNumber[] = new int[]{1,2,3};
+        final int expectedNumberTimeSeries[] = new int[]{2,2,3};
         
         for (int i = 0; i < 3; i++) {
             final FileModel model = new FileModel(files[i], separators[i]);
-            final int _expectedLength = expectedNumber[i];
-            
+            final int _expectedLength = expectedNumberTimeSeries[i];
+
             model.getLoadFileService().setOnSucceeded(new EventHandler<WorkerStateEvent>() {
             @Override public void handle(WorkerStateEvent t) {
                     int result = model.getNumberOfTimeSeries();
@@ -176,6 +158,41 @@ public class FileModelTest {
 //        assertEquals(dataModel.getContainerById(1).getDataItems(), expected1.getDataItems());
 //        assertEquals(dataModel.getContainerById(2).getDataItems(), expected2.getDataItems());
 //        assertEquals(dataModel.getContainerById(3).getDataItems(), expected3.getDataItems());
+    }
+
+    /**
+     * Test that a persisted file equals the read file when no changes are made.
+     * @throws IOException
+     */
+    @Test
+    public void testPersist() throws IOException {
+
+        final FileModel model = new FileModel(files[2], separators[2]);
+        final DataModel data = new DataModel();
+
+        List<String> lines = FileUtils.readLines(new File(files[2]));
+
+        FileModel.LoadFileService service = model.getLoadFileService();
+        service.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
+            @Override
+            public void handle(WorkerStateEvent t) {
+                System.out.println("File load success.");
+                for (int i = 0; i < model.getNumberOfTimeSeries(); i++) {
+                    TimeSeries timeSeries = new TimeSeries(i, model.getXValues(i), model.getYValues(i));
+                    data.put(i, timeSeries);
+                    System.out.println("Put time series "+timeSeries);
+                }
+                System.out.println("Data: "+data);
+                try {
+                    model.persist(data, "./data/persistTestOutput.txt");
+                } catch (IOException e) {
+                    System.out.println("Couldn't persist.");
+                    e.printStackTrace();
+                }
+            }
+        });
+        service.start();
+
     }
     
     

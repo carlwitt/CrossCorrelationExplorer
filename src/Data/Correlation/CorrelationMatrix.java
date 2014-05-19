@@ -1,15 +1,15 @@
 package Data.Correlation;
 
-import Global.RuntimeConfiguration;
-
 import Data.ComplexSequence;
 import Data.TimeSeries;
+import Global.RuntimeConfiguration;
 import com.google.common.base.Joiner;
+import javafx.concurrent.Service;
+import javafx.concurrent.Task;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import javafx.concurrent.Service;
-import javafx.concurrent.Task;
 
 /**
  * The Correlation Matrix aggregates and stores the results of a windowed cross correlation between two sets of time series.
@@ -306,7 +306,7 @@ public class CorrelationMatrix {
     }
     
     /** Represents one aggregated cross-correlation result within a time window */
-    public static class Column  {
+    public class Column  {
 
         /**
          * Holds the data for this column as sequence of complex numbers.
@@ -344,6 +344,10 @@ public class CorrelationMatrix {
             this.mean = cs.re;
             this.stdDev = cs.im;
             this.windowStartIndex = windowStartIndex;
+        }
+
+        public double getAnchorXValue(){
+            return metadata.setA.get(0).getDataItems().re[windowStartIndex];
         }
         
         public double getMeanMin(){ return values.getMin(ComplexSequence.Part.REAL);}

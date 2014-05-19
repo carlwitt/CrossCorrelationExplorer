@@ -4,7 +4,8 @@ import Data.TimeSeries;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 public class CrossCorrelationTest {
 
@@ -16,10 +17,11 @@ public class CrossCorrelationTest {
         TimeSeries tsA = new TimeSeries(new double[]{10,2,3,4,10,6,7,8,9});
         TimeSeries tsB = new TimeSeries(new double[]{3,0,6,4,2,1,5,-8,7});
 
+        CorrelationMatrix exp = new CorrelationMatrix(null);
         CorrelationMatrix.Column[] expected = new CorrelationMatrix.Column[]{
-            new CorrelationMatrix.Column(new double[]{0.0834730012368303, -0.898026510133875, 0.679706623105669}, new double[3], 0, 0),
-            new CorrelationMatrix.Column(new double[]{0.291920179679905, -0.716270534268212, -0.53079104215763, 0.23083326514981}, new double[4], 2, -1),
-            new CorrelationMatrix.Column(new double[]{0.641426980589819, -0.104605206563161, 0.0366765706779718}, new double[3], 4, -1)
+                exp.new Column(new double[]{0.0834730012368303, -0.898026510133875, 0.679706623105669}, new double[3], 0, 0),
+                exp.new Column(new double[]{0.291920179679905, -0.716270534268212, -0.53079104215763, 0.23083326514981}, new double[4], 2, -1),
+                exp.new Column(new double[]{0.641426980589819, -0.104605206563161, 0.0366765706779718}, new double[3], 4, -1)
         };
 
 
@@ -123,6 +125,19 @@ public class CrossCorrelationTest {
 
         incrementalMean = CrossCorrelation.incrementalMean(a, 3, 5, incrementalMean, 2);
         assertEquals(5, incrementalMean, 1e-15);
+
+    }
+
+    /**
+     * Generate two sine curves, one without and one with a time lag.
+     * Writes the data as text file.
+     */
+    @Test
+    public void generateSineTestData(){
+
+        int resolution = 1000;
+
+        // one is computed
 
     }
 

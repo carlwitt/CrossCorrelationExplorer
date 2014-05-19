@@ -65,11 +65,17 @@ public class TimeSeries implements Comparable<TimeSeries> {
         return values.im[id];
     }
 
-    public double getMinItem() {
+    public double getMinX() {
+        return values.getMin(ComplexSequence.Part.REAL);
+    }
+    public double getMinY() {
         return values.getMin(ComplexSequence.Part.IMAGINARY);
     }
 
-    public double getMaxItem() {
+    public double getMaxX() {
+        return values.getMax(ComplexSequence.Part.REAL);
+    }
+    public double getMaxY() {
         return values.getMax(ComplexSequence.Part.IMAGINARY);
     }
     

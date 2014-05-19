@@ -12,12 +12,9 @@ import Data.Correlation.CrossCorrelation;
 import Data.SharedData;
 import Data.TimeSeries;
 import javafx.embed.swing.JFXPanel;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.*;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  *
@@ -82,9 +79,9 @@ public class CorrelogramControllerTest {
         int stdDevResolution = 3;
         
         CorrelationMatrix expResult = new CorrelationMatrix(null);
-        expResult.append(new CorrelationMatrix.Column(new double[]{1,1,1}, new double[]{0,1,2}, 0, 0));
-        expResult.append(new CorrelationMatrix.Column(new double[]{3.5,3.5,3.5}, new double[]{0,1,2}, 1, 0));
-        expResult.append(new CorrelationMatrix.Column(new double[]{6,6,6}, new double[]{0,1,2}, 2, 0));
+        expResult.append(expResult.new Column(new double[]{1,1,1}, new double[]{0,1,2}, 0, 0));
+        expResult.append(expResult.new Column(new double[]{3.5,3.5,3.5}, new double[]{0,1,2}, 1, 0));
+        expResult.append(expResult.new Column(new double[]{6,6,6}, new double[]{0,1,2}, 2, 0));
         
         CorrelationMatrix result = instance.legend.valueRangeSample(meanResolution, stdDevResolution);
         assertEquals(expResult, result);
@@ -115,7 +112,7 @@ public class CorrelogramControllerTest {
         int stdDevResolution = 3;
         
         CorrelationMatrix expResult = new CorrelationMatrix(null);
-        expResult.append(new CorrelationMatrix.Column(new double[]{1}, new double[]{0}, 1, 0));
+        expResult.append(expResult.new Column(new double[]{1}, new double[]{0}, 1, 0));
 
         CorrelationMatrix result = instance.legend.valueRangeSample(meanResolution, stdDevResolution);
         assertEquals(expResult, result);

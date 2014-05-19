@@ -1,11 +1,8 @@
 package Visualization;
 
-import Data.*;
 import Data.Correlation.CorrelationMatrix;
-
-import java.text.DecimalFormat;
-import java.util.*;
-
+import Data.SharedData;
+import Data.TimeSeries;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
@@ -17,6 +14,9 @@ import javafx.scene.control.Slider;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
 import javafx.util.converter.NumberStringConverter;
+
+import java.text.DecimalFormat;
+import java.util.HashMap;
 
 /**
  *
@@ -90,16 +90,16 @@ public class TimeSeriesViewController {
         sharedData.correlationSetB.addListener(drawContentListener);
         
     }
-    
+
     public void initialize(){
-        
+
         timeSeriesPane.getChildren().add(timeSeriesChart);
         timeSeriesChart.toBack(); // the reset button etc. are to be displayed on top of the chart
         AnchorPane.setTopAnchor(timeSeriesChart, 0.);
         AnchorPane.setRightAnchor(timeSeriesChart, 0.);
         AnchorPane.setBottomAnchor(timeSeriesChart, 0.);
         AnchorPane.setLeftAnchor(timeSeriesChart, 0.);
-        
+
         // when changing the level of detail, show the results immediately
         detailSlider.valueProperty().addListener(new ChangeListener<Number>() {
             @Override public void changed(ObservableValue<? extends Number> ov, Number t, Number t1) {
@@ -114,17 +114,17 @@ public class TimeSeriesViewController {
         timeSeriesChart.xAxis.upperBoundProperty().addListener(axisRangeChanged);
         timeSeriesChart.yAxis.lowerBoundProperty().addListener(axisRangeChanged);
         timeSeriesChart.yAxis.upperBoundProperty().addListener(axisRangeChanged);
-        
+
         timeSeriesChart.xAxis.setTickLabelFormatter(new NumberStringConverter(new  DecimalFormat("####")));
 //        timeSeriesChart.yAxis.setTickLabelFormatter(new NumberStringConverter(new  DecimalFormat("0,000")));
-        
+
         timeSeriesChart.xAxis.setLabel("Year as Geotime (t + 1950)");
         timeSeriesChart.yAxis.setLabel("Temperature ˚C");
-        
+
         // this fires listeners which try to access not yet set properties (data model?)
 //        timeSeriesChart.yAxis.setLowerBound(-10);
 //        timeSeriesChart.yAxis.setUpperBound(10);
-        
+
     }
     
     void updateTickUnits(){

@@ -3,8 +3,6 @@ package Gui;
 import Data.SharedData;
 import Visualization.CorrelogramController;
 import Visualization.TimeSeriesViewController;
-import java.net.URL;
-import java.util.ResourceBundle;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
@@ -12,6 +10,9 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.Pane;
+
+import java.net.URL;
+import java.util.ResourceBundle;
 
 /**
  * FXML Controller class
@@ -74,8 +75,9 @@ public class MainWindowController implements Initializable {
 //                
 //            }
 //        });
-          fileInputController.fileModel.setFilename("/Users/macbookdata/IdeaProjects/CrossCorrelationExplorer/data/simpleNumbers.txt");
-//        fileInputController.fileModel.setFilename("./data/inputData.txt");
+//          fileInputController.fileModel.setFilename("/Users/macbookdata/IdeaProjects/CrossCorrelationExplorer/data/simpleNumbers.txt");
+        fileInputController.fileModel.setFilename("/Users/macbookdata/Documents/Arbeit/GFZ/CrossCorrelationExplorer/dongge_realisations.txt");
+
 //        fileInputController.fileModel.setFilename("/Users/macbookdata/lianhua_realisations.txt");
 //        fileInputController.fileModel.setFilename("/Users/macbookdata/dongge_realisations.txt");
 //        fileInputController.fileModel.setFilename("/Users/macbookdata/inputDataSimple.txt");

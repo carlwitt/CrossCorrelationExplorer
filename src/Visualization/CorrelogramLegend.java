@@ -2,12 +2,8 @@ package Visualization;
 
 import Data.ComplexSequence;
 import Data.Correlation.CorrelationMatrix;
-import Data.Correlation.CorrelogramStore;
 import Data.SharedData;
 import com.sun.javafx.tk.FontLoader;
-import java.awt.Point;
-import java.util.List;
-import java.util.Locale;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
@@ -20,6 +16,10 @@ import javafx.scene.text.Font;
 import javafx.scene.transform.Affine;
 import javafx.scene.transform.Translate;
 import javafx.util.converter.NumberStringConverter;
+
+import java.awt.*;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * Used to draw the correlogram. Takes a matrix with two dimensional entries and renders each of them as a matrix of colored blocks.
@@ -274,7 +274,7 @@ public class CorrelogramLegend extends CanvasChart {
                 
             }
             ComplexSequence columnValues = ComplexSequence.create(meanValues, stdDevValues);
-            result.append(new CorrelationMatrix.Column(columnValues, i, i));
+            result.append(result.new Column(columnValues, i, i));
         }   
 //System.out.println(String.format("value range sample: %s", result));
         return result;

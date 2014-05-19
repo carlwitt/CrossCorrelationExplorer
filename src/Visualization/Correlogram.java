@@ -2,9 +2,6 @@ package Visualization;
 
 import Data.Correlation.CorrelationMatrix;
 import Data.SharedData;
-import java.awt.Point;
-import java.util.List;
-
 import Data.TimeSeries;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -16,6 +13,9 @@ import javafx.scene.paint.Color;
 import javafx.scene.transform.Affine;
 import javafx.scene.transform.NonInvertibleTransformException;
 import javafx.scene.transform.Translate;
+
+import java.awt.*;
+import java.util.List;
 
 /**
  * Used to draw the correlogram. Takes a matrix with two dimensional entries and renders each of them as a matrix of colored blocks.
@@ -130,7 +130,8 @@ public class Correlogram extends CanvasChart {
                     gc.setLineWidth(2);
                     gc.strokeRect(ulc.getX(), ulc.getY(), brc.getX() - ulc.getX(), ulc.getY() - brc.getY());
                     gc.restore();
-                } else {
+                }
+                else {
                     gc.setStroke(paintScale.getPaint(column.mean[lag], column.stdDev[lag]));
                     gc.strokeRect(ulc.getX(), ulc.getY(), brc.getX() - ulc.getX(), ulc.getY() - brc.getY());
                 }
@@ -163,12 +164,11 @@ public class Correlogram extends CanvasChart {
                 System.err.println("Couldn't invert data to screen transform on mouse over (correlogram).");
             }
 
-            // determine block sizes and overall correlogram offset on X axis
-            int windowSize = matrix.metadata.windowSize;
-            double blockWidth = Math.min(windowSize, matrix.metadata.baseWindowOffset);
+            // determine the space for each column in the correlogram and the offset of the first column on the X axis
+            double blockWidth = matrix.metadata.baseWindowOffset;
             double windowOffset = matrix.getStartXValueInTimeSeries() + 0.5*matrix.metadata.windowSize - blockWidth/2;
 
-            // use equi-distance property to calculate the window index by division
+            // use equi-distance property (of columns) to calculate the window index by division
             int activeTimeWindowIdx = (int) Math.floor((dataCoordinates.getX() - windowOffset)/blockWidth);
 
             Point activeCell;
