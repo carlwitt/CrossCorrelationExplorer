@@ -6,16 +6,16 @@
 
 package Data.IO;
 
-import Data.DataModel;
 import Data.TimeSeries;
 import javafx.concurrent.WorkerStateEvent;
 import javafx.embed.swing.JFXPanel;
 import javafx.event.EventHandler;
-import org.apache.commons.io.FileUtils;
+import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -160,38 +160,156 @@ public class FileModelTest {
 //        assertEquals(dataModel.getContainerById(3).getDataItems(), expected3.getDataItems());
     }
 
-    /**
-     * Test that a persisted file equals the read file when no changes are made.
-     * @throws IOException
-     */
-    @Test
+    @Test @Ignore
     public void testPersist() throws IOException {
 
+        double[] xValues = new double[]{-1,0,1,2,3,4};
+        List<TimeSeries> ts = Arrays.asList(
+                new TimeSeries(1, xValues, new double[]{1,2,3,4,5,6}),
+                new TimeSeries(1, xValues, new double[]{1e1,1e2,1e3,1e4,1e5,1e6}),
+                new TimeSeries(1, xValues, new double[]{1e-1,1e-2,1e-3,1e-4,1e-5,1e-6})
+        );
+        // save all time series
+        FileModel.persist(ts, "./data/persistTestOutput.txt");
+
+    }
+
+    /**
+     * Test parallel processing of array partitions, as can be used for parsing.
+     * @throws Exception
+     */
+    @Test public void threadJoin() throws Exception{
+
+        int numThreads = Runtime.getRuntime().availableProcessors();
+        System.out.println("Available Processors: "+numThreads);
+
+
+        int numLines = 1112894;
+        final String[] lines = new String[numLines];
+        for (int i = 0; i < numLines; i++) {
+            lines[i] = ""+i;
+        }
+
+        final int[] results = new int[numLines];
+        final int[] expectedResults = new int[numLines];
+        for (int i = 0; i < numLines; i++) {
+            expectedResults[i] = -i;
+        }
+
+        Thread[] processors = new Thread[numThreads];
+
+        long before = System.currentTimeMillis();
+
+        int step = numLines/numThreads;
+        for (int i = 0; i < numThreads; i++) {
+            final int from = i * step, to = i == numThreads-1 ? numLines-1 : (i+1)*step-1;
+            final int idx = i;
+            processors[i] = new Thread(new Runnable() {
+                int fromIndex = from, toIndex = to;
+                int threadIndex = idx;
+                @Override
+                public void run() {
+                    System.out.println(String.format("Starting thread %s, [%s, %s]", threadIndex, fromIndex, toIndex));
+                    for (int j = fromIndex; j <= toIndex; j++) {
+                        int val = -1 * Integer.parseInt(lines[j]);
+                        results[j] = val;
+//                        System.out.println(threadIndex+": " + val);
+                    }
+                }
+            });
+            processors[i].start();
+        }
+
+        for (int i = 0; i < numThreads; i++) {
+            processors[i].join();
+        }
+
+        System.out.println("needed time: "+(System.currentTimeMillis()-before));
+
+        assertArrayEquals(expectedResults, results);
+
+    }
+
+    /**
+     * Test that the parsed content from a persisted file equals the parsed contents of some original file.
+     * Extremely difficult to get the thread synchronization done.
+     * - invoke a wait after each service start to avoid that the test routine is exited before the thread is done
+     * - use synchronized to be allowed to call service.wait() at all
+     * - use synchronized to be allowed to call service.notify()
+     *
+     * However, gets caught in an endless loop.
+     *
+     * @throws IOException
+     */
+    @Test @Ignore
+    public void testPersistAsynchronous() throws IOException {
+
+        // load all time series from a file
         final FileModel model = new FileModel(files[2], separators[2]);
-        final DataModel data = new DataModel();
-
-        List<String> lines = FileUtils.readLines(new File(files[2]));
-
-        FileModel.LoadFileService service = model.getLoadFileService();
+        final FileModel.LoadFileService service = model.getLoadFileService();
         service.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
             @Override
             public void handle(WorkerStateEvent t) {
-                System.out.println("File load success.");
-                for (int i = 0; i < model.getNumberOfTimeSeries(); i++) {
-                    TimeSeries timeSeries = new TimeSeries(i, model.getXValues(i), model.getYValues(i));
-                    data.put(i, timeSeries);
-                    System.out.println("Put time series "+timeSeries);
+
+                // create time series from file data
+                final ArrayList<TimeSeries> timeSeriesInFile = new ArrayList<TimeSeries>(model.getNumberOfTimeSeries());
+
+                for (int j = 0; j < model.getNumberOfTimeSeries(); j++) {
+                    TimeSeries timeSeries = new TimeSeries(j, model.getXValues(j), model.getYValues(j));
+                    timeSeriesInFile.add(timeSeries);
+                    System.out.println("Read time series: " + timeSeries);
                 }
-                System.out.println("Data: "+data);
+
+                // persist the data...
+                String outPath = "./data/persistTestOutput.txt";
                 try {
-                    model.persist(data, "./data/persistTestOutput.txt");
+                    model.persist(timeSeriesInFile, outPath);
                 } catch (IOException e) {
                     System.out.println("Couldn't persist.");
                     e.printStackTrace();
                 }
+
+                System.out.println("Persisted everything.");
+
+                // ... and read it again
+                final FileModel modelForPersisted = new FileModel(outPath, new LineParser(16));
+                final FileModel.LoadFileService serviceForPersisted = modelForPersisted.getLoadFileService();
+                serviceForPersisted.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
+                    @Override
+                    public void handle(WorkerStateEvent event) {
+
+                        System.out.println("Reading persisted file content.");
+
+                        // and compare to the initial parsed ones
+                        for (int j = 0; j < modelForPersisted.getNumberOfTimeSeries(); j++) {
+                            TimeSeries timeSeries = new TimeSeries(j, modelForPersisted.getXValues(j), modelForPersisted.getYValues(j));
+                            assertArrayEquals(timeSeriesInFile.get(j).getDataItems().re, timeSeries.getDataItems().re, 1e-15);
+                            assertArrayEquals(timeSeriesInFile.get(j).getDataItems().im, timeSeries.getDataItems().im, 1e-15);
+                        }
+                        synchronized (serviceForPersisted){
+                            serviceForPersisted.notify();
+                        }
+
+                    }
+                });
+                synchronized (serviceForPersisted){
+                    serviceForPersisted.start();
+                    try { serviceForPersisted.wait(); } catch (Exception e) { e.printStackTrace(); }
+                }
+
+                synchronized (service){
+                    service.notify();
+                }
+
             }
         });
-        service.start();
+
+
+        synchronized (service){
+            service.start();
+//            while(service.getState() != Worker.State.SUCCEEDED);
+            try { service.wait(); } catch (Exception e) { e.printStackTrace(); }
+        }
 
     }
     

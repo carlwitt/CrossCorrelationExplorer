@@ -48,7 +48,8 @@ public class SharedData extends Observable {
 
     /** Specifies the current time window and time lag in the correlation matrix which is currently under the mouse cursor.
      * The x component specifies the 0-based index of the column, the y component specifies the 0-based index of the cell.
-     * No time lag splitting here! Simply the elements with their raw time lags in range [0..column length]. */
+     * No time lag splitting here! Simply the elements with their raw time lags in range [0..column length].
+     * Integer.MAX_VALUE indicates that a component has no sensible range. */
     private final ObjectProperty<Point> highlightedCell = new SimpleObjectProperty<>(new Point(-1, -1));
     public ObjectProperty highlightedCellProperty() { return highlightedCell; }
     public Point getHighlightedCell() { return highlightedCell.get(); }

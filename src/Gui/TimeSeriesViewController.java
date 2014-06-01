@@ -1,4 +1,4 @@
-package Visualization;
+package Gui;
 
 import Data.Correlation.CorrelationMatrix;
 import Data.SharedData;

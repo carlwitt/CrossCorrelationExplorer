@@ -79,7 +79,6 @@ public class TimeSeriesChart extends CanvasChart {
                     widthOnScreen, getHeight());
         }
 
-
         // draw each set
         Color setBColor = Color.web("#4333ff").deriveColor(0, 1, 1, 0.5);
         for (Map.Entry<Color, ObservableList<TimeSeries>> coloredSet : seriesSets.entrySet()) {
@@ -113,11 +112,12 @@ public class TimeSeriesChart extends CanvasChart {
                         inWindow = true;
                         // the next point to be displayed must be shifted
                         nextPointIdx += highlightTimeLag;
+                        if(nextPointIdx >= data.re.length) break;
                         xShift = highlightTimeLag;
                         // also shift the previous point
                         int prevPointIdx = Math.max(0, nextPointIdx-step);
                         prevPoint = dataToScreen.transform(new Point2D(data.re[prevPointIdx-xShift], data.im[prevPointIdx]));
-                    }
+                    } else
                     // if the renderer leaves the highlighted window
                     if(drawShift && inWindow && i > highlightWindowTo){
 

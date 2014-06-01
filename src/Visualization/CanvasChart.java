@@ -22,8 +22,7 @@ import javafx.scene.transform.Translate;
 
 /**
  * Base class for fast rendering charts using a canvas rather than the scene graph.
- * The idea is to use a standard chart to generate axes, legend and title and position a canvas over it on which the content is drawn.
- * TODO: much of the hassle aligning the canvas to the axes stems from the fact that axis labels grow to the right, thus pushing the axis to right when increasing precision. Custom axes rendering code should be written (using the scene graph to profit from simplified interaction, e.g. via picking)
+ * Is used by the time series and correlogram visualization.
  * @author Carl Witt
  */
 abstract class CanvasChart extends AnchorPane {
@@ -31,10 +30,11 @@ abstract class CanvasChart extends AnchorPane {
     /** This is used to draw the data. Much faster than adding all the data elements to the scene graph. */
     public final Canvas chartCanvas;
     
-    private AnchorPane canvasPane;
+    protected AnchorPane canvasPane;
     
-    NumberAxis xAxis;
-    NumberAxis yAxis;
+    public NumberAxis xAxis,
+                      yAxis;
+
     /** This field summarizes the current x- and y-axis bounds. The x-axis lower bound and range is stored in minX and width, and 
      * the y-axis lower bound and range is stored in minY and height. Listening to changes in this property is simpler and faster than listening
      * for all four (x and y, lower and upper) properties.

@@ -1,8 +1,6 @@
 package Gui;
 
 import Data.SharedData;
-import Visualization.CorrelogramController;
-import Visualization.TimeSeriesViewController;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
@@ -26,13 +24,13 @@ public class MainWindowController implements Initializable {
     @FXML private ProgressBar progressBar;
     @FXML private Label progressLabel;
     @FXML private Button progressCancelButton;
-    
     @FXML private TabPane inputTabPane;
     
     // controller responsible for loading files and filling the data model
     @FXML private FileInputController fileInputController;
     @FXML private TimeSeriesViewController timeSeriesViewController;
     @FXML private ComputationInputController computationInputController;
+    @FXML private ComputationOutputController computationOutputController;
     @FXML private CorrelogramController correlationViewController;
     
     
@@ -53,10 +51,15 @@ public class MainWindowController implements Initializable {
         
         fileInputController.progressLayer = progressLayer;
         computationInputController.progressLayer = progressLayer;
-        
+        computationOutputController.progressLayer = progressLayer;
+
         fileInputController.setSharedData(sharedData);
         timeSeriesViewController.setSharedData(sharedData);
         computationInputController.setSharedData(sharedData);
+
+        computationOutputController.setSharedData(sharedData);
+        computationOutputController.setCorrelogramController(correlationViewController);
+
         correlationViewController.setSharedData(sharedData);
 
 //        fileInputController.availableTimeSeries.addListener(new ListChangeListener<Integer>() {
@@ -76,7 +79,7 @@ public class MainWindowController implements Initializable {
 //            }
 //        });
 //          fileInputController.fileModel.setFilename("/Users/macbookdata/IdeaProjects/CrossCorrelationExplorer/data/simpleNumbers.txt");
-        fileInputController.fileModel.setFilename("/Users/macbookdata/Documents/Arbeit/GFZ/CrossCorrelationExplorer/dongge_realisations.txt");
+        fileInputController.fileModel.setFilename("/Users/macbookdata/Documents/Arbeit/GFZ/CrossCorrelationExplorer/data/dongge_realisations.txt");
 
 //        fileInputController.fileModel.setFilename("/Users/macbookdata/lianhua_realisations.txt");
 //        fileInputController.fileModel.setFilename("/Users/macbookdata/dongge_realisations.txt");

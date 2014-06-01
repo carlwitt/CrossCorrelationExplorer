@@ -1,18 +1,26 @@
-package Visualization;
+package Gui;
 
 import Data.SharedData;
-import java.text.DecimalFormat;
+import Visualization.Correlogram;
+import Visualization.CorrelogramLegend;
+import Visualization.MultiDimensionalPaintScale;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.Tooltip;
+import javafx.scene.image.WritableImage;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.converter.NumberStringConverter;
+
+import javax.imageio.ImageIO;
+import java.io.File;
+import java.text.DecimalFormat;
 
 /**
  * Controller for the correlogram view. Manages the correlation matrix and the legend.
@@ -33,7 +41,7 @@ public class CorrelogramController {
     @FXML StackPane correlogramPane;
     @FXML StackPane legendPane;
     @FXML ToggleButton linkWithTimeSeriesViewToggle;
-    
+
     public void initialize() {
         
 //        legendPaintScale = new MultiDimensionalPaintScale(meanColorResolution, standardDeviationColorResolution);
@@ -120,6 +128,24 @@ public class CorrelogramController {
 //        correlogram.setAxesRanges(new Rectangle2D(correlogram.xAxis.getLowerBound(), correlogram.yAxis.getLowerBound(), correlogram.xAxis.getRange(), correlogram.yAxis.getRange()));
         legend.resetView();
         legend.drawContents();
+    }
+
+    /**
+     * Writes the current content of the correlogram view to an image file (in png format).
+     * @param outputFilePath where to store the image, should include the extension png.
+     */
+    public void saveCorrelogramImage(String outputFilePath){
+
+        WritableImage wim = correlogram.getCurrentViewAsImage();
+
+        File file = new File(outputFilePath);
+        try {
+            ImageIO.write(SwingFXUtils.fromFXImage(wim, null), "png", file);
+        } catch (Exception s) {
+            System.out.println("Couldn't write the correlogram image.");
+            s.printStackTrace();
+        }
+
     }
 
 }

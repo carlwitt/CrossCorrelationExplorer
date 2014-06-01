@@ -1,30 +1,30 @@
 package Gui;
 
-import Data.*;
 import Data.Correlation.CorrelogramStore;
-import java.awt.Point;
-import java.io.File;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.Random;
-import java.util.ResourceBundle;
-import java.util.TreeMap;
-
 import Data.IO.FileModel;
+import Data.SharedData;
+import Data.TimeSeries;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.concurrent.*;
+import javafx.concurrent.WorkerStateEvent;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.*;
+import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.FileChooser;
 import org.controlsfx.dialog.Dialogs;
+
+import java.awt.*;
+import java.io.File;
+import java.net.URL;
+import java.util.*;
 
 /**
  * Controls the loading of text files and the selection of time series from the text file to work with.
@@ -90,12 +90,6 @@ public class FileInputController implements Initializable {
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        // bind list views to the available time series and loaded time series list models
-//        availableList.setCellFactory(new Callback<ListView<Integer>, ListCell<Integer>>() {
-//            @Override public ListCell<Integer> call(ListView<Integer> p) {
-//                
-//            }
-//        });
         availableList.setItems(availableTimeSeries);
         
         // bind label text to currently selected filepath...
@@ -208,6 +202,7 @@ public class FileInputController implements Initializable {
                 sharedData.correlationSetB.clear();
                 CorrelogramStore.clear();
                 availableTimeSeries.clear();
+                loadedTimeSeries.clear();
                 sharedData.dataModel.timeSeries.clear();
                 
                 ArrayList<Integer> toAdd = new ArrayList<>(fileModel.getNumberOfTimeSeries());

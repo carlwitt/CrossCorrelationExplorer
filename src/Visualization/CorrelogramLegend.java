@@ -97,11 +97,6 @@ public class CorrelogramLegend extends CanvasChart {
         
         valueRangeSample.set(m);
 
-        // center mean zero at the middle of the axis
-        double meanRangeMax = Math.max(Math.abs(m.getMeanMinValue()), Math.abs(m.getMeanMaxValue()));
-        paintScale.setLowerBounds(-meanRangeMax, m.getStdDevMinValue());
-        paintScale.setUpperBounds(meanRangeMax, m.getStdDevMaxValue());
-        
         // adjust display bounds
         xValueMin = m.getMeanMinValue();
         xValueMax = m.getMeanMaxValue();
@@ -145,6 +140,9 @@ public class CorrelogramLegend extends CanvasChart {
         double meanRangeMax = Math.max(Math.abs(matrix.getMeanMinValue()), Math.abs(matrix.getMeanMaxValue()));
         paintScale.setLowerBounds(-meanRangeMax, matrix.getStdDevMinValue());
         paintScale.setUpperBounds(meanRangeMax, matrix.getStdDevMaxValue());
+        // always have a range of [-1, 1] in both dimensions
+//        paintScale.setLowerBounds(-1., -1.);
+//        paintScale.setUpperBounds(1., 1.);
 
         // for each column of the matrix (or, equivalently, for each distinct mean value)
         for (int i = 0; i < columns.size(); i++) {
@@ -285,7 +283,7 @@ public class CorrelogramLegend extends CanvasChart {
      * Resets the axes such that they fit the matrix bounds.
      * Performs a redraw.
      */
-    void resetView() {
+    public void resetView() {
 
         CorrelationMatrix m = getValueRangeSample();
         if(m == null) return;

@@ -1,6 +1,5 @@
 package Data.IO;
 
-import Data.DataModel;
 import Data.TimeSeries;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
@@ -12,6 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Predicate;
 
 /**
@@ -77,22 +77,29 @@ public class FileModel {
         return result;
     }
 
-    public void persist(DataModel data, String targetPath) throws IOException {
+    /**
+     * Writes a set of time series in the specified format to disk.
+     * @param timeSeries the time series (all of them must have the same x values.)
+     * @param targetPath the path to the file where the results shall be written (will be overwritten)
+     * @throws IOException if the output can't be written
+     */
+    public static void persist(List<TimeSeries> timeSeries, String targetPath) throws IOException {
 
-//        ArrayList<Double> lineValues = new ArrayList<>(data.size()+1); // all time series and their common x values
-        ArrayList<String> lines = new ArrayList<>(data.getTimeSeriesLength()+1);
+        // all time series and one column for their common x values
+        ArrayList<String> lines = new ArrayList<>(timeSeries.size()+1);
 
-        TimeSeries firstTimeSeries = data.firstEntry().getValue();
-        for (int i = 0; i < data.getTimeSeriesLength(); i++) {
+        TimeSeries representativeTimeSeries = timeSeries.get(0);
+        for (int i = 0; i < timeSeries.get(0).getSize(); i++) {
+
 //            lineValues.clear();
 //            lineValues.add(data.firstEntry().getValue().getDataItems().re[i]);
             String line = "";
 
-            line += String.format("%-16s", firstTimeSeries.getDataItems().re[i]);
+            line += String.format("%-16s", representativeTimeSeries.getDataItems().re[i]);
 
-            for(TimeSeries ts : data.values()){
+            for(TimeSeries ts : timeSeries){
                 //lineValues.add(ts.getDataItems().get(i));
-                line += String.format("%-16s", ts.getDataItems().get(i));
+                line += String.format(Locale.ENGLISH, "%-16e", ts.getDataItems().im[i]);
             }
 
             lines.add(line);
@@ -149,15 +156,16 @@ public class FileModel {
                         @Override public boolean test(String t) { return t.length() <= 2; }
                     });
                     
-                    // parse values
                     updateMessage("Parsing File");
                     rowValues = new double[lines.size()][];
-                    for (int i = 0; i < lines.size(); i++) {
-                        rowValues[i] = separator.splitToDouble(lines.get(i));
-                        updateProgress(i+1, lines.size());
-                        if (isCancelled()) { break; }
-                    }
-                    
+
+                    // parse values concurrently, if possible
+                    int numThreads = Runtime.getRuntime().availableProcessors()-1;  // leave one thread for the application
+                    if(numThreads < 2)
+                        parseLines(lines);
+                    else
+                        parseLinesConcurrent(lines, numThreads);
+
                     // cache first column
                     firstColumn = new double[getTimeSeriesLength()];
                     for (int i = 0; i < firstColumn.length; i++) {
@@ -166,7 +174,64 @@ public class FileModel {
                     
                     return null;
                 }
-                
+
+                /**
+                 * Instantiates a number of threads to parallelize the parsing of the array.
+                 * Speedup is (for four cores) not significant (usually 1.8s instead of 2.5s) but it also doesn't slow things down.
+                 * @param lines
+                 */
+                private void parseLinesConcurrent(final List<String> lines, int numThreads) {
+
+//                    long before = System.currentTimeMillis();
+                    Thread[] processors = new Thread[numThreads];
+
+                    // divide the string array in approximately equally sized partitions
+                    int step = lines.size()/numThreads;
+
+                    // create a thread for each partition and start it
+                    for (int i = 0; i < numThreads; i++) {
+
+                        final int from = i * step;
+                        final int to = i == numThreads-1 ? lines.size()-1 : (i+1)*step-1;
+
+                        processors[i] = new Thread(new Runnable() {
+                            int fromIndex = from;
+                            int toIndex = to;
+                            @Override
+                            public void run() {
+                                // parse each line in this thread's partition
+                                for (int j = fromIndex; j <= toIndex; j++){
+                                    rowValues[j] = separator.splitToDouble(lines.get(j));
+//                                    updateProgress(j-fromIndex,toIndex-fromIndex+1); // slow
+
+                                }
+                            }
+                        });
+                        processors[i].start();
+                    }
+
+                    // wait for all threads having finished
+                    for (int i = 0; i < numThreads; i++) {
+                        try {
+                            processors[i].join();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+//                    System.out.println("needed time: "+(System.currentTimeMillis()-before));
+                }
+
+                private void parseLines(List<String> lines) {
+                    long before = System.currentTimeMillis();
+                    for (int i = 0; i < lines.size(); i++) {
+                        rowValues[i] = separator.splitToDouble(lines.get(i));
+                        updateProgress(i+1, lines.size());
+                        if (isCancelled()) { break; }
+                    }
+                    System.out.println("needed time: "+(System.currentTimeMillis()-before));
+                }
+
                 @Override protected void failed() {
                     super.failed();
                     updateMessage(this.getException().getMessage());

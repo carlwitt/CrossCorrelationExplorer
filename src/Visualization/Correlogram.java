@@ -1,15 +1,20 @@
 package Visualization;
 
 import Data.Correlation.CorrelationMatrix;
+import Data.Correlation.CorrelationMetadata;
 import Data.SharedData;
 import Data.TimeSeries;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
+import javafx.geometry.BoundingBox;
 import javafx.geometry.Point2D;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.StrokeType;
 import javafx.scene.transform.Affine;
 import javafx.scene.transform.NonInvertibleTransformException;
 import javafx.scene.transform.Translate;
@@ -18,7 +23,7 @@ import java.awt.*;
 import java.util.List;
 
 /**
- * Used to draw the correlogram. Takes a matrix with two dimensional entries and renders each of them as a matrix of colored blocks.
+ * Used to draw the correlogram. Takes a matrix with two dimensional entries and renders each of them as a colored block.
  * @author Carl Witt
  */
 public class Correlogram extends CanvasChart {
@@ -27,6 +32,14 @@ public class Correlogram extends CanvasChart {
 
     /** encodes 2D values in a single color */
     private MultiDimensionalPaintScale paintScale;
+
+    // width and height of a cell in the correlogram.
+    // using the actual windowSize is not feasible, since windows overlap.
+    // a new window starts in each baseWindowOffset steps, each window is assigned that width (but at most the window size, in case of negative overlap)
+    double blockWidth, blockHeight;
+
+    Rectangle activeWindowRect = new javafx.scene.shape.Rectangle(10, 10);
+    double activeWindowStrokeWidth = 2;
 
     /** the y offset for drawing correlogram blocks.
      *  this can be used to center blocks around their time lag (e.g. time lag 0 => -0.5 ... 0.5) */
@@ -38,30 +51,35 @@ public class Correlogram extends CanvasChart {
         yAxis.setMinTickUnit(1);
         
         chartCanvas.setOnMouseMoved(reportHighlightedCell);
+
+        // initialize the active window highlight rectangle
+        activeWindowRect.setFill(Color.rgb(0, 0, 0, 0));    // transparent fill
+        activeWindowRect.setStroke(Color.web("#fff500")); // yellow border
+        activeWindowRect.setStrokeType(StrokeType.OUTSIDE);
+        activeWindowRect.setVisible(false);
+        activeWindowRect.setStrokeWidth(activeWindowStrokeWidth);
+        activeWindowRect.setMouseTransparent(true);
+        canvasPane.getChildren().add(activeWindowRect);
     }
     
-    void setSharedData(SharedData sharedData) {
+    public void setSharedData(SharedData sharedData) {
         this.sharedData = sharedData;
         
         // listen to changes in the correlation result matrix
         sharedData.correlationMatrixProperty().addListener(new ChangeListener<CorrelationMatrix>() {
             @Override public void changed(ObservableValue<? extends CorrelationMatrix> ov, CorrelationMatrix t, CorrelationMatrix m) {
 
-                // center mean zero at the middle of the axis
-                double meanRangeMax = Math.max(Math.abs(m.getMeanMinValue()), Math.abs(m.getMeanMaxValue()));
-                paintScale.setLowerBounds(-meanRangeMax, m.getStdDevMinValue());
-                paintScale.setUpperBounds(meanRangeMax, m.getStdDevMaxValue());
                 resetView();
                 drawContents();
             }
         });
 
         // when the mouse moves to another cell, redraw to update highlight
-        sharedData.highlightedCellProperty().addListener(new ChangeListener() {
-            @Override public void changed(ObservableValue observable, Object oldValue, Object newValue) {
-                drawContents();
-            }
-        });
+//        sharedData.highlightedCellProperty().addListener(new ChangeListener() {
+//            @Override public void changed(ObservableValue observable, Object oldValue, Object newValue) {
+//                drawContents();
+//            }
+//        });
         
     }
 
@@ -95,54 +113,71 @@ public class Correlogram extends CanvasChart {
         paintScale.setLowerBounds(-meanRangeMax, matrix.getStdDevMinValue());
         paintScale.setUpperBounds(meanRangeMax, matrix.getStdDevMaxValue());
 
-        // width and height of a cell in the correlogram.
-        // using the actual windowSize is not feasible, since windows overlap.
-        // a new window starts in each baseWindowOffset steps, each window is assigned that width (but at most the window size, in case of negative overlap)
-        double blockWidth = Math.min(matrix.metadata.windowSize, matrix.metadata.baseWindowOffset),
-               blockHeight = 1;
+        // always have a range of [-1, 1] in both dimensions
+//        paintScale.setLowerBounds(-1., -1.);
+//        paintScale.setUpperBounds(1., 1.);
+
+        computeBlockDimensions();
+
+        // clipping on the time axis
+        int columnIdxFrom = 0,
+            columnIdxTo = columns.size()-1;
+        if(getAxesRanges() != null){
+            columnIdxFrom = (int) Math.max(0., Math.ceil(getAxesRanges().getMinX() - 1950.)/blockWidth-matrix.metadata.baseWindowOffset);
+            columnIdxTo   = (int) Math.min(columns.size()-1, Math.ceil(getAxesRanges().getMaxX()- 1950.)/blockWidth+matrix.metadata.baseWindowOffset);
+        }
+
+        // clipping on the resolution
+        Point2D blockDimensionsScreen = dataToScreen.deltaTransform(blockWidth, -blockHeight); // negative height because the transformation takes data coordinates and gives screen coordinates
+        int windowStep = Math.max(1, (int) Math.floor(1. / blockDimensionsScreen.getX()));
+        int lagStep = Math.max(1, (int) Math.floor(2./blockDimensionsScreen.getY()));
+        blockHeight *= lagStep;
+        blockWidth  *= windowStep;
 
         // for each column of the matrix (or, equivalently, for each time window)
-        for (int i = 0; i < columns.size(); i++) {
+        for (int i = columnIdxFrom; i <= columnIdxTo; i += windowStep) {
 
             CorrelationMatrix.Column column = columns.get(i);
 
             double minX, minY;
 
             // center around window center
-            minX = xValues[columns.get(i).windowStartIndex] + 0.5*matrix.metadata.windowSize - blockWidth/2;
+            minX = xValues[columns.get(i).windowStartIndex] + 0.5* matrix.metadata.windowSize - blockWidth/2;
 
-            Point2D ulc, brc; // upper left corner, bottom right corner of the cell
-            int columnLength = column.mean.length;
-            for (int lag = 0; lag < columnLength; lag++) {
-                
+            Point2D ulc, brc; // upper left corner, bottom right corner of the cell, the same for the last drawn cell
+            int lagIdxFrom = 0,
+                lagIdxTo = column.mean.length-1;
+
+            // clipping on the lag axis
+            if(getAxesRanges() != null){
+                lagIdxFrom = (int) Math.max(0., Math.floor(getAxesRanges().getMinY() - column.tauMin)-1);
+                lagIdxTo   = (int) Math.min(column.mean.length-1, Math.ceil(getAxesRanges().getMaxY() - column.tauMin)+1);
+            }
+
+            for (int lag = lagIdxFrom; lag <= lagIdxTo; lag += lagStep) {
+
                 minY = column.tauMin + lag + 1 + blockYOffset; //CorrelationMatrix.splitLag(idx, columnLength)*height + yOffset + 1;
                 ulc = dataToScreen.transform(minX, minY);
                 brc = dataToScreen.transform(minX + blockWidth, minY + blockHeight);
 
                 // draw cell
                 gc.setFill(paintScale.getPaint(column.mean[lag], column.stdDev[lag]));
-                gc.fillRect(ulc.getX(), ulc.getY(), brc.getX() - ulc.getX(), ulc.getY() - brc.getY());
-
-                // draw highlighted cell, or otherwise a border in the same color (avoids moiré effects because of tiny gaps between cells)
-                if( i == sharedData.getHighlightedCell().getX() && lag == sharedData.getHighlightedCell().getY() ){
-                    gc.save();
-                    gc.setStroke(Color.YELLOW);
-                    gc.setLineWidth(2);
-                    gc.strokeRect(ulc.getX(), ulc.getY(), brc.getX() - ulc.getX(), ulc.getY() - brc.getY());
-                    gc.restore();
-                }
-                else {
-                    gc.setStroke(paintScale.getPaint(column.mean[lag], column.stdDev[lag]));
-                    gc.strokeRect(ulc.getX(), ulc.getY(), brc.getX() - ulc.getX(), ulc.getY() - brc.getY());
-                }
+                gc.fillRect(ulc.getX(), ulc.getY(), brc.getX() - ulc.getX() +1, ulc.getY() - brc.getY()+1);
 
             }
-            
+
         }
-        
+
         xAxis.drawContents();
         yAxis.drawContents();
+        highlightActiveWindow();
 
+    }
+
+    private void computeBlockDimensions() {
+        CorrelationMetadata metadata = sharedData.getCorrelationMatrix().metadata;
+        blockWidth = Math.min(metadata.windowSize, metadata.baseWindowOffset);
+        blockHeight = 1;
     }
 
     /**
@@ -194,18 +229,58 @@ public class Correlogram extends CanvasChart {
             }
 
             // report only if changes have occured
-            if( ! sharedData.getHighlightedCell().equals(activeCell))
+            if( ! sharedData.getHighlightedCell().equals(activeCell)){
                 sharedData.setHighlightedCell(activeCell);
+                highlightActiveWindow();
+            }
         }
     };
+
+    /**
+     * Highlights the active window, i.e. the (time,lag) coordinate in the correlogram that is hovered by the user.
+     */
+    void highlightActiveWindow(){
+
+        Point activeWindow = sharedData.getHighlightedCell();
+        // check whether the active window is a valid coordinate
+        boolean drawWindow = activeWindow.x >= 0 && activeWindow.x != Integer.MAX_VALUE && activeWindow.y >= 0 && activeWindow.y != Integer.MAX_VALUE;
+
+        // position rectangle over the window in the correlogram
+        CorrelationMatrix matrix = sharedData.getCorrelationMatrix();
+        if(drawWindow && matrix != null){
+
+            computeBlockDimensions();
+            // retrieve block anchor
+            double[] xValues = matrix.metadata.setA.get(0).getDataItems().re;
+            double minX = xValues[matrix.getResultItems().get(activeWindow.x).windowStartIndex] + 0.5* matrix.metadata.windowSize - blockWidth/2;
+            double minY = matrix.getResultItems().get(activeWindow.x).tauMin + activeWindow.y + 1 + blockYOffset;
+
+            // transform data to screen coordinates
+            Affine dataToScreen = dataToScreen();
+            Point2D anchorScreen = dataToScreen.transform(minX, minY);
+            Point2D dimensionsScreen = dataToScreen.deltaTransform(blockWidth, -blockHeight);
+
+            // check that the rectangle doesn't extend the panes
+            BoundingBox boundsScreen = new BoundingBox(anchorScreen.getX()-activeWindowStrokeWidth, anchorScreen.getY()-activeWindowStrokeWidth, dimensionsScreen.getX()+2*activeWindowStrokeWidth, dimensionsScreen.getY()+2*activeWindowStrokeWidth);
+            if(canvasPane.getLayoutBounds().contains(boundsScreen)){
+                activeWindowRect.setLayoutX(anchorScreen.getX());
+                activeWindowRect.setLayoutY(anchorScreen.getY());
+                activeWindowRect.setWidth(dimensionsScreen.getX());
+                activeWindowRect.setHeight(dimensionsScreen.getY());
+            } else drawWindow = false;
+
+        }
+
+        activeWindowRect.setVisible(drawWindow);
+    }
 
     /**
      * Resets the axes such that they fit the matrix bounds.
      * Performs a redraw.
      */
-    void resetView() {
+    public void resetView() {
         CorrelationMatrix m = sharedData.getCorrelationMatrix();
-        
+
         if(m == null) return;
         xAxis.setLowerBound(m.getStartXValueInTimeSeries());
         xAxis.setUpperBound(m.getEndXValueInTimeSeries()+1);
@@ -215,15 +290,30 @@ public class Correlogram extends CanvasChart {
         } else {
             yAxis.setLowerBound(m.minLag()+blockYOffset);
             yAxis.setUpperBound(m.maxLag()-blockYOffset);
-        } 
+        }
     }
-    
+
     public MultiDimensionalPaintScale getPaintScale() {
         return paintScale;
     }
 
     public void setPaintScale(MultiDimensionalPaintScale paintScale) {
         this.paintScale = paintScale;
+    }
+
+    /**
+     * @return an image of the current contents of the visualization window
+     */
+    public WritableImage getCurrentViewAsImage(){
+
+        int width = (int) chartCanvas.getWidth(),
+            height = (int) chartCanvas.getHeight();
+
+        WritableImage wim = new WritableImage(width, height);
+
+        chartCanvas.snapshot(null, wim);
+
+        return wim;
     }
 
 }

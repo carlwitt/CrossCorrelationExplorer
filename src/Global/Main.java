@@ -1,13 +1,14 @@
 package Global;
 
 import Gui.MainWindowController;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Main extends Application {
 
@@ -17,9 +18,9 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        
+
         try {
-            Pane rootNode = (Pane) FXMLLoader.load(MainWindowController.class.getResource("MainWindow.fxml"));          
+            Pane rootNode = FXMLLoader.load(MainWindowController.class.getResource("MainWindow.fxml"));
             Scene scene = new Scene(rootNode);
             primaryStage.setScene(scene);
             primaryStage.setTitle("Cross Correlation Explorer");
