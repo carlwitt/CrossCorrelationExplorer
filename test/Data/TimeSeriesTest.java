@@ -6,6 +6,10 @@ package Data;
 
 import org.junit.*;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -26,7 +30,20 @@ public class TimeSeriesTest {
     @AfterClass
     public static void tearDownClass() {
     }
-    
+
+    public static List<TimeSeries> randomTimeSerieses(int numTimeSeries, int timeSeriesLength) {
+        List<TimeSeries> set = new ArrayList<>(numTimeSeries);
+
+        Random rdg = new Random(1l);
+
+        for (int i = 0; i < numTimeSeries; i++) {
+            double[] data = new double[timeSeriesLength];
+            for (int j = 0; j < timeSeriesLength; j++) data[j] = rdg.nextDouble();
+            set.add(new TimeSeries(data));
+        }
+        return set;
+    }
+
     @Before
     public void setUp() {
     }

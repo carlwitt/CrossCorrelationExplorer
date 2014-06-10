@@ -1,13 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ToggleButton?>
-<?import javafx.scene.control.Tooltip?>
+<?import javafx.scene.control.*?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 <VBox fx:id="correlogramView" prefHeight="326.9999000000025" prefWidth="1119.0" style="-fx-background-color: gainsboro;" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.CorrelogramController">
-  <StackPane fx:id="correlogramPane" alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="-1.0" prefWidth="-1.0" style="/*-fx-background-color:white;*/" VBox.vgrow="ALWAYS"/>
+  <TabPane id="visualizationSwitcher" fx:id="visualizationSelector" maxHeight="27.0" minHeight="0.0" prefHeight="27.0" prefWidth="1119.0" style="-fx-background-color: white;" styleClass="mainFxmlClass" tabClosingPolicy="UNAVAILABLE" tabMaxHeight="26.0" tabMinHeight="0.0">
+    <tabs>
+      <Tab text="" />
+      <Tab text="" />
+      <Tab text="" />
+      <Tab text="" />
+      <Tab text="" />
+    </tabs>
+  </TabPane>
+  <StackPane fx:id="correlogramPane" alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="-1.0" prefWidth="-1.0" style="/*-fx-background-color:white;*/" VBox.vgrow="ALWAYS" />
   <StackPane fx:id="legendPane" maxHeight="140.0" maxWidth="1.7976931348623157E308" prefHeight="140.0" prefWidth="-1.0" style="/*-fx-background-color:blue;*/" VBox.vgrow="NEVER">
     <Button cancelButton="false" contentDisplay="GRAPHIC_ONLY" defaultButton="false" graphicTextGap="0.0" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" onAction="#resetView" prefHeight="20.0" prefWidth="20.0" style=";" text="" translateX="-20.0" StackPane.alignment="BOTTOM_LEFT">
       <graphic>

@@ -1,10 +1,10 @@
 package Visualization;
 
 import Data.Correlation.CorrelationMatrix;
-import Data.Correlation.CorrelationMetadata;
 import Data.Correlation.CrossCorrelation;
 import Data.SharedData;
 import Data.TimeSeries;
+import Data.Windowing.WindowMetadata;
 import javafx.embed.swing.JFXPanel;
 import org.junit.Test;
 
@@ -42,7 +42,7 @@ public class CorrelogramLegendTest {
         sharedData.correlationSetB.add(sharedData.dataModel.get(3));
 
         int windowSize = 1;
-        CorrelationMetadata metadata = new CorrelationMetadata(sharedData.correlationSetA, sharedData.correlationSetB, windowSize, -2, 2, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED, 1);
+        WindowMetadata metadata = new WindowMetadata(sharedData.correlationSetA, sharedData.correlationSetB, windowSize, -2, 2, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED, 1);
         CorrelationMatrix correlationMatrix = new CorrelationMatrix(metadata);
         correlationMatrix.compute();
         sharedData.setcorrelationMatrix(correlationMatrix);
@@ -52,9 +52,9 @@ public class CorrelogramLegendTest {
         int stdDevResolution = 3;
 
         CorrelationMatrix expResult = new CorrelationMatrix(null);
-        expResult.append(expResult.new Column(new double[]{1,1,1}, new double[]{0,1,2}, 0, 0));
-        expResult.append(expResult.new Column(new double[]{3.5,3.5,3.5}, new double[]{0,1,2}, 1, 0));
-        expResult.append(expResult.new Column(new double[]{6,6,6}, new double[]{0,1,2}, 2, 0));
+        expResult.append(expResult.new CorrelationColumnBuilder(0, 0).mean(new double[]{1, 1, 1}).standardDeviation(new double[]{0, 1, 2}).build());
+        expResult.append(expResult.new CorrelationColumnBuilder(1, 0).mean(new double[]{3.5, 3.5, 3.5}).standardDeviation(new double[]{0, 1, 2}).build());
+        expResult.append(expResult.new CorrelationColumnBuilder(2, 0).mean(new double[]{6, 6, 6}).standardDeviation(new double[]{0, 1, 2}).build());
 
         CorrelationMatrix result = instance.valueRangeSample(meanResolution, stdDevResolution);
         assertEquals(expResult, result);
@@ -75,7 +75,7 @@ public class CorrelogramLegendTest {
         sharedData.correlationSetB.add(sharedData.dataModel.get(1));
 
         int windowSize = 1;
-        CorrelationMetadata metadata = new CorrelationMetadata(sharedData.correlationSetA, sharedData.correlationSetB, windowSize, -2, 2, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED, 1);
+        WindowMetadata metadata = new WindowMetadata(sharedData.correlationSetA, sharedData.correlationSetB, windowSize, -2, 2, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED, 1);
         CorrelationMatrix correlationMatrix = new CorrelationMatrix(metadata);
         correlationMatrix.compute();
         sharedData.setcorrelationMatrix(correlationMatrix);
@@ -85,7 +85,7 @@ public class CorrelogramLegendTest {
         int stdDevResolution = 3;
 
         CorrelationMatrix expResult = new CorrelationMatrix(null);
-        expResult.append(expResult.new Column(new double[]{1}, new double[]{0}, 1, 0));
+        expResult.append(expResult.new CorrelationColumnBuilder(1, 0).mean(new double[]{1}).standardDeviation(new double[]{0}).build());
 
         CorrelationMatrix result = instance.valueRangeSample(meanResolution, stdDevResolution);
         assertEquals(expResult, result);

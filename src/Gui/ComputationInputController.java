@@ -1,12 +1,11 @@
 package Gui;
 
-import Data.*;
-import Data.Correlation.*;
-
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Random;
-import java.util.ResourceBundle;
+import Data.Correlation.CorrelationMatrix;
+import Data.Correlation.CrossCorrelation;
+import Data.CorrelogramStore;
+import Data.SharedData;
+import Data.TimeSeries;
+import Data.Windowing.WindowMetadata;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.WorkerStateEvent;
@@ -14,13 +13,16 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.geometry.Point2D;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
-import javafx.util.StringConverter;
 import org.controlsfx.dialog.Dialogs;
+
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Random;
+import java.util.ResourceBundle;
 
 /**
  * Controls the loading of text files and the selection of time series from the text file to work with.
@@ -59,6 +61,7 @@ public class ComputationInputController implements Initializable {
     @FXML private TextField baseWindowOffsetText;
     @FXML private TextField timeLagMinText;
     @FXML private TextField timeLagMaxText;
+    @FXML private TextField significanceLevelText;
     
     // list control buttons
     @FXML private Button loadAllSetAButton;
@@ -93,22 +96,22 @@ public class ComputationInputController implements Initializable {
         });
         
         // bind min/max time lag input 
-//        timeLagMinText.textProperty().bindBidirectional(sharedData.timeLagBoundsProperty(), new StringConverter<Point2D>() {
+//        timeLagMinText.textProperty().bindBidirectional(sharedData.progressMessageProperty(), new StringConverter<Point2D>() {
 //            @Override public String toString(Point2D t) {
 //                return "" + t.getX();
 //            }
 //            @Override public Point2D fromString(String string) {
-//                Point2D currentBounds = sharedData.getTimeLagBounds();
+//                Point2D currentBounds = sharedData.getProgressMessage();
 //                try{ return new Point2D(Double.parseDouble(string), currentBounds.getY()); }
 //                catch(NumberFormatException e) { return currentBounds; }
 //            }
 //        });
-//        timeLagMaxText.textProperty().bindBidirectional(sharedData.timeLagBoundsProperty(), new StringConverter<Point2D>() {
+//        timeLagMaxText.textProperty().bindBidirectional(sharedData.progressMessageProperty(), new StringConverter<Point2D>() {
 //            @Override public String toString(Point2D t) {
 //                return "" + t.getY();
 //            }
 //            @Override public Point2D fromString(String string) {
-//                Point2D currentBounds = sharedData.getTimeLagBounds();
+//                Point2D currentBounds = sharedData.getProgressMessage();
 //                try{ return new Point2D(currentBounds.getX(), Double.parseDouble(string)); }
 //                catch(NumberFormatException e) { return currentBounds; }
 //            }
@@ -157,12 +160,12 @@ public class ComputationInputController implements Initializable {
         int baseWindowOffset = (int) Double.parseDouble(baseWindowOffsetText.getText());
         int tauMin = (int) Double.parseDouble(timeLagMinText.getText());
         int tauMax = (int) Double.parseDouble(timeLagMaxText.getText());
+        double significanceLevel = Double.parseDouble(significanceLevelText.getText());
 
         // the window size must be at least two (otherwise, the pearson correlation coefficient is undefined)
         // and at most the length of the time series (otherwise the correlation matrix will have no columns)
         // TODO: inform the user if the window size is invalid
         windowSize = Math.min(sharedData.getTimeSeriesLength(), Math.max(2, windowSize));
-
 
         // display the parsed values
         windowSizeText.setText(""+windowSize); // to display what was parsed
@@ -180,8 +183,9 @@ public class ComputationInputController implements Initializable {
             naAction = CrossCorrelation.NA_ACTION.REPLACE_WITH_ZERO;
         }
         
-        CorrelationMetadata metadata = new CorrelationMetadata(sharedData.correlationSetA, sharedData.correlationSetB, windowSize, tauMin, tauMax, naAction, baseWindowOffset);
-        
+        WindowMetadata metadata = new WindowMetadata(sharedData.correlationSetA, sharedData.correlationSetB, windowSize, tauMin, tauMax, naAction, baseWindowOffset);
+        CorrelationMatrix.setSignificanceLevel(metadata, significanceLevel);
+
         // get result from cache or execute an asynchronuous compute service
         CorrelationMatrix result;
         if(CorrelogramStore.contains(metadata)){
@@ -199,7 +203,7 @@ public class ComputationInputController implements Initializable {
                 @Override public void handle(WorkerStateEvent t) {
                     progressLayer.hide();
                     sharedData.setcorrelationMatrix(service.getValue());
-                    System.out.println("Columns in the matrix: "+service.getValue().getSize());
+//                    System.out.println("Columns in the matrix: "+service.getValue().getSize());
                 }
             });
             

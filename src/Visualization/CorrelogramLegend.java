@@ -1,6 +1,5 @@
 package Visualization;
 
-import Data.ComplexSequence;
 import Data.Correlation.CorrelationMatrix;
 import Data.SharedData;
 import com.sun.javafx.tk.FontLoader;
@@ -75,7 +74,7 @@ public class CorrelogramLegend extends CanvasChart {
                 Point activeCell = (Point) t1;
                 // check whether the column exists the 
                 if(activeCell.x >= 0 && activeCell.x < sharedData.getCorrelationMatrix().getResultItems().size() ){
-                    CorrelationMatrix.Column activeColumn = sharedData.getCorrelationMatrix().getResultItems().get(activeCell.x);
+                    CorrelationMatrix.CorrelationColumn activeColumn = sharedData.getCorrelationMatrix().getResultItems().get(activeCell.x);
                     // check whether the row exists
                     if(activeCell.y >= 0 && activeCell.y < activeColumn.mean.length){
                         highlightMean = activeColumn.mean[activeCell.y];
@@ -98,10 +97,10 @@ public class CorrelogramLegend extends CanvasChart {
         valueRangeSample.set(m);
 
         // adjust display bounds
-        xValueMin = m.getMeanMinValue();
-        xValueMax = m.getMeanMaxValue();
-        yValueMin = m.getStdDevMinValue();
-        yValueMax = m.getStdDevMaxValue(); 
+        xValueMin = m.getMin(CorrelationMatrix.MEAN);
+        xValueMax = m.getMax(CorrelationMatrix.MEAN);
+        yValueMin = m.getMin(CorrelationMatrix.STD_DEV);
+        yValueMax = m.getMax(CorrelationMatrix.STD_DEV);
         // handle special case of only one value along the axis
         int meanValues = m.getResultItems().size();
         xTickUnit = meanValues > 1 ? (xValueMax-xValueMin)/(meanValues-1) : 1;
@@ -133,20 +132,20 @@ public class CorrelogramLegend extends CanvasChart {
 
         // retrieve data to render
         CorrelationMatrix matrix = getValueRangeSample();
-        List<CorrelationMatrix.Column> columns = matrix.getResultItems();
+        List columns = matrix.getResultItems();
 
         // configure paintscale
         // center mean zero at the middle of the axis
-        double meanRangeMax = Math.max(Math.abs(matrix.getMeanMinValue()), Math.abs(matrix.getMeanMaxValue()));
-        paintScale.setLowerBounds(-meanRangeMax, matrix.getStdDevMinValue());
-        paintScale.setUpperBounds(meanRangeMax, matrix.getStdDevMaxValue());
+        double meanRangeMax = Math.max(Math.abs(matrix.getMin(CorrelationMatrix.MEAN)), Math.abs(matrix.getMax(CorrelationMatrix.MEAN)));
+        paintScale.setLowerBounds(-meanRangeMax, matrix.getMin(CorrelationMatrix.STD_DEV));
+        paintScale.setUpperBounds(meanRangeMax, matrix.getMax(CorrelationMatrix.STD_DEV));
         // always have a range of [-1, 1] in both dimensions
 //        paintScale.setLowerBounds(-1., -1.);
 //        paintScale.setUpperBounds(1., 1.);
 
         // for each column of the matrix (or, equivalently, for each distinct mean value)
         for (int i = 0; i < columns.size(); i++) {
-            CorrelationMatrix.Column column = columns.get(i);
+            CorrelationMatrix.CorrelationColumn column = (CorrelationMatrix.CorrelationColumn) columns.get(i);
             
             double minX, minY, startY, width, height;
             
@@ -154,8 +153,8 @@ public class CorrelogramLegend extends CanvasChart {
             width = xTickUnit;
             height = yTickUnit;
 
-            minX = matrix.getMeanMinValue() + i*width - width/2;
-            startY = matrix.getStdDevMinValue()+height/2;
+            minX = matrix.getMin(CorrelationMatrix.MEAN) + i*width - width/2;
+            startY = matrix.getMin(CorrelationMatrix.STD_DEV)+height/2;
 
             Point2D ulc, brc; // upper left corner, bottom right corner of the cell
             for (int lag = 0; lag < column.mean.length; lag++) {
@@ -236,9 +235,9 @@ public class CorrelogramLegend extends CanvasChart {
         if(m == null) return null;
 
         // center mean zero at the middle of the axis
-        double meanRangeMax = Math.max(Math.abs(m.getMeanMinValue()), Math.abs(m.getMeanMaxValue()));
+        double meanRangeMax = Math.max(Math.abs(m.getMin(CorrelationMatrix.MEAN)), Math.abs(m.getMax(CorrelationMatrix.MEAN)));
         double[] meanRange = new double[]{-meanRangeMax, meanRangeMax};
-        double[] stdDevRange = new double[]{m.getStdDevMinValue(), m.getStdDevMaxValue()};
+        double[] stdDevRange = new double[]{m.getMin(CorrelationMatrix.STD_DEV), m.getMax(CorrelationMatrix.STD_DEV)};
         
         // if the lower bound equals the upper bound, use only one return value in that dimension
         if(meanRange[1]-meanRange[0] < 1e-10){
@@ -271,8 +270,7 @@ public class CorrelogramLegend extends CanvasChart {
                 stdDevValues[j] = currentStdDev;
                 
             }
-            ComplexSequence columnValues = ComplexSequence.create(meanValues, stdDevValues);
-            result.append(result.new Column(columnValues, i, i));
+            result.append(result.new CorrelationColumnBuilder(i, i).mean(meanValues).standardDeviation(stdDevValues).build());
         }   
 //System.out.println(String.format("value range sample: %s", result));
         return result;
@@ -288,7 +286,7 @@ public class CorrelogramLegend extends CanvasChart {
         CorrelationMatrix m = getValueRangeSample();
         if(m == null) return;
         
-        xAxis.setTickOrigin(m.getMeanMinValue());
+        xAxis.setTickOrigin(m.getMin(CorrelationMatrix.MEAN));
         xAxis.setTickUnit(xTickUnit); 
         
         yAxis.setTickOrigin(yValueMin);

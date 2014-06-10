@@ -55,7 +55,7 @@ public class SharedData extends Observable {
     public Point getHighlightedCell() { return highlightedCell.get(); }
     public void setHighlightedCell(Point value) { highlightedCell.set(value); }
 
-    public CorrelationMatrix.Column getHighlightedColumn() {
+    public CorrelationMatrix.CorrelationColumn getHighlightedColumn() {
         if(getCorrelationMatrix() == null) return null;
         int x = getHighlightedCell().x;
         if(x < 0 || x >= getCorrelationMatrix().getResultItems().size()) return null;

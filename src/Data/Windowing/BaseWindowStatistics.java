@@ -1,28 +1,22 @@
-package Data.Correlation;
+package Data.Windowing;
 
+import Data.Correlation.CrossCorrelation;
 import Data.TimeSeries;
 
 /**
  * This class performs heavy precomputation of reusable terms to speed up cross-correlation computation.
  *
- * Base windows usually overlap, but apart from an incremental mean computation, this cannot be exploited for speedup,
- * since the normalized values change with the window mean (so summed squares can't be used neither).
+ * E.g. when cross correlating two sets of time series in a nested loop, this can be used for the time series
+ * used in the outer, slow running loop.
  *
- * Example memory cost of computating all normalized values:
- * For a length of 10k values, and a window size of 1000, 64Mb are needed to store all normalized values.
- * 10k-1000+1 windows ~ 8k windows times 1000 values per window 8e6 times 8 byte per double = 64 Mb
- * The worst case is |w| = N/2 for which 200 Mb are needed.
- * Since this memory is used only during one iteration and freed afterwards, this should not be a problem.
- *
- * E.g. when cross correlating two sets of time series in a nested loop, this can be used for the time series used in the outer loop.
  * Created by Carl Witt on 14.05.14.
  */
 public class BaseWindowStatistics extends AbstractWindowStatistics {
 
     /**
-     * For the parameter documentation please refer to the documentation of the correspondent fields in {@link Data.Correlation.AbstractWindowStatistics}
+     * For the parameter documentation please refer to the documentation of the correspondent fields in {@link AbstractWindowStatistics}
      */
-    protected BaseWindowStatistics(TimeSeries ts, int windowSize, int delta) {
+    public BaseWindowStatistics(TimeSeries ts, int windowSize, int delta) {
         super(ts, windowSize, delta);
 
         int largestValidWindowStartIndex = ts.getSize() - windowSize; // N-windowSize+1 would be one-based
@@ -31,7 +25,7 @@ public class BaseWindowStatistics extends AbstractWindowStatistics {
         numWindows = largestValidWindowStartIndex / delta + 1;    // +1: the first window is located at index zero
 
         // --------------------------------------------
-        // precompute the actual means, summedSquares and
+        // precompute the actual means, rootOfSummedSquares and
         // possibly normalized values for each window
         // --------------------------------------------
 
@@ -44,11 +38,11 @@ public class BaseWindowStatistics extends AbstractWindowStatistics {
      * @param computeNormalizedValues whether to precompute the mean shifted values (memory expensive).
      */
     @Override
-    protected void computeWindowStatistics(boolean computeNormalizedValues){
+    public void computeWindowStatistics(boolean computeNormalizedValues){
 
         // allocate memory
         means = new double[numWindows];
-        summedSquares = new double[numWindows];
+        rootOfSummedSquares = new double[numWindows];
         if(computeNormalizedValues) normalizedValues = new double[numWindows][];
 
         double[] values = timeSeries.getDataItems().im;
@@ -76,11 +70,12 @@ public class BaseWindowStatistics extends AbstractWindowStatistics {
             if(computeNormalizedValues)
                 normalizedValues[i] = normalizedWindowValues;   // cache values if allowed
 
-            // 3. compute variance
-            summedSquares[i] = 0;
+            // 3. compute root of summed squares
+            rootOfSummedSquares[i] = 0;
             for (int j = 0; j < windowSize; j++) {
-                summedSquares[i] += normalizedWindowValues[j] * normalizedWindowValues[j];
+                rootOfSummedSquares[i] += normalizedWindowValues[j] * normalizedWindowValues[j];
             }
+            rootOfSummedSquares[i] = Math.sqrt(rootOfSummedSquares[i]);
 
         }
 
@@ -117,11 +112,11 @@ public class BaseWindowStatistics extends AbstractWindowStatistics {
     public double getSummedSquares(int windowStartIndex){
 
         int windowNumber = getWindowNumberForStartIndex(windowStartIndex);
-        return summedSquares[windowNumber];
+        return rootOfSummedSquares[windowNumber];
     }
 
     @Override
-    protected int getWindowNumberForStartIndex(int windowStartIndex){
+    public int getWindowNumberForStartIndex(int windowStartIndex){
 
         if(windowStartIndex % baseWindowOffset != 0) throw new AssertionError("There is no base window starting at time series value index "+windowStartIndex);
         return windowStartIndex/ baseWindowOffset;
@@ -129,7 +124,7 @@ public class BaseWindowStatistics extends AbstractWindowStatistics {
     }
 
     @Override
-    protected void computeWindowStartIndices(){
+    public void computeWindowStartIndices(){
 
         windowStartIndices = new int[numWindows];
 

@@ -2,7 +2,6 @@ package Visualization;
 
 import Data.ComplexSequence;
 import Data.Correlation.CorrelationMatrix;
-import Data.Correlation.CorrelationMatrix.Column;
 import Data.SharedData;
 import Data.TimeSeries;
 import javafx.beans.property.IntegerProperty;
@@ -60,7 +59,7 @@ public class TimeSeriesChart extends CanvasChart {
         // the value at highlightWindowTo is not in the window, but the displayed window extends up to it
         int highlightTimeLag = 0, highlightWindowFrom = Integer.MAX_VALUE, highlightWindowTo = Integer.MAX_VALUE;
 
-        Column highlightedColumn = sharedData.getHighlightedColumn();
+        CorrelationMatrix.CorrelationColumn highlightedColumn = sharedData.getHighlightedColumn();
         CorrelationMatrix matrix = sharedData.getCorrelationMatrix();
         if(highlightedColumn != null && matrix != null && matrix.metadata.setA.size() > 0){
 

@@ -74,7 +74,7 @@ public class TimeSeriesViewController {
         
         // when a new correlation matrix has been computed, reset the view 
         sharedData.correlationMatrixProperty().addListener(new ChangeListener<CorrelationMatrix>() {
-            @Override public void changed(ObservableValue<? extends CorrelationMatrix> ov, CorrelationMatrix t, CorrelationMatrix t1) { 
+            @Override public void changed(ObservableValue<? extends CorrelationMatrix> ov, CorrelationMatrix t, CorrelationMatrix t1) {
                 resetView(null);  
             }
         });

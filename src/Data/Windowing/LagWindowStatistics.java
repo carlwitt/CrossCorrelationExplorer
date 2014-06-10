@@ -1,5 +1,6 @@
-package Data.Correlation;
+package Data.Windowing;
 
+import Data.Correlation.CrossCorrelation;
 import Data.TimeSeries;
 
 /**
@@ -11,9 +12,8 @@ import Data.TimeSeries;
 public class LagWindowStatistics extends AbstractWindowStatistics {
 
     /** The minimum and maximum desired time lag in the cross-correlation computation. */
-    final int tauMin, tauMax;
+    public final int tauMin, tauMax;
 
-    private final LagWindowCache cache;
 
     // -----------------------------------------------------------------------------------------------------------------
     // derived from specific parameters
@@ -24,14 +24,14 @@ public class LagWindowStatistics extends AbstractWindowStatistics {
     private final int lastLagWindowStart;
 
     /** Number of lag windows that can be used in the cross-correlation computation of a base window as well as in the computation of its subsequent base window. */
-    final int sharedLagWindows;
+    public final int sharedLagWindows;
 
     /**
      * If true, the start indices of any two consecutive precomputed windows always differ by one.
      * This might not be the case if the baseWindowOffset is large, because then there are "holes" between the lag ranges.
      * In this case, some subsequences of the time series are NOT needed for any cross-correlation computation step.
      */
-    final boolean continuousIndices;
+    public final boolean continuousIndices;
 
     // -----------------------------------------------------------------------------------------------------------------
     // methods
@@ -40,7 +40,7 @@ public class LagWindowStatistics extends AbstractWindowStatistics {
     /**
      * For the parameter documentation please refer to the documentation of the correspondent fields.
      */
-    protected LagWindowStatistics(TimeSeries ts, int windowSize, int baseWindowOffset, int tauMin, int tauMax) {
+    public  LagWindowStatistics(TimeSeries ts, int windowSize, int baseWindowOffset, int tauMin, int tauMax) {
         super(ts, windowSize, baseWindowOffset);
 
         this.tauMin = tauMin;
@@ -52,9 +52,6 @@ public class LagWindowStatistics extends AbstractWindowStatistics {
         /** The number of lag windows that are needed both in the cross-correlation computation of a base window b and its subsequent base window b'.
          * This is the size of the intersection of the ranges [s_b + tauMin ... s_b + tauMax] and [s_b' + tauMin ... s_b' + tauMax]. */
         sharedLagWindows = tauMax - tauMin - baseWindowOffset + 1;
-
-        // create cache for lag window data
-        cache = new LagWindowCache(sharedLagWindows);
 
         // if there are shared windows, the lag ranges are not disjoint and thus their union is a continuous sequence.
         // if the distance between subsequent lag ranges is 1 (shared windows = 0) all lag ranges are adjacent and their union is again a continous index range.
@@ -87,11 +84,11 @@ public class LagWindowStatistics extends AbstractWindowStatistics {
         }
 
         // --------------------------------------------
-        // precompute the actual means, summedSquares and
+        // precompute the actual means, rootOfSummedSquares and
         // possibly normalized values for each window
         // --------------------------------------------
 
-        computeWindowStatistics(false);
+        computeWindowStatistics(true);
 
     }
 
@@ -99,11 +96,12 @@ public class LagWindowStatistics extends AbstractWindowStatistics {
      * Computes the mean and variance for each window and optionally the normalized values.
      * @param computeNormalizedValues whether to precompute the mean shifted values (memory expensive).
      */
-    protected void computeWindowStatistics(boolean computeNormalizedValues){
+    public void computeWindowStatistics(boolean computeNormalizedValues){
 
         // allocate memory
         means = new double[numWindows];
-        summedSquares = new double[numWindows];
+        rootOfSummedSquares = new double[numWindows];
+        normalizedValues = new double[numWindows][];
 
         double[] values = timeSeries.getDataItems().im;
 
@@ -131,10 +129,11 @@ public class LagWindowStatistics extends AbstractWindowStatistics {
                 normalizedValues[i] = normalizedWindowValues;   // cache values if allowed
 
             // 3. compute variance
-            summedSquares[i] = 0;
+            rootOfSummedSquares[i] = 0;
             for (int j = 0; j < windowSize; j++) {
-                summedSquares[i] += normalizedWindowValues[j] * normalizedWindowValues[j];
+                rootOfSummedSquares[i] += normalizedWindowValues[j] * normalizedWindowValues[j];
             }
+            rootOfSummedSquares[i] = Math.sqrt(rootOfSummedSquares[i]);
 
         }
 
@@ -142,7 +141,14 @@ public class LagWindowStatistics extends AbstractWindowStatistics {
 
     @Override
     public double[] getNormalizedValues(int windowStartIndex) {
-        throw new UnsupportedOperationException("!");
+
+        int windowNumber = getWindowNumberForStartIndex(windowStartIndex);
+
+        /** These values are not cached because they usually require a lot of memory. */
+        if(normalizedValues != null) return normalizedValues[windowNumber];
+
+        throw new UnsupportedOperationException("On demand computation of normalized values not yet implemented for lag window statistics.");
+
     }
 
     @Override
@@ -156,7 +162,7 @@ public class LagWindowStatistics extends AbstractWindowStatistics {
         return windowStartIndices;
     }
 
-    protected int getWindowNumberForStartIndex(int windowStartIndex){
+    public int getWindowNumberForStartIndex(int windowStartIndex){
 
         if(! continuousIndices) throw new UnsupportedOperationException("Window number from start index computation not yet implemented for non continuous lag ranges.");
 
@@ -164,7 +170,7 @@ public class LagWindowStatistics extends AbstractWindowStatistics {
 
     }
 
-    protected void computeWindowStartIndices(){
+    public void computeWindowStartIndices(){
 
         if(! continuousIndices) throw new UnsupportedOperationException("Window start index computation not yet implemented for non continuous lag ranges.");
 

@@ -1,5 +1,9 @@
 package Data.Correlation;
 
+import Data.Windowing.WindowMetadata;
+
+import java.util.Arrays;
+
 /**
  * Saves the normalized values and summed squares for a continuous range of k lag windows.
  * This is usefull because usually, two subsequent base windows refer to partially the same lag windows.
@@ -22,100 +26,145 @@ package Data.Correlation;
  * rangeStart = C. cache internal state: (D,E,C)
  * get(0) = C; get(1) = D; get(2) = E
  */
-class LagWindowCache {
+public class LagWindowCache {
 
-    /** The (zero-based) index of the time series value where the first buffered lag window starts (first meaning 'having the lowest start index'). */
-    private int rangeStart = -1; // no valid index at startup
+    WindowMetadata metadata;
+
+    /** The index of the time series value where the first buffered lag window starts (first meaning 'having the lowest start index'). */
+    private int[] rangeStart; // no valid index at startup
 
     /** How many windows are currently stored in the cache. This is needed only for the warmup phase where the cache contains less then cacheSize elements. */
-    private int numberOfElements = 0;
+    private int[] numberOfElements;
 
-    /** The number of lag windows cached. Should be equal to the overlap of lag ranges but can be smaller if memory is critical. */
+    /** The maximum number of lag windows that can be cached. Should be equal to the overlap of lag ranges but can be smaller if memory is critical. */
     private final int cacheSize;
 
     /** Points to the array index that is next overwritten. After the cache has been filled completely, this points to the oldest element. */
-    private int nextWriteLocation = 0;
+    private int[] nextWriteLocation;
 
-    private final double[][] normalizedValues;
-    private final double[] summedSquares;
+    /** the dimensions refer to the following: normalizedValues[time series index][lag window index][value index] */
+    private final double[][][] normalizedValues;
+    /** the dimensions refer to the following: rootOfSummedSquares[time series index][lag window index] */
+    private final double[][] rootOfSummedSquares;
 
-    public LagWindowCache(int cacheSize) {
-        this.cacheSize = cacheSize;
-        normalizedValues = new double[cacheSize][];
-        summedSquares = new double[cacheSize];
+    /** Stores the means of the last stored window of a time series. */
+    private final double[] frontMeans;
+    private final int[] lastFroms;
+
+    public LagWindowCache(WindowMetadata metadata, int cacheSize) {
+        this.metadata = metadata;
+        this.cacheSize = Math.max(1, cacheSize);
+
+        int numTimeSeries = metadata.setB.size();
+        normalizedValues = new double[numTimeSeries][this.cacheSize][];
+        rootOfSummedSquares = new double[numTimeSeries][this.cacheSize];
+
+        frontMeans = new double[numTimeSeries];
+        Arrays.fill(frontMeans, Double.NaN);
+        lastFroms = new int[numTimeSeries];
+
+        rangeStart = new int[numTimeSeries];
+        Arrays.fill(rangeStart, -1);
+
+        numberOfElements = new int[numTimeSeries];
+        nextWriteLocation = new int[numTimeSeries];
     }
 
     /**
      * Adds data to the cache.
-     * @param startIndex the (zero-based) index of the time series value where the lag window starts.
+     * @param timeSeriesIndex the index of the time series to which the window belongs
+     * @param startIndex the index of the time series value where the lag window starts.
      *                   This is read only once, when the first element is added. Later on, it is only used to
      *                   - check that the user actually appends windows in a continuous range
      * @param normalizedValues see getNormalizedValues
-     * @param summedSquares see getSummedSquares
+     * @param rootOfSummedSquares see getRootOfSummedSquares
      */
-    public void put(int startIndex, double[] normalizedValues, double summedSquares){
+    protected void put(int timeSeriesIndex, int startIndex, double[] normalizedValues, double rootOfSummedSquares){
 
         // if the cache is empty, initialize the range
-        if(numberOfElements == 0) rangeStart = startIndex;
+        if(numberOfElements[timeSeriesIndex] == 0) rangeStart[timeSeriesIndex] = startIndex;
 
         // check the appended window results in a continuous range:
         // rangeEnd must point to the index before the windowStartIndex (works for the empty cache)
-        int rangeEnd = rangeStart + numberOfElements - 1; //
+        int rangeEnd = rangeStart[timeSeriesIndex] + numberOfElements[timeSeriesIndex] - 1; //
         if(startIndex != rangeEnd+1) throw new AssertionError("Can not append window! " +
                 "The window needs to be the subsequent window of the last window in the cached range " +
-                "(window start index must be "+(rangeEnd+1)+" but is "+startIndex);
+                "(window start index must be "+(rangeEnd+1)+") but is "+startIndex);
 
         // store data
-        this.normalizedValues[nextWriteLocation] = normalizedValues;
-        this.summedSquares[nextWriteLocation] = summedSquares;
+        this.normalizedValues[timeSeriesIndex][nextWriteLocation[timeSeriesIndex]] = normalizedValues;
+        this.rootOfSummedSquares[timeSeriesIndex][nextWriteLocation[timeSeriesIndex]] = rootOfSummedSquares;
 
         // the range start moves only, if the cache was full when put was performed. (numberOfElements hasn't been updated here yet!)
-        if(numberOfElements == cacheSize) rangeStart++;
+        if(numberOfElements[timeSeriesIndex] == cacheSize) rangeStart[timeSeriesIndex]++;
         // the number of elements increases only if the cache is not full yet
-        if(numberOfElements<cacheSize) numberOfElements++;
+        if(numberOfElements[timeSeriesIndex]<cacheSize) numberOfElements[timeSeriesIndex]++;
         // the next write location is (possibly) wrapped around if larger than the last array index
-        nextWriteLocation = (nextWriteLocation+1)%cacheSize;
+        nextWriteLocation[timeSeriesIndex] = (nextWriteLocation[timeSeriesIndex]+1)%cacheSize;
 
     }
 
     /**
-     * @param startIndex the (zero-based) index of the time series value where the lag window starts.
+     * @param startIndex the index of the time series value where the lag window starts.
      * @return whether the data for the specified window is cached or not. */
-    public boolean hasWindow(int startIndex){
+    protected boolean hasWindow(int timeSeriesIndex, int startIndex){
 
         // the last window start index covered
-        int rangeEnd = rangeStart + numberOfElements - 1;
-        return startIndex >= rangeStart && startIndex <= rangeEnd;
+        int rangeEnd = rangeStart[timeSeriesIndex] + numberOfElements[timeSeriesIndex] - 1;
+        return startIndex >= rangeStart[timeSeriesIndex] && startIndex <= rangeEnd;
 
     }
 
     /**
-     * ! the user is responsible for checking the existence of the requested window ! (e.g. use hasWindow)
-     * @param startIndex the (zero-based) index of the time series value where the lag window starts.
+     * @param startIndex the index of the time series value where the lag window starts.
      * @return an array of the mean-shifted values in that lag window = (x_i - µ) for i in [0, |w|-1]
      */
-    public double[] getNormalizedValues(int startIndex){
+    public double[] getNormalizedValues(int timeSeriesIndex, int startIndex){
+
+        if(! hasWindow(timeSeriesIndex, startIndex))
+            computeWindow(timeSeriesIndex, startIndex);
 
         // map the request start index to an offset within the cached range
-        int rangeOffset = startIndex-rangeStart;
+        int rangeOffset = startIndex-rangeStart[timeSeriesIndex];
         // the first element of the cached range is positioned at nextWriteLocation
-        int firstRangeElement = numberOfElements == cacheSize ? nextWriteLocation : 0;
-        return normalizedValues[(firstRangeElement+rangeOffset)%cacheSize];
+        int firstRangeElement = numberOfElements[timeSeriesIndex] == cacheSize ? nextWriteLocation[timeSeriesIndex] : 0;
+        return normalizedValues[timeSeriesIndex][(firstRangeElement+rangeOffset)%cacheSize];
 
     }
 
     /**
-     * ! the user is responsible for checking the existence of the requested window ! (e.g. use hasWindow)
-     * @param startIndex the (zero-based) index of the time series value where the lag window starts.
+     * @param startIndex the index of the time series value where the lag window starts.
      * @return the sum of the squares of the mean-shifted values in that lag window = ∑(x_i - µ)^2
      */
-    public double getSummedSquares(int startIndex){
+    public double getRootOfSummedSquares(int timeSeriesIndex, int startIndex){
+
+        if(! hasWindow(timeSeriesIndex, startIndex))
+            computeWindow(timeSeriesIndex, startIndex);
 
         // map the request start index to an offset within the cached range
-        int rangeOffset = startIndex-rangeStart;
-        // the first element of the cached range is positioned at nextWriteLocation
-        int firstRangeElement = numberOfElements == cacheSize ? nextWriteLocation : 0;
-        return summedSquares[(firstRangeElement+rangeOffset)%cacheSize];
+        int rangeOffset = startIndex-rangeStart[timeSeriesIndex];
 
+        // the first element of the cached range is positioned at nextWriteLocation
+        int firstRangeElement = numberOfElements[timeSeriesIndex] == cacheSize ? nextWriteLocation[timeSeriesIndex] : 0;
+        return rootOfSummedSquares[timeSeriesIndex][(firstRangeElement+rangeOffset)%cacheSize];
+
+    }
+
+    /**
+     * Computes the requested window by finding the normalized values and the root of the summed squares for the given time series and window.
+     * @param timeSeriesIndex the index of the time series to which the window belongs
+     * @param startIndex
+     */
+    protected void computeWindow(int timeSeriesIndex, int startIndex) {
+        final int to = startIndex + metadata.windowSize - 1;
+        double mean = CrossCorrelation.incrementalMean(metadata.setB.get(timeSeriesIndex), startIndex, to, frontMeans[timeSeriesIndex], lastFroms[timeSeriesIndex]);
+        frontMeans[timeSeriesIndex] = mean;
+        lastFroms[timeSeriesIndex] = startIndex;
+
+        double[] normalizedValues = new double[metadata.windowSize];
+        CrossCorrelation.normalizeValues(metadata.setB.get(timeSeriesIndex).getDataItems().im, startIndex, to, mean, normalizedValues);
+        double rootOfSummedSquares = CrossCorrelation.rootOfSummedSquares(normalizedValues);
+
+        put(timeSeriesIndex, startIndex, normalizedValues, rootOfSummedSquares);
     }
 }

@@ -1,6 +1,6 @@
 package Gui;
 
-import Data.Correlation.CorrelogramStore;
+import Data.CorrelogramStore;
 import Data.IO.FileModel;
 import Data.SharedData;
 import Data.TimeSeries;

@@ -1,13 +1,13 @@
 package Visualization;
 
-import Visualization.Color.Datatype;
 import Visualization.Color.Color_manager;
+import Visualization.Color.Datatype;
 import com.google.common.base.Joiner;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Vector;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
+
+import java.util.ArrayList;
+import java.util.Vector;
 /**
  * Converts value pairs into colors. The first dimension is encoded as a hue value, the second is encoded as decreasing saturation.
  * Inspected project phase 2 (16.5.2014).
@@ -102,37 +102,46 @@ public class MultiDimensionalPaintScale
      * Returns the associated color
      * @return A color encoding the value pair.
      */
-    Paint getPaint(Double... d) {
+    Paint getPaint(double d0, double d1) {
 
-        if(Double.isNaN(d[0]) || Double.isNaN(d[1])) return Color.GRAY;
+        if(Double.isNaN(d0) || Double.isNaN(d1)) return Color.GRAY;
 
-        int hueDim = 0, saturationDim = 1;
+        float saturationPercent = (float) Math.min(1, interpolate(d1, 1));
+        float huePercent = (float) Math.min(1, interpolate(d0, 0));
 
-        float saturationPercent = (float) interpolate(d[saturationDim], saturationDim);
-        float huePercent = (float) interpolate(d[hueDim], hueDim);
-        
-        int satIndex = Math.round((saturationDepth-1) * saturationPercent);
-        int hueIndex = Math.round((hueDepth -1) * huePercent);
-        
-        if(huePercent > 1 || saturationPercent > 1 || huePercent < 0 || saturationPercent < 0)
-        System.out.println(String.format(
-                "in values: %s\n"
-                + "lower bounds: %s, upper bounds: %s\n"
-                + "hue percent: %s, hue: %s\n"
-                + "sat percent: %s, sat: %s",
-                Arrays.toString(d), 
-                Arrays.toString(lowerBounds), Arrays.toString(upperBounds),
-                huePercent, hueIndex,
-                saturationPercent, satIndex));
-        
-        Color c;
-//        if(hueIndex < 0 || hueIndex >= colors.length){
-//            c = Color.BLACK;
-//        } else {
-            c = colors[satIndex][hueIndex];
-//        }
-       
-        return c;
+//        double saturationPercent = interpolate(d1, 1);
+//        double huePercent = interpolate(d0, 0);
+
+//        int satIndex = (int) Math.round((saturationDepth-1) * saturationPercent);
+//        int hueIndex = (int) Math.round((hueDepth -1) * huePercent);
+
+        int satIndex = (int) ((saturationDepth-1) * saturationPercent);
+        int hueIndex = (int) ((hueDepth -1) * huePercent);
+
+//        if(huePercent > 1 || saturationPercent > 1 || huePercent < 0 || saturationPercent < 0)
+//        System.out.println(String.format(
+//                "in values: %s\n"
+//                + "lower bounds: %s, upper bounds: %s\n"
+//                + "hue percent: %s, hue: %s\n"
+//                + "sat percent: %s, sat: %s",
+//                Arrays.toString(new double[]{d0,d1}),
+//                Arrays.toString(lowerBounds), Arrays.toString(upperBounds),
+//                huePercent, hueIndex,
+//                saturationPercent, satIndex));
+
+        return colors[satIndex][hueIndex];
+    }
+
+    Paint getPaint(double d){
+        if(Double.isNaN(d)) return Color.GRAY;
+
+        float saturationPercent = (float) Math.min(1, interpolate(d, 1));
+        float huePercent = (float) Math.min(1, interpolate(d, 0));
+
+        int satIndex = (int) ((saturationDepth-1) * saturationPercent);
+        int hueIndex = (int) ((hueDepth -1) * huePercent);
+
+        return colors[0][hueIndex];
     }
     
     // dumps the generated palettes of this paint scale as rgb values [r,g,b] in javascript array notation

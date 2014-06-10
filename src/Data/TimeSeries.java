@@ -35,7 +35,7 @@ public class TimeSeries implements Comparable<TimeSeries> {
      * Note that the array is taken as is, meaning any changes to the passed array will write through to the time series and vice versa.
      * @param d The sequence of function values
      */
-    public TimeSeries(double[] d) {
+    public TimeSeries(double... d) {
         this.id = nextId--;
         this.values = ComplexSequence.create(new double[d.length], d);
     }

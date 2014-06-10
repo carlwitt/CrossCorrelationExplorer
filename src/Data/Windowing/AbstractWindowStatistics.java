@@ -1,24 +1,30 @@
-package Data.Correlation;
+package Data.Windowing;
 
 import Data.TimeSeries;
 
 /**
- * Using implementations of this class, reusable parts of the cross-correlation computation can be precomputed at the expense of memory.
- * There's the {@link Data.Correlation.BaseWindowStatistics} class for heavy precompution of data and the {@link Data.Correlation.LagWindowStatistics} class
+ * Using implementations of this class, reusable terms of the cross-correlation computation can be precomputed at the expense of memory.
+ * There's the {@link BaseWindowStatistics} class for heavy precompution of data and the {@link LagWindowStatistics} class
  * for lightweight precomputation of data and on-the-fly caching of reusable values.
  *
- * Definitions:
- *   - A window of a time series is a continuous subsequence of time series.
- *      All windows have the same length |w|.
- *      The start index of the i-th window is denoted by s_i.
- *      The precomputed windows are enumerated with an index from 1 to l.
+ * The reusable terms comprise normalized values and the root of the summed squares.
  *
- *   - A base window has s_i = k*baseWindowOffset (k = 0,1,2,...).
- *   - A lag window has s_i = s_b + tau (tau = tauMin, tauMin+1, ..., tauMax), where s_b = k*baseWindowOffset.
- *      The range [s_b + tauMin ... s_b + tauMax] is called the lag range for base window b.
- *   - A shared lag window is a window that belongs to more than one base window.
- *      Example: baseWindowOffset = 1. A window that starts at index 1 can be assigned the base window starting at index 0 (tau = 1),
- *      or the base window starting at index 1 (tau = 0) or at index 2 (tau = -1), etc.
+ * Normalized values:
+ * The mean-shifted values are needed to compute the covariance. Reusing them should be saving lots of subtractions, since
+ * each time series value needs to be mean-shifted and lag windows are usually targeted from several base windows.
+ * On the other hand, this comes at relatively high memory cost. Example memory cost of computing all normalized values:
+ * For a length of 10k values, and a window size of 1000, 64Mb are needed to store all normalized values.
+ * 10k-1000+1 windows ~ 8k windows times 1000 values per window 8e6 times 8 byte per double = 64 Mb
+ * The worst case is |w| = N/2 for which 200 Mb are needed.
+ * Since this memory is used only during one iteration and freed afterwards, this should not be a problem.
+ *
+ * Root of summed squares:
+ * The root of the sum of the squares of the normalized values is needed to normalize the covariance (denominator)
+ *      sqrt((x_i - average(window i))^2)
+ * Reusing this term saves |w| square operations, |w| additions and one square root computation.
+ *
+ * Means:
+ * Since base and lag windows usually overlap, the means can be computed much faster by using an incremental mean formula.
  *
  * Created by Carl Witt on 14.05.14.
  *
@@ -30,26 +36,26 @@ public abstract class AbstractWindowStatistics {
     // -----------------------------------------------------------------------------------------------------------------
 
     /** The time series for which to precompute the data. */
-    final TimeSeries timeSeries;
+    public final TimeSeries timeSeries;
 
     /** Size of the windows that are taken from a time series (denoted |w|). */
-    final int windowSize;
+    public final int windowSize;
 
     /** The offset between base windows. baseWindowOffset = s_b' - s_b where b is any base window and b' its subsequent base window. */
-    final int baseWindowOffset;
+    public final int baseWindowOffset;
 
     // -----------------------------------------------------------------------------------------------------------------
     // derived from specific parameters
     // -----------------------------------------------------------------------------------------------------------------
 
-    /** Total number of windows to precompute, assuming only complete windows are considered. */
-    int numWindows;
+    /** Total number of windows to precompute, only complete windows are considered. */
+    public int numWindows;
 
     /** The mean of window i. */
     public double[] means;
 
-    /** The sum of the squared normalized values in window i. (x_i - average(window i))^2 */
-    public double[] summedSquares;
+    /** The square root of the sum of the squared normalized values in window i. sqrt((x_i - average(window i))^2) */
+    public double[] rootOfSummedSquares;
 
     /** The mean-shifted values of window i (x - average of window i).
      * Note that the shared values between windows can not be reused since the means of the windows vary. */
@@ -73,12 +79,12 @@ public abstract class AbstractWindowStatistics {
      * @param windowStartIndex the zero based index of the time series value where the windows starts.
      * @return the zero based window index
      */
-    protected abstract int getWindowNumberForStartIndex(int windowStartIndex);
+    public abstract int getWindowNumberForStartIndex(int windowStartIndex);
 
-    protected abstract void computeWindowStartIndices();
+    public abstract void computeWindowStartIndices();
 
     /** Precomputes the data. */
-    protected abstract void computeWindowStatistics(boolean computeNormalizedValues);
+    public abstract void computeWindowStatistics(boolean computeNormalizedValues);
 
     public abstract double[] getNormalizedValues(int windowStartIndex);
     public abstract double getSummedSquares(int windowStartIndex);

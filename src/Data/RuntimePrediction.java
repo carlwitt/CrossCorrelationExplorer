@@ -1,4 +1,4 @@
-package Data.Correlation;
+package Data;
 
 import java.util.HashMap;
 

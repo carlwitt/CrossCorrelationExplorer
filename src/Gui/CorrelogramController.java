@@ -11,6 +11,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.WritableImage;
@@ -41,13 +42,22 @@ public class CorrelogramController {
     @FXML StackPane correlogramPane;
     @FXML StackPane legendPane;
     @FXML ToggleButton linkWithTimeSeriesViewToggle;
+    @FXML TabPane visualizationSelector;
+
+    public static final String[] renderModeLabels = new String[]{
+            "Mean/Std Dev",           // mean and standard deviation
+            "Median/IQR",             // median and interquartile range
+            "Negative Significant",   // percentage of significantly negative correlated window pairs
+            "Positive Significant",   // percentage of significantly positive correlated window pairs
+            "Absolute Significant"    // percentage of significantly correlated window pairs
+    };
 
     public void initialize() {
         
 //        legendPaintScale = new MultiDimensionalPaintScale(meanColorResolution, standardDeviationColorResolution);
 //        correlogram = new Correlogram(new MultiDimensionalPaintScale(1200, 400));
 //        legend = new CorrelogramLegend(new MultiDimensionalPaintScale(meanColorResolution, standardDeviationColorResolution));
-         
+
         correlogramPane.getChildren().add(correlogram);
         correlogram.toBack();
         legendPane.getChildren().add(legend);
@@ -64,7 +74,21 @@ public class CorrelogramController {
         Tooltip yAxisTip = new Tooltip("Standard deviation of the correlation within all aligned time windows.");
         Tooltip.install(legend.xAxis, xAxisTip);
         Tooltip.install(legend.yAxis, yAxisTip);
-        
+
+        // label tabs according to render mode labels
+        for(Correlogram.RENDER_MODE mode : Correlogram.RENDER_MODE.values()){
+            int idx = mode.ordinal();
+            visualizationSelector.getTabs().get(idx).setText(renderModeLabels[idx]);
+        }
+
+        // on selecting different tabs, change the correlogram display mode
+        visualizationSelector.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
+            @Override public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                Correlogram.RENDER_MODE newMode = Correlogram.RENDER_MODE.values()[(int)newValue];
+                correlogram.setRenderMode(newMode);
+                correlogram.drawContents();
+            }
+        });
 //        correlogram.setPaintScale(paintScale);
 //        legend.setPaintScale(paintScale);
         
@@ -128,6 +152,7 @@ public class CorrelogramController {
 //        correlogram.setAxesRanges(new Rectangle2D(correlogram.xAxis.getLowerBound(), correlogram.yAxis.getLowerBound(), correlogram.xAxis.getRange(), correlogram.yAxis.getRange()));
         legend.resetView();
         legend.drawContents();
+
     }
 
     /**

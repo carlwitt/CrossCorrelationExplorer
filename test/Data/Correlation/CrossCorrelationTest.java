@@ -2,6 +2,8 @@ package Data.Correlation;
 
 import Data.IO.FileModel;
 import Data.TimeSeries;
+import Data.Windowing.LagWindowStatistics;
+import Data.Windowing.WindowMetadata;
 import org.apache.commons.math3.analysis.function.Atanh;
 import org.apache.commons.math3.distribution.TDistribution;
 import org.junit.Ignore;
@@ -30,20 +32,20 @@ public class CrossCorrelationTest {
         TimeSeries tsB = new TimeSeries(new double[]{3,0,6,4,2,1,5,-8,7});
 
         CorrelationMatrix exp = new CorrelationMatrix(null);
-        CorrelationMatrix.Column[] expected = new CorrelationMatrix.Column[]{
-                exp.new Column(new double[]{0.0834730012368303, -0.898026510133875, 0.679706623105669}, new double[3], 0, 0),
-                exp.new Column(new double[]{0.291920179679905, -0.716270534268212, -0.53079104215763, 0.23083326514981}, new double[4], 2, -1),
-                exp.new Column(new double[]{0.641426980589819, -0.104605206563161, 0.0366765706779718}, new double[3], 4, -1)
+        CorrelationMatrix.CorrelationColumn[] expected = new CorrelationMatrix.CorrelationColumn[]{
+                exp.new CorrelationColumnBuilder(0, 0).mean(new double[]{0.0834730012368303, -0.898026510133875, 0.679706623105669}).standardDeviation(new double[3]).build(),
+                exp.new CorrelationColumnBuilder(2, -1).mean(new double[]{0.291920179679905, -0.716270534268212, -0.53079104215763, 0.23083326514981}).standardDeviation(new double[4]).build(),
+                exp.new CorrelationColumnBuilder(4, -1).mean(new double[]{0.641426980589819, -0.104605206563161, 0.0366765706779718}).standardDeviation(new double[3]).build()
         };
 
 
-        CorrelationMatrix result = CrossCorrelation.naiveCrossCorrelation(new CorrelationMetadata(tsA, tsB, windowSize, taumin, tauMax, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED, baseWindowOffset));
+        CorrelationMatrix result = CrossCorrelation.naiveCrossCorrelation(new WindowMetadata(tsA, tsB, windowSize, taumin, tauMax, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED, baseWindowOffset));
         for (int i = 0; i < 3; i++) {
-            assertArrayEquals(expected[i].mean, result.getItembyID(i).mean, 1e-15);
-            assertEquals(expected[i].tauMin, result.getItembyID(i).tauMin);
-            assertEquals(expected[i].windowStartIndex, result.getItembyID(i).windowStartIndex);
-//            System.out.println(result.getItembyID(i).tauMin);
-//            assertEquals(expected[i], result.getItembyID(i));
+            assertArrayEquals(expected[i].mean, result.getColumn(i).mean, 1e-15);
+            assertEquals(expected[i].tauMin, result.getColumn(i).tauMin);
+            assertEquals(expected[i].windowStartIndex, result.getColumn(i).windowStartIndex);
+//            System.out.println(result.getColumn(i).tauMin);
+//            assertEquals(expected[i], result.getColumn(i));
         }
 
     }
@@ -303,42 +305,6 @@ public class CrossCorrelationTest {
                     +tDistribution.cumulativeProbability(-values[i])
             ));
         }
-
-    }
-
-    @Test public void testFindCriticalValue(){
-
-        // given some alpha (risk I probability), find the critical t value
-        double alpha = 0.2;
-        double desiredArea = 1-alpha;
-        int degreesOfFreedom = 120;
-
-        TDistribution tDistribution = new TDistribution(degreesOfFreedom);
-
-        double precision = 1e-4;
-        double searchRangeFrom = 0,
-               searchRangeTo = Double.POSITIVE_INFINITY;
-        double t = 0;
-        double error;
-        do {
-
-            if(Double.isInfinite(searchRangeTo)){
-                t+= 100;
-            } else {
-                t = (searchRangeTo+searchRangeFrom)/2;
-            }
-            double twoTailedAreaForT = tDistribution.cumulativeProbability(t)-tDistribution.cumulativeProbability(-t);
-            if(twoTailedAreaForT > desiredArea){
-                searchRangeTo = t;
-            }
-            if(twoTailedAreaForT < desiredArea){
-                searchRangeFrom = t;
-            }
-
-            error = Math.abs(twoTailedAreaForT - desiredArea);
-            System.out.println(String.format("current critical value estimate: %s gives area %s error is %s", t, twoTailedAreaForT, error));
-        } while(error > precision);
-
 
     }
 
