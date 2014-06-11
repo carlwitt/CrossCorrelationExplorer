@@ -129,6 +129,77 @@ public class CrossCorrelationTest {
 
     }
 
+    // int subs are (in this setting) about 2.5x faster than double subs
+//    @Test public void compareIntAndFloatSubtraction(){
+//
+//        int N = 100000;
+//        int k = 100000;
+//
+//        int[] ints = new int[N];
+//        double[] doubles = new double[N];
+//        Random r = new Random(1l);
+//        for (int i = 0; i < N; i++) {
+//            ints[i] = r.nextInt();
+//            doubles[i] = r.nextDouble();
+//        }
+//
+//        long before = System.currentTimeMillis();
+//        for (int i = 1; i < N; i++) {
+//            for (int j = 0; j < k; j++) {
+//                ints[i] -= ints[i-1];
+//            }
+//        }
+//        System.out.println(String.format("time needed for int subs: %s [ms]", System.currentTimeMillis()-before));
+//
+//        before = System.currentTimeMillis();
+//        for (int i = 1; i < N; i++) {
+//            for (int j = 0; j < k; j++) {
+//                doubles[i] -= doubles[i-1];
+//            }
+//        }
+//        System.out.println(String.format("time needed for double subs [ms]: %s", System.currentTimeMillis()-before));
+//
+//    }
+
+    // lookups are only 1.6 times faster than multiplications.
+//    @Test public void compareMultiplicationToLookup(){
+//
+//        int N = 10000;
+//        int k = 1000000;
+//
+//        // generate random data
+//        int[][] table = new int[N][N];
+//        int[] results = new int[N];
+//
+//        double[] doubles1 = new double[N];
+//        double[] doubles2 = new double[N];
+//        double[] resultsDouble = new double[N];
+//
+//        Random r = new Random(1l);
+//        for (int i = 0; i < N; i++) {
+//            for (int j = 0; j < N; j++) table[i][j] = r.nextInt();
+//            doubles1[i] = r.nextDouble();
+//            doubles2[i] = r.nextDouble();
+//        }
+//
+//        long before = System.currentTimeMillis();
+//        for (int i = 1; i < N-1; i++) {
+//            for (int j = 0; j < k-1; j++) {
+//                results[i] = table[i-1][i+1];
+//            }
+//        }
+//        System.out.println(String.format("time needed for int lookups: %s", System.currentTimeMillis()-before));
+//
+//        before = System.currentTimeMillis();
+//        for (int i = 1; i < N-1; i++) {
+//            for (int j = 0; j < k-1; j++) {
+//                resultsDouble[i] = doubles1[i-1] * doubles2[i+1];
+//            }
+//        }
+//        System.out.println(String.format("time needed for double mults: %s", System.currentTimeMillis()-before));
+//
+//    }
+
     // Test the computation of the mean of a window from a previous window
     @Test
     public void testIncrementalMean() throws Exception {

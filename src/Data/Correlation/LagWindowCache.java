@@ -52,10 +52,13 @@ public class LagWindowCache {
     private final int[] lastFroms;
 
     public LagWindowCache(WindowMetadata metadata, int cacheSize) {
+
+        assert cacheSize > 0 : "Cache size must be positive.";
         this.metadata = metadata;
-        this.cacheSize = Math.max(1, cacheSize);
+        this.cacheSize = cacheSize;
 
         int numTimeSeries = metadata.setB.size();
+        
         normalizedValues = new double[numTimeSeries][this.cacheSize][];
         rootOfSummedSquares = new double[numTimeSeries][this.cacheSize];
 
@@ -68,10 +71,12 @@ public class LagWindowCache {
 
         numberOfElements = new int[numTimeSeries];
         nextWriteLocation = new int[numTimeSeries];
+
+//        System.out.println(String.format("cache size: %s numTimeSeries: %s", cacheSize, numTimeSeries));
     }
 
     /**
-     * Adds data to the cache.
+     * Adds data to the cache. Should be used internally.
      * @param timeSeriesIndex the index of the time series to which the window belongs
      * @param startIndex the index of the time series value where the lag window starts.
      *                   This is read only once, when the first element is added. Later on, it is only used to
@@ -121,8 +126,8 @@ public class LagWindowCache {
      */
     public double[] getNormalizedValues(int timeSeriesIndex, int startIndex){
 
-        if(! hasWindow(timeSeriesIndex, startIndex))
-            computeWindow(timeSeriesIndex, startIndex);
+//        if(! hasWindow(timeSeriesIndex, startIndex))
+//            computeWindow(timeSeriesIndex, startIndex);
 
         // map the request start index to an offset within the cached range
         int rangeOffset = startIndex-rangeStart[timeSeriesIndex];
@@ -138,8 +143,8 @@ public class LagWindowCache {
      */
     public double getRootOfSummedSquares(int timeSeriesIndex, int startIndex){
 
-        if(! hasWindow(timeSeriesIndex, startIndex))
-            computeWindow(timeSeriesIndex, startIndex);
+//        if(! hasWindow(timeSeriesIndex, startIndex))
+//            computeWindow(timeSeriesIndex, startIndex);
 
         // map the request start index to an offset within the cached range
         int rangeOffset = startIndex-rangeStart[timeSeriesIndex];
@@ -155,7 +160,7 @@ public class LagWindowCache {
      * @param timeSeriesIndex the index of the time series to which the window belongs
      * @param startIndex
      */
-    protected void computeWindow(int timeSeriesIndex, int startIndex) {
+    public void computeWindow(int timeSeriesIndex, int startIndex) {
         final int to = startIndex + metadata.windowSize - 1;
         double mean = CrossCorrelation.incrementalMean(metadata.setB.get(timeSeriesIndex), startIndex, to, frontMeans[timeSeriesIndex], lastFroms[timeSeriesIndex]);
         frontMeans[timeSeriesIndex] = mean;

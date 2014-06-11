@@ -1,7 +1,6 @@
 package Data.Correlation;
 
 import Data.TimeSeries;
-import Data.Windowing.BaseWindowStatistics;
 import Data.Windowing.LagWindowStatistics;
 import Data.Windowing.WindowMetadata;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
@@ -37,62 +36,6 @@ public class CrossCorrelation {
         REPLACE_WITH_ZERO,
         LEAVE_UNCHANGED
     }
-
-    public static CorrelationMatrix multiCrossCorrelation(WindowMetadata metadata){
-
-        /**
-         * The slow running outer loop repeatedly uses tsA.
-         * Reusable terms: normalized values (memory: approx. |w| * N) and summed squares (memory: l)
-         * Both is stored in the BaseWindowStatistics.
-         *
-         * The faster inner loop touches each tsB only once for each tsA.
-         * Reusable terms: Entire lag windows (summed squares and normalized values) between subsequent base windows.
-         * Storing all of them requires way too much space. But keeping those in memory that can be reused for the next base window is fast and memory efficient.
-         * Alternatively, precomputing all lag windows and deleting the normalized values afterwards is less complicated and requires probably not too much memory.
-         */
-        // precompute lightweight (only means and rootOfSummedSquares) window statistics for each time series in set B
-
-        for (TimeSeries tsA : metadata.setA){
-
-            // precompute data for current time series
-            BaseWindowStatistics precomputationA = new BaseWindowStatistics(tsA, metadata.windowSize, metadata.baseWindowOffset);
-
-
-            for (TimeSeries tsB : metadata.setB){
-
-
-
-
-            }
-
-        }
-
-        throw new UnsupportedOperationException("Not yet implemented.");
-
-    }
-
-    public static CorrelationMatrix crossCorrelation(BaseWindowStatistics a, LagWindowStatistics b, NA_ACTION naAction){
-
-        CorrelationMatrix result = new CorrelationMatrix(new WindowMetadata(a.timeSeries, b.timeSeries, a.windowSize, b.tauMin, b.tauMax, naAction, 1));
-
-        // check whether time series length, window size, baseWindowOffset, etc. matches
-        if( ! a.sameCrossCorrelationParameters(b) ) throw new AssertionError("Precomputed data for time series a and time series b is incompatible.");
-
-        for (int i = 0; i < a.numWindows; i++) {
-
-            // add one column for each base window
-
-
-            // if ¬ hasWindow(lagWindowIndex) lagWindowCache.put(...)
-
-
-        }
-
-        throw new UnsupportedOperationException("Not yet implemented.");
-//        return result;
-
-    }
-
 
     /**
      * Computes the pearson correlation coefficient.
@@ -200,6 +143,8 @@ public class CrossCorrelation {
         // aggregate the results
         CorrelationSignificance tester = new CorrelationSignificance(metadata.windowSize, CorrelationMatrix.getSignificanceLevel(metadata));
 
+        int n = partialResults.length;
+
         // for each column
         final int numColumns = partialResults[0].getSize();
         for (int colIdx = 0; colIdx < numColumns; colIdx++) {
@@ -227,8 +172,9 @@ public class CrossCorrelation {
                 data[CorrelationMatrix.MEAN][lag] = descriptiveStatistics.getMean();
                 data[CorrelationMatrix.STD_DEV][lag] = descriptiveStatistics.getStandardDeviation();
                 data[CorrelationMatrix.MEDIAN][lag] = descriptiveStatistics.getPercentile(50);
-                data[CorrelationMatrix.NEGATIVE_SIGNIFICANT][lag] = numNegSig;
-                data[CorrelationMatrix.POSITIVE_SIGNIFICANT][lag] = numPosSig;
+                data[CorrelationMatrix.NEGATIVE_SIGNIFICANT][lag] = (double) numNegSig / n;
+                data[CorrelationMatrix.POSITIVE_SIGNIFICANT][lag] = (double) numPosSig / n;
+                data[CorrelationMatrix.ABSOLUTE_SIGNIFICANT][lag] = data[CorrelationMatrix.NEGATIVE_SIGNIFICANT][lag] + data[CorrelationMatrix.POSITIVE_SIGNIFICANT][lag];
 
             }
 
@@ -238,6 +184,7 @@ public class CrossCorrelation {
                     .median(data[CorrelationMatrix.MEDIAN])
                     .negativeSignificant(data[CorrelationMatrix.NEGATIVE_SIGNIFICANT])
                     .positiveSignificant(data[CorrelationMatrix.POSITIVE_SIGNIFICANT])
+                    .absoluteSignificant(data[CorrelationMatrix.ABSOLUTE_SIGNIFICANT])
                     .build()
                     );
         }

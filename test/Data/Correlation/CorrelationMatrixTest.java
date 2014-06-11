@@ -15,18 +15,24 @@ public class CorrelationMatrixTest {
 
     @Test public void compareWithNaive() {
 
-        int numTimeSeries = 4;
-        int length = 12;
+        int numTimeSeries = 100;
+        int length = 100;
 
         List<TimeSeries> ts = TimeSeriesTest.randomTimeSerieses(numTimeSeries, length);
 
-//        List<TimeSeries> setA = Arrays.asList(ts.get(0), ts.get(1));
-//        List<TimeSeries> setB = Arrays.asList(ts.get(2), ts.get(3));
+        List<TimeSeries> setA = Arrays.asList(ts.get(0), ts.get(2));
+        List<TimeSeries> setB = Arrays.asList(ts.get(3));
 
-        List<TimeSeries> setA = Arrays.asList(new TimeSeries(-1,3,2,15,21,9,6,-2), new TimeSeries(-2,2,1,14,20,8,5,-3));
-        List<TimeSeries> setB = Arrays.asList(new TimeSeries(-10,30,20,150,210,90,60,-20), new TimeSeries(-10,30,20,150,210,90,60,-20));
+//        List<TimeSeries> setA = Arrays.asList(new TimeSeries(-1,3,2,15,21,9,6,-2), new TimeSeries(-2,2,1,14,20,8,5,-3));
+//        List<TimeSeries> setB = Arrays.asList(new TimeSeries(-10,30,20,150,210,90,60,-20), new TimeSeries(-10,30,20,150,210,90,60,-20));
 
-        int windowSize = 5, baseWindowOffset = 3, tauMin = -1, tauMax = 2;
+//        List<TimeSeries> setA = new ArrayList<>(numTimeSeries/2), setB = new ArrayList<>(numTimeSeries/2);
+//        for (int i = 0; i < numTimeSeries / 2; i++) {
+//            setA.add(ts.get(i));
+//            setB.add(ts.get(i+numTimeSeries/2));
+//        }
+
+        int windowSize = 10, baseWindowOffset = 3, tauMin = -2, tauMax = 2;
         WindowMetadata metadata = new WindowMetadata(setA, setB, windowSize, tauMin, tauMax, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED, baseWindowOffset);
         CorrelationMatrix.setSignificanceLevel(metadata, 0.05);
 
@@ -44,6 +50,11 @@ public class CorrelationMatrixTest {
             CorrelationMatrix.CorrelationColumn resultColumn = result.getColumn(i);
             assertArrayEquals(expectedColumn.mean, resultColumn.mean, 1e-15);
             assertArrayEquals(expectedColumn.stdDev, resultColumn.stdDev, 1e-15);
+            assertArrayEquals(expectedColumn.median, resultColumn.median, 1e-15);
+            assertArrayEquals(expectedColumn.negativeSignificant, resultColumn.negativeSignificant, 1e-15);
+            assertArrayEquals(expectedColumn.positiveSignificant, resultColumn.positiveSignificant, 1e-15);
+            assertArrayEquals(expectedColumn.absoluteSignificant, resultColumn.absoluteSignificant, 1e-15);
+
         }
 
     }
