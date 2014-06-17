@@ -18,19 +18,21 @@ import java.util.concurrent.CyclicBarrier;
  */
 public class CorrelationMatrix {
 
-    protected final static int MINIMUM = 0, MAXIMUM = 1;
-    protected static int NUM_META_STATS = 2;                // how many statistics about the statistics are measured (minimum and maximum)
+    private final static int MINIMUM = 0;
+    private final static int MAXIMUM = 1;
+    private static final int NUM_META_STATS = 2;                // how many statistics about the statistics are measured (minimum and maximum)
 
     /** These constants can be used to conveniently refer to certain statistics.
      * {@link #POSITIVE_SIGNIFICANT} percentage of statistically significant (t-test) positive correlation values.
      * {@link #NEGATIVE_SIGNIFICANT} percentage of statistically significant negative correlation values.
      */
     public final static int MEAN = 0, STD_DEV = 1, MEDIAN = 2, IQR = 3, POSITIVE_SIGNIFICANT = 4, NEGATIVE_SIGNIFICANT = 5, ABSOLUTE_SIGNIFICANT = 6;
-    protected static int NUM_STATS = 7;                     // how many statistics are measured
+    public final static int NUM_STATS = 7;                     // how many statistics are measured
+    public static final String[] statisticsLabels = new String[]{"mean", "standard deviation", "median", "interquartile range", "% positive significant", "% negative significant", "% significant"};
 
     public final ComputeService computeService = new ComputeService();
 
-    protected List<CorrelationColumn> columns = new ArrayList<CorrelationColumn>();
+    protected List<CorrelationColumn> columns = new ArrayList<>();
 
     /** Stores the input of the computation. */
     public final WindowMetadata metadata;
@@ -39,9 +41,9 @@ public class CorrelationMatrix {
      *  refers to the statistic (index using {@link #MEAN}, {@link #STD_DEV}, ...) and the second
      *  dimension specifies the kind of the extremum (index using {@link #MINIMUM}, {@link #MAXIMUM}).
      */
-    protected final Double[][] extrema = new Double[NUM_STATS][NUM_META_STATS];
+    private final Double[][] extrema = new Double[NUM_STATS][NUM_META_STATS];
 
-    CorrelationSignificance significanceTester;
+    private CorrelationSignificance significanceTester;
 
     /**
      * Sets the metadata for a correlation matrix, WITHOUT computing the actual contents.
@@ -60,7 +62,7 @@ public class CorrelationMatrix {
 
     public static double getSignificanceLevel(WindowMetadata metadata){
         Double significanceLevel = (Double) metadata.customParameters.get("significanceLevel");
-        assert(significanceLevel != null);
+        assert significanceLevel != null : "Please add a significance level to the computation metadata (using CorrelationMatrix.setSignificanceLevel(metadata, pValue) )";
         return significanceLevel;
     }
     public static void setSignificanceLevel(WindowMetadata metadata, double significanceLevel){
@@ -71,9 +73,9 @@ public class CorrelationMatrix {
     // Computation
     // -----------------------------------------------------------------------------------------------------------------
 
-    int numThreads;
-    LagWindowCache lagWindowCache;
-    double[][] cells;
+    private int numThreads;
+    private LagWindowCache lagWindowCache;
+    private double[][] cells;
 
     /**
      * Resets the columns. Determines a sensible number of threads.
@@ -103,7 +105,7 @@ public class CorrelationMatrix {
         CyclicBarrier compute = new CyclicBarrier(numThreads, new Runnable() {
 
             // all time series in set A and set B are expected to be of equal length
-            int timeSeriesLength = metadata.setA.get(0).getSize();
+            final int timeSeriesLength = metadata.setA.get(0).getSize();
 
             int baseWindowStartIdx = 0;
             @Override public void run() {
@@ -127,7 +129,7 @@ public class CorrelationMatrix {
 
     }
 
-    protected void computeParallel(final CyclicBarrier precompute, final CyclicBarrier compute) {
+    void computeParallel(final CyclicBarrier precompute, final CyclicBarrier compute) {
 
         // all time series in set A and set B are expected to be of equal length
         int timeSeriesLength = metadata.setA.get(0).getSize();
@@ -188,7 +190,7 @@ public class CorrelationMatrix {
         }
     }
 
-    protected void precomputeLagWindowData(int tsBIdx, int baseWindowStartIdx, int tauMin, int tauMax, LagWindowCache lagWindowCache){
+    void precomputeLagWindowData(int tsBIdx, int baseWindowStartIdx, int tauMin, int tauMax, LagWindowCache lagWindowCache){
 
         // iterate over all the lag windows
         for (int lagWindowStartIdx = baseWindowStartIdx + tauMin; lagWindowStartIdx <= baseWindowStartIdx + tauMax; lagWindowStartIdx++) {
@@ -203,9 +205,17 @@ public class CorrelationMatrix {
     /**
      * Computes all raw correlation values vor a single column of the correlation matrix.
      * @param baseWindowStartIdx the index of the value where the base window starts
-     * @return all the correlation values in all the cells in this column (the raw data for aggregation). the first dimension refers to time lag, second to the computed correlation values.
+     * @param tauMin the minimal valid (resulting in a window of length |w|) time lag
+     * @param tauMax the maximum valid (resulting in a window of length |w|) time lag
+     * @param tsA the time series to take the base window data from
+     * @param tsAPlace the offset of tsA in the input set A (correlationSetA)
+     * @param lagWindowCache contains the precomputed data for the lag windows (taken from all time seriese of input set B)
+     * @param cells array to store the results to. The first dimension refers to the time lag and must thus be at least of size tauMax-tauMin+1.
+     *              The second dimension refers to the pairs of windows (from input set A and B).
+     *              The order of the results is (0,0) (0,1) (0,|B|) ... (|A|, 0) ... (|A|, |B|) where |A| is the size of input set A and |B| is the size of input set B.
+     *              Using pre-allocated memory for the results of the computation reduces the need for garbage collection.
      */
-    protected void columnCorrelations(int baseWindowStartIdx, int tauMin, int tauMax, TimeSeries tsA, int tsAPlace, LagWindowCache lagWindowCache, double[][] cells) {
+    void columnCorrelations(int baseWindowStartIdx, int tauMin, int tauMax, TimeSeries tsA, int tsAPlace, LagWindowCache lagWindowCache, double[][] cells) {
 
 //        System.out.println(String.format("baseWindowStartIdx: %s", baseWindowStartIdx));
         // for rolling mean optimization
@@ -283,13 +293,25 @@ public class CorrelationMatrix {
                 negSig = new double[colLen],
                 absSig = new double[colLen];
 
+        DescriptiveStatistics descriptiveStatistics = new DescriptiveStatistics();
         for (int lag = 0; lag < colLen; lag++) {
-            DescriptiveStatistics descriptiveStatistics = new DescriptiveStatistics(cells[lag]);
+            descriptiveStatistics.clear();
+            for (int i = 0; i < cells[lag].length; i++) {
+                if( ! Double.isNaN(cells[lag][i]))
+                    descriptiveStatistics.addValue(cells[lag][i]);
+            }
             means[lag] = descriptiveStatistics.getMean();
             sd[lag] = descriptiveStatistics.getStandardDeviation();
             median[lag] = descriptiveStatistics.getPercentile(50);
-            iqr[lag] = descriptiveStatistics.getPercentile(75)-descriptiveStatistics.getPercentile(25);
-
+            double threeQuarters = descriptiveStatistics.getPercentile(75);
+            double oneQuarter = descriptiveStatistics.getPercentile(25);
+            iqr[lag] = threeQuarters - oneQuarter;
+            assert Double.isNaN(iqr[lag]) || iqr[lag] >= 0 : String.format("Negative interquartile range. 75th percentile %s 25th percentile %s \nunsorted data %s \nsorted data %s\nre-evaluation of 75th %s 25th %s",
+                    threeQuarters, oneQuarter,
+                    Arrays.toString(descriptiveStatistics.getValues()),
+                    Arrays.toString(descriptiveStatistics.getSortedValues()),
+                    descriptiveStatistics.getPercentile(75), descriptiveStatistics.getPercentile(25)
+                    );
             // if the window size is too small (less than three) significance can't be tested using the t-distribution (see constructor)
             if(significanceTester == null){
                 posSig[lag] = Double.NaN;
@@ -387,7 +409,10 @@ public class CorrelationMatrix {
     double getExtremum(int STATISTIC, int MINMAX){
         if(extrema[STATISTIC][MINMAX] == null){
             DescriptiveStatistics descriptiveStatistics = new DescriptiveStatistics();
-            for(CorrelationColumn c : columns) descriptiveStatistics.addValue(c.getExtremum(STATISTIC, MINMAX));
+            for(CorrelationColumn c : columns) {
+                descriptiveStatistics.addValue(c.getExtremum(STATISTIC, MINIMUM));
+                descriptiveStatistics.addValue(c.getExtremum(STATISTIC, MAXIMUM));
+            }
             extrema[STATISTIC][MINIMUM] = descriptiveStatistics.getMin();
             extrema[STATISTIC][MAXIMUM] = descriptiveStatistics.getMax();
         }
@@ -407,11 +432,16 @@ public class CorrelationMatrix {
         /** Contains the minimal/maximal value of the given statistic along this column.
          * E.g. extrema[STD_DEV][MINIMUM] gives the minimum standard deviation among all time lags for the window represented by this column.
          */
-        protected Double[][] extrema = new Double[NUM_STATS][NUM_META_STATS];
+        final Double[][] extrema = new Double[NUM_STATS][NUM_META_STATS];
 
         /** Aliases for clearer code. Points to the data stored in the values field.
          * Using the aliases, references to re and im can be avoided. */
-        public double[] mean, stdDev, median, positiveSignificant, negativeSignificant, absoluteSignificant;
+        public final double[] mean;
+        public final double[] stdDev;
+        public final double[] median;
+        public final double[] positiveSignificant;
+        public final double[] negativeSignificant;
+        public final double[] absoluteSignificant;
 
         /** Each columns represents the results of a window of the x-axis. This is the x-value where the window starts (where it ends follows from the column length). */
         public final int windowStartIndex;
@@ -419,7 +449,7 @@ public class CorrelationMatrix {
         /** The first value in the column corresponds to this time lag. (Since only complete windows are considered, this deviates for the first columns in the matrix.) */
         public final int tauMin;
 
-        protected CorrelationColumn(CorrelationColumnBuilder builder){
+        CorrelationColumn(CorrelationColumnBuilder builder){
             this.windowStartIndex = builder.windowStartIndex;
             this.tauMin = builder.tauMin;
             data = builder.data;
@@ -458,15 +488,16 @@ public class CorrelationMatrix {
 
         @Override
         public String toString() {
-            return String.format("   mean: %s\nstd dev: %s\n median: %s\nneg sig: %s\npos sig: %s\nabs sig: %s", Arrays.toString(data[MEAN]), Arrays.toString(data[STD_DEV]), Arrays.toString(data[MEDIAN]), Arrays.toString(data[NEGATIVE_SIGNIFICANT]), Arrays.toString(data[POSITIVE_SIGNIFICANT]), Arrays.toString(data[ABSOLUTE_SIGNIFICANT]));
+            return String.format("   mean: %s\nstd dev: %s\n median: %s\n    iqr: %s\nneg sig: %s\npos sig: %s\nabs sig: %s", Arrays.toString(data[MEAN]), Arrays.toString(data[STD_DEV]), Arrays.toString(data[MEDIAN]), Arrays.toString(data[IQR]), Arrays.toString(data[NEGATIVE_SIGNIFICANT]), Arrays.toString(data[POSITIVE_SIGNIFICANT]), Arrays.toString(data[ABSOLUTE_SIGNIFICANT]));
         }
     }
 
     public class CorrelationColumnBuilder{
 
-        public double[][] data = new double[NUM_STATS][];
+        public final double[][] data = new double[NUM_STATS][];
 
-        public int windowStartIndex, tauMin;
+        public final int windowStartIndex;
+        public final int tauMin;
 
         public CorrelationColumnBuilder(int windowStartIndex, int tauMin){
             this.windowStartIndex = windowStartIndex;
@@ -523,13 +554,12 @@ public class CorrelationMatrix {
 
         @Override protected Task<CorrelationMatrix> createTask() {
 
-            Task<CorrelationMatrix> task = new Task<CorrelationMatrix>() {
+            return new Task<CorrelationMatrix>() {
 
                 long timeSpent = 0,         // total time in the computation loop
-                     rawDataTime = 0,       // time spent on computing the correlation values
                      aggregationTime = 0;   // time spent on aggregating correlation values
 
-                protected void predictRemainingTime(int baseWindowStartIdx, long elapsedTime){
+                void predictRemainingTime(int baseWindowStartIdx, long elapsedTime){
 
                     long totalWork = metadata.numBaseWindows;
 
@@ -553,13 +583,14 @@ public class CorrelationMatrix {
                     CyclicBarrier precompute = new CyclicBarrier(numThreads);
                     CyclicBarrier compute = new CyclicBarrier(numThreads, new Runnable() {
 
-                        // all time series in set A and set B are expected to be of equal length
-                        int timeSeriesLength = metadata.setA.get(0).getSize();
-
                         long lastBarrierVisit = System.currentTimeMillis();
-
+                        // the current base window start index is used for computing the remaining time
                         int baseWindowStartIdx = 0;
+
                         @Override public void run() {
+
+                            // all time series in set A and set B are expected to be of equal length
+                            int timeSeriesLength = metadata.setA.get(0).getSize();
 
                             // the first and last columns permit for only some of the time lags
                             int minLagWindowStartIdx = Math.max(0, baseWindowStartIdx + metadata.tauMin);
@@ -567,12 +598,14 @@ public class CorrelationMatrix {
                             int minTau = minLagWindowStartIdx - baseWindowStartIdx;
                             int maxTau = maxLagWindowStartIdx - baseWindowStartIdx;
 
+                            // aggregate the correlation distributions and add the column to the result matrix
                             long b1 = System.currentTimeMillis();
                             columns.add(aggregate(cells, baseWindowStartIdx, minTau, maxTau));
                             aggregationTime += System.currentTimeMillis()-b1;
 
                             baseWindowStartIdx += metadata.baseWindowOffset;
 
+                            // predict and report the remaining time
                             timeSpent += System.currentTimeMillis() - lastBarrierVisit; // this happens once for each column
                             lastBarrierVisit = System.currentTimeMillis();
                             predictRemainingTime(baseWindowStartIdx, timeSpent);        // reports progress to the GUI
@@ -598,7 +631,6 @@ public class CorrelationMatrix {
                     getException().printStackTrace();
                 }
             };
-            return task;
         }
     }
 

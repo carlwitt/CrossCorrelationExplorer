@@ -332,7 +332,7 @@ public class ComputationInputController implements Initializable {
         // make a copy of the selection, because removing list items changes the selection
         Object[] selectionCopy = sourceView.getSelectionModel().getSelectedItems().toArray();
         for (Object item : selectionCopy) {
-            sourceView.getItems().remove((TimeSeries) item);
+            sourceView.getItems().remove(item);
         }
     }
     

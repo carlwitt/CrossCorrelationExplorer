@@ -12,7 +12,8 @@ import Data.TimeSeries;
 public class LagWindowStatistics extends AbstractWindowStatistics {
 
     /** The minimum and maximum desired time lag in the cross-correlation computation. */
-    public final int tauMin, tauMax;
+    private final int tauMin;
+    private final int tauMax;
 
 
     // -----------------------------------------------------------------------------------------------------------------

@@ -32,9 +32,8 @@ public class MainWindowController implements Initializable {
     @FXML private ComputationInputController computationInputController;
     @FXML private ComputationOutputController computationOutputController;
     @FXML private CorrelogramController correlationViewController;
-    
-    
-    private ProgressLayer progressLayer;
+
+
     /**
      * Called after the controls have been parsed from the XML. Sets up logic and components that could not be set up using the GUI builder.
      */
@@ -42,8 +41,8 @@ public class MainWindowController implements Initializable {
     public void initialize(URL url, ResourceBundle rb) {
 
         SharedData sharedData = new SharedData();
-        
-        progressLayer = new ProgressLayer();
+
+        ProgressLayer progressLayer = new ProgressLayer();
         progressLayer.overlay = progressPane;
         progressLayer.progressBar = progressBar;
         progressLayer.messageLabel = progressLabel;

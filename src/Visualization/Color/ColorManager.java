@@ -2,9 +2,10 @@
  * 
  */
 package Visualization.Color;
-import java.util.Vector;
 
 import Visualization.Color.Datatype.Color;
+
+import java.util.Vector;
 
 /**
  * @author juanzi
@@ -17,23 +18,15 @@ class ColorManager {
 /*!
  The basic concept of the algorithm is based on Bezier curves.
 */
-  
-    
-	private int _number_of_colors;                                              /*!< Number of colors generated for one subpalette */
-	private float _max_lightness;                                               /*!< Maximum value for lightness */
-	private float _max_chroma;                                                  /*!< Maximum value for chroma */
-	private float _max_hue;                                                     /*!< Maximum value for hue */
-    
-	private float _lightness;                                                   /*!< Lightness value */
-	private float _chroma;                                                      /*!< Chroma value */
-	protected float _hue;                                                         /*!< Hue value */
+
+
+    protected float _hue;                                                         /*!< Hue value */
     
 	private float _C;                                                           /*!< C value (implicit constant) */
 	private float _B;                                                           /*!< B value (implicit constant) */
     
 	private Color _p_0;                                                         /*!< 2D Bezier color p0 */
-	private Color _p_1;                                                         /*!< 2D Bezier color p1 (most saturated color) */
-	private Color _p_2;                                                         /*!< 2D Bezier color p2 */
+    private Color _p_2;                                                         /*!< 2D Bezier color p2 */
     
 	private Color _q_0;                                                         /*!< 2D Bezier color q0 */
 	private Color _q_1;                                                         /*!< 2D Bezier color q1 */
@@ -41,18 +34,15 @@ class ColorManager {
     
 	private Vector<Vector<Color> > _color_palettes;                             /*!< Available color palettes */
 	private Vector<Color> _current_color_palette;                               /*!< Current color palette */
-    
-	private Color _grid_color;                                                  /*!< Predefined color for grid lines (implicit constant) */
-	private Color _polygon_color; 												/*!< Predefined color for polygonal lines (implicit constant) */
-	
-	// constructor
+
+    // constructor
     ColorManager(){}
 	
 	
     //! Method responsible for initializing the 2D Bezier colors.
 	protected void initColorPoints(Color _p_0, Color _p_1, Color _p_2, Color _q_0, Color _q_1, Color _q_2){
 		this._p_0 = _p_0;
-		this._p_1 = _p_1;
+        Color _p_11 = _p_1;
 		this._p_2 = _p_2;
 		this._q_0 = _q_0;
 		this._q_1 = _q_1;
@@ -64,21 +54,21 @@ class ColorManager {
 	protected void initConstants(int _number_of_colors,float _max_lightness,float _max_chroma,
 		float _max_hue,float _C,float _B,
 		Color _grid_color,Color _polygon_color){
-		this._number_of_colors = _number_of_colors;
-		this._max_lightness = _max_lightness;
-		this._max_chroma = _max_chroma;
-		this._max_hue = _max_hue;
+        int _number_of_colors1 = _number_of_colors;
+        float _max_lightness1 = _max_lightness;
+        float _max_chroma1 = _max_chroma;
+        float _max_hue1 = _max_hue;
 		this._C = _C;
 		this._B = _B;
-		this._grid_color = _grid_color;
-		this._polygon_color = _polygon_color;
+        Color _grid_color1 = _grid_color;
+        Color _polygon_color1 = _polygon_color;
 	}
 	
     
     //! Method responsible for initializing the lightness and the chroma.
 	protected void initLightnessAndChroma(float _lightness,float _chroma){
-		this._lightness = _lightness;
-		this._chroma = _chroma;
+        float _lightness1 = _lightness;
+        float _chroma1 = _chroma;
 	}
     
     // Function responsible for generating a value based on Bezier curves.

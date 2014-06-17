@@ -195,8 +195,8 @@ public class FileModel {
                         final int to = i == numThreads-1 ? lines.size()-1 : (i+1)*step-1;
 
                         processors[i] = new Thread(new Runnable() {
-                            int fromIndex = from;
-                            int toIndex = to;
+                            final int fromIndex = from;
+                            final int toIndex = to;
                             @Override
                             public void run() {
                                 // parse each line in this thread's partition

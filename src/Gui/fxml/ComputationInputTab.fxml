@@ -31,7 +31,7 @@
     <Label contentDisplay="LEFT" text="load">
       <graphic>
         <ImageView fitHeight="12.0" fitWidth="12.0" pickOnBounds="true" preserveRatio="true">
-          <Image url="@img/glyphicons_210_left_arrow.png" />
+          <Image url="@../img/glyphicons_210_left_arrow.png" />
         </ImageView>
       </graphic>
     </Label>
@@ -47,7 +47,7 @@
     <Label contentDisplay="RIGHT" text="unload">
       <graphic>
         <ImageView fitHeight="12.0" fitWidth="12.0" pickOnBounds="true" preserveRatio="true">
-          <Image url="@img/glyphicons_211_right_arrow.png" />
+          <Image url="@../img/glyphicons_211_right_arrow.png" />
         </ImageView>
       </graphic>
     </Label>
@@ -63,7 +63,7 @@
     <Label contentDisplay="RIGHT" text="load">
       <graphic>
         <ImageView fitHeight="12.0" fitWidth="12.0" pickOnBounds="true" preserveRatio="true">
-          <Image url="@img/glyphicons_211_right_arrow.png" />
+          <Image url="@../img/glyphicons_211_right_arrow.png" />
         </ImageView>
       </graphic>
     </Label>
@@ -75,7 +75,7 @@
     <Label contentDisplay="LEFT" text="unload">
       <graphic>
         <ImageView fitHeight="12.0" fitWidth="12.0" pickOnBounds="true" preserveRatio="true">
-          <Image url="@img/glyphicons_210_left_arrow.png" />
+          <Image url="@../img/glyphicons_210_left_arrow.png" />
         </ImageView>
       </graphic>
     </Label>
@@ -145,7 +145,7 @@
         <padding>
           <Insets top="5.0" />
         </padding>
-        <RadioButton id="fixedWidthSeparatorRadio" fx:id="nanSetToZeroRadio" alignment="TOP_LEFT" contentDisplay="RIGHT" graphicTextGap="8.0" mnemonicParsing="false" prefWidth="-1.0" selected="true" text="Set to Zero">
+        <RadioButton id="fixedWidthSeparatorRadio" fx:id="nanSetToZeroRadio" alignment="TOP_LEFT" contentDisplay="RIGHT" disable="true" graphicTextGap="8.0" mnemonicParsing="false" prefWidth="-1.0" selected="false" text="Set to Zero">
           <font>
             <Font size="13.0" fx:id="x3" />
           </font>
@@ -153,7 +153,7 @@
             <ToggleGroup fx:id="nanStrategy" />
           </toggleGroup>
         </RadioButton>
-        <RadioButton id="characterSeparatorRadio" fx:id="nanLeaveRadio" alignment="TOP_LEFT" contentDisplay="RIGHT" disable="true" font="$x3" graphicTextGap="20.0" mnemonicParsing="false" prefWidth="-1.0" selected="false" text="Leave" toggleGroup="$nanStrategy" underline="false" />
+        <RadioButton id="characterSeparatorRadio" fx:id="nanLeaveRadio" alignment="TOP_LEFT" contentDisplay="RIGHT" disable="false" font="$x3" graphicTextGap="20.0" mnemonicParsing="false" prefWidth="-1.0" selected="true" text="Leave" toggleGroup="$nanStrategy" underline="false" />
       </VBox>
     </center>
     <padding>

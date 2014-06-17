@@ -30,7 +30,7 @@ abstract class CanvasChart extends AnchorPane {
     /** This is used to draw the data. Much faster than adding all the data elements to the scene graph. */
     public final Canvas chartCanvas;
     
-    protected AnchorPane canvasPane;
+    AnchorPane canvasPane;
     
     public NumberAxis xAxis,
                       yAxis;
@@ -69,7 +69,9 @@ abstract class CanvasChart extends AnchorPane {
 //                    if(t == null) return;
 //                    t1 = t;
 //                }
+//                assert t1 != null : "something went terribly wrong.";
                 Rectangle2D newRanges = (Rectangle2D) t1;
+
 
                 xAxis.setLowerBound(newRanges.getMinX());
                 xAxis.setUpperBound(newRanges.getMaxX());

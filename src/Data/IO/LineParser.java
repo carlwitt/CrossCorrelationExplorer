@@ -1,8 +1,8 @@
 package Data.IO;
 
 import com.google.common.base.Splitter;
+
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.StringTokenizer;
 
 /** Defines how the lines of the text file are to be separated into strings that are then parsed into numbers.

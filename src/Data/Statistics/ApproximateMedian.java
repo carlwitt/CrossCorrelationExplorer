@@ -19,7 +19,7 @@ import java.util.Arrays;
 public class ApproximateMedian {
 
     /** the data to analyze */
-    double[] data;
+    private final double[] data;
     public ApproximateMedian(double[] data){
         this.data = data;
     }
@@ -30,16 +30,16 @@ public class ApproximateMedian {
         return data[data.length/2]; // integer division uses truncation to round (for positive numbers like the floor function)
     }
 
-    // ok, precise
+    // medium speed, precise
     public double commons(double[] data){
         DescriptiveStatistics stats = new DescriptiveStatistics();
         for(double d : data) stats.addValue(d);
         return stats.getPercentile(50);
     }
 
-    int decimals = 4; // only 10% slower than 3 decimals
-    int base = (int)Math.pow(10,decimals);
-    int[] bins = new int[2*base];
+    private final int decimals = 4; // only 10% slower than 3 decimals
+    private final int base = (int)Math.pow(10,decimals);
+    private final int[] bins = new int[2*base];
 
     // fast, approximate
     public double countingSort(double[] data){

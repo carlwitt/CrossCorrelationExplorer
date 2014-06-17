@@ -28,7 +28,7 @@ import java.util.Arrays;
  */
 public class LagWindowCache {
 
-    WindowMetadata metadata;
+    private WindowMetadata metadata;
 
     /** The index of the time series value where the first buffered lag window starts (first meaning 'having the lowest start index'). */
     private int[] rangeStart; // no valid index at startup

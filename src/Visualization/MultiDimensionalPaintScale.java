@@ -82,7 +82,7 @@ public class MultiDimensionalPaintScale
                 // the factor (in range 0..1) by which the saturation is multiplied compared to the base color
                 // the following gives stronger decay in the beginning and a softer decay in the end leading to a visually more continuous saturation loss
                 double satPercent = (double)j/(saturationDepth-1);
-                double saturationReduction = -Math.log(0.45*satPercent+1/Math.E);// some arbitrary function that gives a smooth fallof
+                double saturationReduction = -Math.log(0.45*satPercent+1/Math.E);// some arbitrary function that gives a fast falloff
                 
                 colors[j][i] = Color
                         .rgb((int)color.dimension_1,(int)color.dimension_2,(int)color.dimension_3)
@@ -135,33 +135,13 @@ public class MultiDimensionalPaintScale
     Paint getPaint(double d){
         if(Double.isNaN(d)) return Color.GRAY;
 
-        float saturationPercent = (float) Math.min(1, interpolate(d, 1));
-        float huePercent = (float) Math.min(1, interpolate(d, 0));
+        double huePercent = interpolate(d, 0);
 
-        int satIndex = (int) ((saturationDepth-1) * saturationPercent);
+        assert huePercent >= 0 && huePercent <= 1 : String.format("The requested value %s is outside the first dimensions bounds [%s, %s]", d, lowerBounds[0], upperBounds[1]);
+
         int hueIndex = (int) ((hueDepth -1) * huePercent);
 
         return colors[0][hueIndex];
-    }
-    
-    // dumps the generated palettes of this paint scale as rgb values [r,g,b] in javascript array notation
-    // format: [ [ [color1 satdepth1], [color2 satdepth2], ... ], [colors belonging to saturation depth 2], ... ]
-    protected void printPalettesJSON(){
-        
-        System.out.println("[");
-        
-        for (int row = 0; row < saturationDepth; row++) {
-            ArrayList<String> colorCodes = new ArrayList<>();
-            
-            for (int col = 0; col < hueDepth; col++) {
-                Color color = colors[row][col];
-                colorCodes.add(String.format("[%s,%s,%s]",(int)(color.getRed()*255), (int)(color.getGreen()*255), (int)(color.getBlue()*255)));
-            }
-            System.out.println(String.format("[%s],",Joiner.on(",").join(colorCodes)));
-        }
-        
-        System.out.println("]");
-        
     }
     
     public Double[] getLowerBounds() { return this.lowerBounds; }
@@ -211,4 +191,25 @@ public class MultiDimensionalPaintScale
     }
     
     public Color[][] getColors() { return colors; }
+
+    // dumps the generated palettes of this paint scale as rgb values [r,g,b] in javascript array notation
+    // format: [ [ [color1 satdepth1], [color2 satdepth2], ... ], [colors belonging to saturation depth 2], ... ]
+    protected void printPalettesJSON(){
+
+        System.out.println("[");
+
+        for (int row = 0; row < saturationDepth; row++) {
+            ArrayList<String> colorCodes = new ArrayList<>();
+
+            for (int col = 0; col < hueDepth; col++) {
+                Color color = colors[row][col];
+                colorCodes.add(String.format("[%s,%s,%s]",(int)(color.getRed()*255), (int)(color.getGreen()*255), (int)(color.getBlue()*255)));
+            }
+            System.out.println(String.format("[%s],",Joiner.on(",").join(colorCodes)));
+        }
+
+        System.out.println("]");
+
+    }
+
 }

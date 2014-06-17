@@ -12,13 +12,13 @@ import org.apache.commons.math3.distribution.TDistribution;
 public class CorrelationSignificance {
 
     /** The sample size used to parameterize the t-distribution. This is usually the size of a time series window. */
-    int sampleSize;
+    private final int sampleSize;
     /** The desired level of significance (equals the probability to get a result as strong as the observed by chance). Is usually 0.05 (5%) or 0.01 (1%). */
-    double significanceLevel;
+    private final double significanceLevel;
     /** The minimum t value that leads to the rejection of the null hypothesis that there is no correlation. */
-    double criticalTValue;
+    private final double criticalTValue;
     /** The minimum correlation value that leads to the rejection of the null hypothesis that there is no correlation. */
-    double criticalCorrelationValue;
+    final double criticalCorrelationValue;
 
     /**
      * @param sampleSize see {@link #sampleSize}

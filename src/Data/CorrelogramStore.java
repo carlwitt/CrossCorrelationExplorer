@@ -27,7 +27,7 @@ public class CorrelogramStore {
         return correlationMatricesByMetadata.containsKey(metadata);
     }
     
-    public static void append(CorrelationMatrix c) {
+    private static void append(CorrelationMatrix c) {
         correlationMatricesByMetadata.put(c.metadata, c);
     }
 

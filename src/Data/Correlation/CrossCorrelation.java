@@ -3,6 +3,7 @@ package Data.Correlation;
 import Data.TimeSeries;
 import Data.Windowing.LagWindowStatistics;
 import Data.Windowing.WindowMetadata;
+import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import java.util.ArrayList;
@@ -47,6 +48,7 @@ public class CrossCorrelation {
      * @param tau the window start and end indices in the second time series result from adding tau to the indices in the first time series.
      * @return normalized cross correlation between the two windows
      */
+    static PearsonsCorrelation correlation = new PearsonsCorrelation();
     public static double correlationCoefficient(TimeSeries a, TimeSeries b, int from, int to, int tau){
 
         // time series data
@@ -86,7 +88,7 @@ public class CrossCorrelation {
      * @param metadata describes the computation input.
      * @return the windowed cross correlation between two time series.
      */
-    public static CorrelationMatrix naiveCrossCorrelationAtomic(WindowMetadata metadata){
+    private static CorrelationMatrix naiveCrossCorrelationAtomic(WindowMetadata metadata){
 
         CorrelationMatrix result = new CorrelationMatrix(metadata);
 
@@ -172,6 +174,7 @@ public class CrossCorrelation {
                 data[CorrelationMatrix.MEAN][lag] = descriptiveStatistics.getMean();
                 data[CorrelationMatrix.STD_DEV][lag] = descriptiveStatistics.getStandardDeviation();
                 data[CorrelationMatrix.MEDIAN][lag] = descriptiveStatistics.getPercentile(50);
+                data[CorrelationMatrix.IQR][lag] = descriptiveStatistics.getPercentile(75)-descriptiveStatistics.getPercentile(25);
                 data[CorrelationMatrix.NEGATIVE_SIGNIFICANT][lag] = (double) numNegSig / n;
                 data[CorrelationMatrix.POSITIVE_SIGNIFICANT][lag] = (double) numPosSig / n;
                 data[CorrelationMatrix.ABSOLUTE_SIGNIFICANT][lag] = data[CorrelationMatrix.NEGATIVE_SIGNIFICANT][lag] + data[CorrelationMatrix.POSITIVE_SIGNIFICANT][lag];
@@ -182,6 +185,7 @@ public class CrossCorrelation {
                     .mean(data[CorrelationMatrix.MEAN])
                     .standardDeviation(data[CorrelationMatrix.STD_DEV])
                     .median(data[CorrelationMatrix.MEDIAN])
+                    .interquartileRange(data[CorrelationMatrix.IQR])
                     .negativeSignificant(data[CorrelationMatrix.NEGATIVE_SIGNIFICANT])
                     .positiveSignificant(data[CorrelationMatrix.POSITIVE_SIGNIFICANT])
                     .absoluteSignificant(data[CorrelationMatrix.ABSOLUTE_SIGNIFICANT])
@@ -259,7 +263,7 @@ public class CrossCorrelation {
 
         if(Double.isNaN(previousMean)) return mean(a, from, to);
 
-        assert from < to : String.format("Window start index %s needs to be ≤ window end index %s.",from, to);
+        assert from <= to : String.format("Window start index %s needs to be ≤ window end index %s.",from, to);
         assert previousFrom < from : String.format("Previous window start index %s needs to be smaller than the windows start index %s", previousFrom, from);
 
         double[] x = a.getDataItems().im;
@@ -306,8 +310,8 @@ public class CrossCorrelation {
 
     public static double rootOfSummedSquares(double[] normalizedValues) {
         double sum = 0;
-        for (int t = 0; t < normalizedValues.length; t++)
-            sum += normalizedValues[t] * normalizedValues[t]; // square
+        for (double normalizedValue : normalizedValues)
+            sum += normalizedValue * normalizedValue; // square
         return Math.sqrt(sum);
     }
 

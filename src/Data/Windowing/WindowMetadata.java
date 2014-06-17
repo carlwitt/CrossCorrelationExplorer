@@ -45,7 +45,7 @@ public class WindowMetadata {
 
     /** The number of lag windows that are needed both in the cross-correlation computation of a base window b and its subsequent base window b'.
       * This is the size of the intersection of the ranges [s_b + tauMin ... s_b + tauMax] and [s_b' + tauMin ... s_b' + tauMax]. */
-    public final int lagRangeOverlap;
+    private final int lagRangeOverlap;
 
     /** The list of all time series for which the correlogram was computed. */
     public final List<TimeSeries> setA;
@@ -53,7 +53,7 @@ public class WindowMetadata {
 
     public final CrossCorrelation.NA_ACTION naAction;
 
-    public HashMap<String, Object> customParameters = new HashMap<>();
+    public final HashMap<String, Object> customParameters = new HashMap<>();
 
     public WindowMetadata(@NotNull TimeSeries seriesA, @NotNull TimeSeries seriesB, int windowSize, int tauMin, int tauMax, CrossCorrelation.NA_ACTION naAction, int baseWindowOffset){
         this.tauMin = tauMin;
@@ -92,7 +92,7 @@ public class WindowMetadata {
         return largestValidWindowStartIndex / baseWindowOffset + 1;    // +1: the first window is located at index zero
     }
 
-    public int getLagRangeOverlap() {
+    int getLagRangeOverlap() {
         return tauMax - tauMin - baseWindowOffset + 1;
     }
 

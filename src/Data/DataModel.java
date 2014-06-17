@@ -68,7 +68,8 @@ public class DataModel extends TreeMap<Integer, TimeSeries> {
     }
 
     /** These cache the minimum and maximum Y value of the current dataset. Are invalidated (set to null) when time series are added or removed. */
-    Double minY = null, maxY = null;
+    private Double minY = null;
+    private Double maxY = null;
     public double getMinY() {
         // compute if not cached
         if(minY == null){

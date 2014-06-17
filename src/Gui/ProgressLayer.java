@@ -9,7 +9,7 @@ import javafx.scene.layout.Pane;
  * Contains controls to indicate the progress - is displayed as an overlay in the tab view (file input, computation input, ...)
  * @author Carl Witt
  */
-public class ProgressLayer {
+class ProgressLayer {
     
     public Pane overlay;                // container (has a background color and blocks underlying elements)
     public ProgressBar progressBar;

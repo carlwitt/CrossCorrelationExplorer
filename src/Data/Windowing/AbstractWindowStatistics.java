@@ -36,13 +36,13 @@ public abstract class AbstractWindowStatistics {
     // -----------------------------------------------------------------------------------------------------------------
 
     /** The time series for which to precompute the data. */
-    public final TimeSeries timeSeries;
+    final TimeSeries timeSeries;
 
     /** Size of the windows that are taken from a time series (denoted |w|). */
     public final int windowSize;
 
     /** The offset between base windows. baseWindowOffset = s_b' - s_b where b is any base window and b' its subsequent base window. */
-    public final int baseWindowOffset;
+    final int baseWindowOffset;
 
     // -----------------------------------------------------------------------------------------------------------------
     // derived from specific parameters
@@ -81,7 +81,7 @@ public abstract class AbstractWindowStatistics {
      */
     public abstract int getWindowNumberForStartIndex(int windowStartIndex);
 
-    public abstract void computeWindowStartIndices();
+    protected abstract void computeWindowStartIndices();
 
     /** Precomputes the data. */
     public abstract void computeWindowStatistics(boolean computeNormalizedValues);
@@ -92,7 +92,7 @@ public abstract class AbstractWindowStatistics {
     /**
      * @return Whether the cross-correlation is to be run with the same parameters (windowSize, baseWindowOffset) on both time series.
      */
-    public boolean sameCrossCorrelationParameters(AbstractWindowStatistics other){
+    boolean sameCrossCorrelationParameters(AbstractWindowStatistics other){
 
         // both time series need to have the same length
         if(timeSeries.getSize() != other.timeSeries.getSize()) return false;

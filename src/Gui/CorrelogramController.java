@@ -35,22 +35,28 @@ public class CorrelogramController {
 
     protected MultiDimensionalPaintScale paintScale;
     
-    private final Correlogram correlogram = new Correlogram(new MultiDimensionalPaintScale(1200, 400));
-    protected final CorrelogramLegend legend = new CorrelogramLegend(new MultiDimensionalPaintScale(1200, 400));
+    private final Correlogram correlogram;
+    private final CorrelogramLegend legend;
     
     @FXML VBox correlogramView;
     @FXML StackPane correlogramPane;
     @FXML StackPane legendPane;
     @FXML ToggleButton linkWithTimeSeriesViewToggle;
+    @FXML ToggleButton scatterPlotToggle;
     @FXML TabPane visualizationSelector;
 
-    public static final String[] renderModeLabels = new String[]{
+    private static final String[] renderModeLabels = new String[]{
             "Mean/Std Dev",           // mean and standard deviation
             "Median/IQR",             // median and interquartile range
             "Negative Significant",   // percentage of significantly negative correlated window pairs
             "Positive Significant",   // percentage of significantly positive correlated window pairs
             "Absolute Significant"    // percentage of significantly correlated window pairs
     };
+
+    public CorrelogramController() {
+        correlogram = new Correlogram(new MultiDimensionalPaintScale(1200, 400));
+        legend = new CorrelogramLegend(correlogram, new MultiDimensionalPaintScale(12, 4));
+    }
 
     public void initialize() {
         
@@ -87,6 +93,17 @@ public class CorrelogramController {
                 Correlogram.RENDER_MODE newMode = Correlogram.RENDER_MODE.values()[(int)newValue];
                 correlogram.setRenderMode(newMode);
                 correlogram.drawContents();
+                legend.updateRenderMode();
+                legend.resetView();
+                legend.drawContents();
+            }
+        });
+
+        // push scatter plot toggle value to legend if changed.
+        scatterPlotToggle.selectedProperty().addListener(new ChangeListener<Boolean>() {
+            @Override public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                legend.setDrawScatterPlot(newValue);
+                legend.drawContents();
             }
         });
 //        correlogram.setPaintScale(paintScale);

@@ -1,7 +1,6 @@
 package Visualization;
 
 import com.sun.javafx.tk.FontLoader;
-import java.util.Locale;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Point2D;
@@ -9,13 +8,10 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
-import javafx.scene.transform.Affine;
-import javafx.scene.transform.NonInvertibleTransformException;
-import javafx.scene.transform.Rotate;
-import javafx.scene.transform.Scale;
-import javafx.scene.transform.Transform;
-import javafx.scene.transform.Translate;
+import javafx.scene.transform.*;
 import javafx.util.converter.NumberStringConverter;
+
+import java.util.Locale;
 
 /**
  * The component that draws an axis, its tick marks, tick labels and the axis label.
@@ -137,7 +133,7 @@ public class NumberAxis extends Canvas {
      * The main drawing routine that calls all other drawing routines.
      */
     public void drawContents(){
-        
+
         dataToScreen = computeDataToScreen();
         GraphicsContext g = getGraphicsContext2D();
         
@@ -200,7 +196,7 @@ public class NumberAxis extends Canvas {
         }
         
     }
-    
+
     /** Draws a single tick mark.
      * @param g The graphics context to draw on.
      * @param value The data coordinates value to put a tick mark on.
@@ -210,7 +206,9 @@ public class NumberAxis extends Canvas {
         double tickMarkLength = 3;
         g.setLineWidth(1);
         g.setFont(tickLabelFont);
-        
+
+        // avoid negative zero values
+        value = Math.abs(value) < 1e-10 ? Math.abs(value) : value;
         String tickLabel = tickLabelFormatter.toString(value);
         Point2D textDimensions = renderedTextSize(tickLabel, tickLabelFont);
         
@@ -374,7 +372,7 @@ public class NumberAxis extends Canvas {
     public final void setTickLabelFormatter(NumberStringConverter sc) {
         this.tickLabelFormatter = sc;
     }
-    
+
     /** @return the tick position generation strategy */
     public TICK_GENERATION_METHOD getTickPositionType(){ return tickPositionType; }
     public void setTickPositionType(TICK_GENERATION_METHOD m){ this.tickPositionType = m; }

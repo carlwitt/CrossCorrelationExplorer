@@ -34,22 +34,20 @@ public class Correlogram extends CanvasChart {
     private SharedData sharedData;
 
     /** encodes 2D values in a single color */
-    private MultiDimensionalPaintScale paintScale;
+    private final MultiDimensionalPaintScale paintScale;
 
     // width and height of a cell in the correlogram.
     // using the actual windowSize is not feasible, since windows overlap.
     // a new window starts in each baseWindowOffset steps, each window is assigned that width (but at most the window size, in case of negative overlap)
-    double blockWidth, blockHeight;
+    private double blockWidth;
+    private double blockHeight;
 
-    Rectangle activeWindowRect = new javafx.scene.shape.Rectangle(10, 10);
-    double activeWindowStrokeWidth = 2;
+    private final Rectangle activeWindowRect = new javafx.scene.shape.Rectangle(10, 10);
+    private final double activeWindowStrokeWidth = 2;
 
     /** the y offset for drawing correlogram blocks.
      *  this can be used to center blocks around their time lag (e.g. time lag 0 => -0.5 ... 0.5) */
-    double blockYOffset = 0;
-
-    // render mode switching
-    private RENDER_MODE renderMode = RENDER_MODE.MEAN_STD_DEV;
+    private final double blockYOffset = 0;
 
     /** Defines how the data in the correlation matrix is visualized. */
     public static enum RENDER_MODE { // color each cell by
@@ -59,6 +57,8 @@ public class Correlogram extends CanvasChart {
         POSITIVE_SIGNIFICANT,   // percentage of significantly positive correlated window pairs
         ABSOLUTE_SIGNIFICANT    // percentage of significantly correlated window pairs
     }
+    private final static RENDER_MODE defaultRenderMode = RENDER_MODE.MEAN_STD_DEV;
+    RENDER_MODE renderMode = defaultRenderMode;
 
     // -----------------------------------------------------------------------------------------------------------------
     // METHODS
@@ -69,6 +69,63 @@ public class Correlogram extends CanvasChart {
         xAxis.setMinTickUnit(1);
         yAxis.setMinTickUnit(1);
 
+        /*
+      This handler listens to mouse moves on the correlogram and informs the shared data object about
+      the correlation matrix cell index (window index index and lag index) under the mouse cursor.
+     */
+        EventHandler<MouseEvent> reportHighlightedCell = new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent t) {
+
+                // get matrix
+                CorrelationMatrix matrix = sharedData.getCorrelationMatrix();
+                if (matrix == null) return;
+
+                // transform from mouse position into data coordinates
+                Point2D dataCoordinates;
+                try {
+                    dataCoordinates = dataToScreen().inverseTransform(t.getX(), t.getY());
+                } catch (NonInvertibleTransformException ex) {
+                    dataCoordinates = new Point2D(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
+                    System.err.println("Couldn't invert data to screen transform on mouse over (correlogram).");
+                }
+
+                // determine the space for each column in the correlogram and the offset of the first column on the X axis
+                double blockWidth = matrix.metadata.baseWindowOffset;
+                double windowOffset = matrix.getStartXValueInTimeSeries() + 0.5 * matrix.metadata.windowSize - blockWidth / 2;
+
+                // use equi-distance property (of columns) to calculate the window index by division
+                int activeTimeWindowIdx = (int) Math.floor((dataCoordinates.getX() - windowOffset) / blockWidth);
+
+                Point activeCell;
+                // check whether the mouse points to any column
+                if (activeTimeWindowIdx >= 0 && activeTimeWindowIdx < matrix.getResultItems().size()) {
+
+                    CorrelationMatrix.CorrelationColumn activeTimeWindow = matrix.getColumn(activeTimeWindowIdx);
+
+                    int posOnYAxis = (int) Math.floor(dataCoordinates.getY() - blockYOffset);
+
+                    // check whether the cell is outside the column
+                    if (posOnYAxis < activeTimeWindow.tauMin || posOnYAxis > activeTimeWindow.tauMin + activeTimeWindow.getSize()) {
+                        posOnYAxis = Integer.MAX_VALUE;
+//                    System.out.println("top/bottom out.");
+                    }
+
+                    int timeLagIndex = posOnYAxis - activeTimeWindow.tauMin;
+                    activeCell = new Point(activeTimeWindowIdx, timeLagIndex);
+
+                } else {
+//                System.out.println("left/right out.");
+                    activeCell = new Point(Integer.MAX_VALUE, Integer.MAX_VALUE);
+                }
+
+                // report only if changes have occured
+                if (!sharedData.getHighlightedCell().equals(activeCell)) {
+                    sharedData.setHighlightedCell(activeCell);
+                    highlightActiveWindow();
+                }
+            }
+        };
         chartCanvas.setOnMouseMoved(reportHighlightedCell);
 
         // initialize the active window highlight rectangle
@@ -87,7 +144,6 @@ public class Correlogram extends CanvasChart {
         // listen to changes in the correlation result matrix
         sharedData.correlationMatrixProperty().addListener(new ChangeListener<CorrelationMatrix>() {
             @Override public void changed(ObservableValue<? extends CorrelationMatrix> ov, CorrelationMatrix t, CorrelationMatrix m) {
-
                 resetView();
                 drawContents();
             }
@@ -120,7 +176,7 @@ public class Correlogram extends CanvasChart {
         List columns = matrix.getResultItems();
 
         // depending on the render mode, configure the paintscale
-        configurePaintscale(matrix);
+        configurePaintscale(matrix, paintScale);
 
         computeBlockDimensions();
 
@@ -164,7 +220,7 @@ public class Correlogram extends CanvasChart {
 
     }
 
-    protected void drawContentsUnivariate(GraphicsContext gc, Affine dataToScreen, CorrelationMatrix matrix, double[] xValues, List columns, int columnIdxFrom, int columnIdxTo, int windowStep, int lagStep, int DIM) {// for each column of the matrix (or, equivalently, for each time window)
+    void drawContentsUnivariate(GraphicsContext gc, Affine dataToScreen, CorrelationMatrix matrix, double[] xValues, List columns, int columnIdxFrom, int columnIdxTo, int windowStep, int lagStep, int DIM) {// for each column of the matrix (or, equivalently, for each time window)
         for (int i = columnIdxFrom; i <= columnIdxTo; i += windowStep) {
 
             CorrelationMatrix.CorrelationColumn column = (CorrelationMatrix.CorrelationColumn) columns.get(i);
@@ -200,7 +256,7 @@ public class Correlogram extends CanvasChart {
         }
     }
 
-    protected void drawContentsMultivariate(GraphicsContext gc, Affine dataToScreen, CorrelationMatrix matrix, double[] xValues, List columns, int columnIdxFrom, int columnIdxTo, int windowStep, int lagStep, int DIM1, int DIM2) {// for each column of the matrix (or, equivalently, for each time window)
+    void drawContentsMultivariate(GraphicsContext gc, Affine dataToScreen, CorrelationMatrix matrix, double[] xValues, List columns, int columnIdxFrom, int columnIdxTo, int windowStep, int lagStep, int DIM1, int DIM2) {// for each column of the matrix (or, equivalently, for each time window)
         for (int i = columnIdxFrom; i <= columnIdxTo; i += windowStep) {
 
             CorrelationMatrix.CorrelationColumn column = (CorrelationMatrix.CorrelationColumn) columns.get(i);
@@ -235,7 +291,7 @@ public class Correlogram extends CanvasChart {
         }
     }
 
-    protected void configurePaintscale(CorrelationMatrix matrix) {
+    public void configurePaintscale(CorrelationMatrix matrix, MultiDimensionalPaintScale paintScale) {
 
         switch (renderMode){
             case MEAN_STD_DEV:
@@ -282,62 +338,6 @@ public class Correlogram extends CanvasChart {
         blockWidth = Math.min(metadata.windowSize, metadata.baseWindowOffset);
         blockHeight = 1;
     }
-
-    /**
-     * This handler listens to mouse moves on the correlogram and informs the shared data object about
-     * the correlation matrix cell index (window index index and lag index) under the mouse cursor.
-     */
-    private final EventHandler<MouseEvent> reportHighlightedCell = new EventHandler<MouseEvent>() {
-        @Override public void handle(MouseEvent t) {
-
-            // get matrix
-            CorrelationMatrix matrix = sharedData.getCorrelationMatrix();
-            if(matrix == null) return;
-
-            // transform from mouse position into data coordinates
-            Point2D dataCoordinates;
-            try { dataCoordinates = dataToScreen().inverseTransform(t.getX(), t.getY()); }
-            catch (NonInvertibleTransformException ex) {
-                dataCoordinates = new Point2D(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
-                System.err.println("Couldn't invert data to screen transform on mouse over (correlogram).");
-            }
-
-            // determine the space for each column in the correlogram and the offset of the first column on the X axis
-            double blockWidth = matrix.metadata.baseWindowOffset;
-            double windowOffset = matrix.getStartXValueInTimeSeries() + 0.5*matrix.metadata.windowSize - blockWidth/2;
-
-            // use equi-distance property (of columns) to calculate the window index by division
-            int activeTimeWindowIdx = (int) Math.floor((dataCoordinates.getX() - windowOffset)/blockWidth);
-
-            Point activeCell;
-            // check whether the mouse points to any column
-            if(activeTimeWindowIdx >= 0 && activeTimeWindowIdx < matrix.getResultItems().size()){
-
-                CorrelationMatrix.CorrelationColumn activeTimeWindow = matrix.getColumn(activeTimeWindowIdx);
-
-                int posOnYAxis = (int) Math.floor(dataCoordinates.getY() - blockYOffset);
-
-                // check whether the cell is outside the column
-                if(posOnYAxis < activeTimeWindow.tauMin || posOnYAxis > activeTimeWindow.tauMin + activeTimeWindow.getSize()){
-                    posOnYAxis = Integer.MAX_VALUE;
-//                    System.out.println("top/bottom out.");
-                }
-
-                int timeLagIndex = posOnYAxis - activeTimeWindow.tauMin;
-                activeCell = new Point(activeTimeWindowIdx, timeLagIndex);
-
-            } else {
-//                System.out.println("left/right out.");
-                activeCell = new Point(Integer.MAX_VALUE, Integer.MAX_VALUE);
-            }
-
-            // report only if changes have occured
-            if( ! sharedData.getHighlightedCell().equals(activeCell)){
-                sharedData.setHighlightedCell(activeCell);
-                highlightActiveWindow();
-            }
-        }
-    };
 
     /**
      * Highlights the active window, i.e. the (time,lag) coordinate in the correlogram that is hovered by the user.

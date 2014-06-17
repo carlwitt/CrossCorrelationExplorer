@@ -1,13 +1,9 @@
 package Visualization.Color;
 
-import java.util.Vector;
-import java.lang.Throwable;
-
-import Visualization.Color.ColorGenerator;
-import Visualization.Color.ColorManager;
-import Visualization.Color.ColorTransformer;
 import Visualization.Color.Datatype.Color;
 import Visualization.Color.Datatype.ColorType;
+
+import java.util.Vector;
 
 
 public class Color_manager extends ColorManager{ 
@@ -34,11 +30,8 @@ public class Color_manager extends ColorManager{
     
 	private final Vector<Vector<Color> > _color_palettes = new Vector<>();                             /*!< Available color palettes */
 	private Vector<Color> _current_color_palette;                               /*!< Current color palette */
-    
-	private final Color _grid_color;                                                  /*!< Predefined color for grid lines (implicit constant) */
-	private final Color _polygon_color; 												/*!< Predefined color for polygonal lines (implicit constant) */
-	
-	// Constructor
+
+    // Constructor
 	public Color_manager(int numberOfColors){
 		 this._p_0 = new Color(ColorType.LCH, 0.0f, 0.0f, 0.0f);
 		 this._p_1 = new Color(ColorType.LCH, 0.0f, 0.0f, 0.0f);
@@ -53,10 +46,10 @@ public class Color_manager extends ColorManager{
 		 this._max_hue = 360.0f;                                            
 		    
 		 this._B = 0.8f;
-		 this._C = (float)Math.min(0.88f, 0.34f + 0.06f * _number_of_colors);
-		    
-		 this._grid_color = new Color(ColorType.RGBA, 120.0f, 120.0f, 120.0f, 0.4f);
-		 this._polygon_color = new Color(ColorType.RGBA, 50.0f, 50.0f, 50.0f, 0.4f);
+		 this._C = Math.min(0.88f, 0.34f + 0.06f * _number_of_colors);
+
+        Color _grid_color = new Color(ColorType.RGBA, 120.0f, 120.0f, 120.0f, 0.4f);
+        Color _polygon_color = new Color(ColorType.RGBA, 50.0f, 50.0f, 50.0f, 0.4f);
 	    
 		 this._lightness = 100.0f;
 		 this._chroma = 100.0f;

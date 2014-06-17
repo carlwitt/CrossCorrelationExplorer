@@ -15,13 +15,13 @@ public class CorrelationMatrixTest {
 
     @Test public void compareWithNaive() {
 
-        int numTimeSeries = 100;
-        int length = 100;
+        int numTimeSeries = 1000;
+        int length = 11;
 
         List<TimeSeries> ts = TimeSeriesTest.randomTimeSerieses(numTimeSeries, length);
 
         List<TimeSeries> setA = Arrays.asList(ts.get(0), ts.get(2));
-        List<TimeSeries> setB = Arrays.asList(ts.get(3));
+        List<TimeSeries> setB = Arrays.asList(ts.get(3), ts.get(8));
 
 //        List<TimeSeries> setA = Arrays.asList(new TimeSeries(-1,3,2,15,21,9,6,-2), new TimeSeries(-2,2,1,14,20,8,5,-3));
 //        List<TimeSeries> setB = Arrays.asList(new TimeSeries(-10,30,20,150,210,90,60,-20), new TimeSeries(-10,30,20,150,210,90,60,-20));
@@ -45,6 +45,11 @@ public class CorrelationMatrixTest {
 
         System.out.println("Result: "+result);
 
+        for (int STAT = 0; STAT < CorrelationMatrix.NUM_STATS; STAT++) {
+            assertEquals(expected.getMin(STAT), result.getMin(STAT), 1e-15);
+            assertEquals(expected.getMax(STAT), result.getMax(STAT), 1e-15);
+        }
+
         for (int i = 0; i < expected.columns.size(); i++) {
             CorrelationMatrix.CorrelationColumn expectedColumn = expected.getColumn(i);
             CorrelationMatrix.CorrelationColumn resultColumn = result.getColumn(i);
@@ -54,8 +59,9 @@ public class CorrelationMatrixTest {
             assertArrayEquals(expectedColumn.negativeSignificant, resultColumn.negativeSignificant, 1e-15);
             assertArrayEquals(expectedColumn.positiveSignificant, resultColumn.positiveSignificant, 1e-15);
             assertArrayEquals(expectedColumn.absoluteSignificant, resultColumn.absoluteSignificant, 1e-15);
-
         }
+
+
 
     }
 

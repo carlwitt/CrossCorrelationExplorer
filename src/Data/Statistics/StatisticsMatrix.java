@@ -27,22 +27,25 @@ public abstract class StatisticsMatrix {
     /** These constants can be used to conveniently refer to certain statistics.
      * {@link #MEAN}: average. {@link #STD_DEV}: standard deviation. {@link #MEDIAN}: the 50th percentile.
      */
-    public final static int MEAN = 0, STD_DEV = 1, MEDIAN = 2;
-    protected static int NUM_STATS = 3;                     // how many statistics are measured
-    protected final static int MINIMUM = 0, MAXIMUM = 1;
-    protected static int NUM_META_STATS = 2;                // how many statistics about the statistics are measured (minimum and maximum)
+    private final static int MEAN = 0;
+    private final static int STD_DEV = 1;
+    private final static int MEDIAN = 2;
+    private static final int NUM_STATS = 3;                     // how many statistics are measured
+    private final static int MINIMUM = 0;
+    private final static int MAXIMUM = 1;
+    private static final int NUM_META_STATS = 2;                // how many statistics about the statistics are measured (minimum and maximum)
 
     /** Stores the input of the computation. */
-    public final WindowMetadata metadata;
+    private final WindowMetadata metadata;
 
     /** Contains the minimum/maximum value of the given statistic, where the first dimension
      *  refers to the statistic (index using {@link #MEAN}, {@link #STD_DEV}, ...) and the second
      *  dimension specifies the kind of the extremum (index using {@link #MINIMUM}, {@link #MAXIMUM}).
      */
-    protected final Double[][] extrema = new Double[NUM_STATS][NUM_META_STATS];
+    private final Double[][] extrema = new Double[NUM_STATS][NUM_META_STATS];
 
     /** The column wise output of the computation. */
-    protected List<Column> columns;
+    private final List<Column> columns;
 
     public StatisticsMatrix(WindowMetadata metadata) {
         this.columns = new ArrayList<>();
@@ -127,12 +130,12 @@ public abstract class StatisticsMatrix {
     /** Represents one aggregated cross-correlation result within a time window */
     public class Column  {
 
-        protected double[][] data = new double[NUM_STATS][];
+        double[][] data = new double[NUM_STATS][];
 
         /** Contains the minimal/maximal value of the given statistic along this column.
          * E.g. extrema[STD_DEV][MINIMUM] gives the minimum standard deviation among all time lags for the window represented by this column.
          */
-        protected Double[][] extrema = new Double[NUM_STATS][NUM_META_STATS];
+        final Double[][] extrema = new Double[NUM_STATS][NUM_META_STATS];
 
         /** Aliases for clearer code. Points to the data stored in the values field.
          * Using the aliases, references to re and im can be avoided. */
@@ -144,7 +147,7 @@ public abstract class StatisticsMatrix {
         /** The first value in the column corresponds to this time lag. (Since only complete windows are considered, this deviates for the first columns in the matrix.) */
         public final int tauMin;
 
-        protected Column(ColumnBuilder builder){
+        Column(ColumnBuilder builder){
             this.windowStartIndex = builder.windowStartIndex;
             this.tauMin = builder.tauMin;
             data = builder.data;
@@ -187,9 +190,10 @@ public abstract class StatisticsMatrix {
 
     public class ColumnBuilder {
 
-        public double[][] data = new double[NUM_STATS][];
+        public final double[][] data = new double[NUM_STATS][];
 
-        public int windowStartIndex, tauMin;
+        public final int windowStartIndex;
+        public final int tauMin;
         public ColumnBuilder(int windowStartIndex, int tauMin){
             this.windowStartIndex = windowStartIndex;
             this.tauMin = tauMin;

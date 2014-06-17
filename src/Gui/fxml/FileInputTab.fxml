@@ -37,7 +37,7 @@
         <Label contentDisplay="RIGHT" text="load">
             <graphic>
                 <ImageView fitHeight="12.0" fitWidth="12.0" pickOnBounds="true" preserveRatio="true">
-                    <Image url="@img/glyphicons_211_right_arrow.png"/>
+                    <Image url="@../img/glyphicons_211_right_arrow.png"/>
                 </ImageView>
             </graphic>
         </Label>
@@ -56,7 +56,7 @@
         <Label text="unload">
             <graphic>
                 <ImageView fitHeight="12.0" fitWidth="12.0" pickOnBounds="true" preserveRatio="true">
-                    <Image url="@img/glyphicons_210_left_arrow.png"/>
+                    <Image url="@../img/glyphicons_210_left_arrow.png"/>
                 </ImageView>
             </graphic>
         </Label>
