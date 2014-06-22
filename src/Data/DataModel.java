@@ -12,21 +12,34 @@ import java.util.TreeMap;
  * @author Carl Witt
  */
 public class DataModel extends TreeMap<Integer, TimeSeries> {
-    
+
+    /** each time series in input set A will be cross correlated with each time series in input set B */
+    public final ObservableList<TimeSeries> correlationSetA = FXCollections.observableArrayList();
+    public final ObservableList<TimeSeries> correlationSetB = FXCollections.observableArrayList();
+
     /** Contains the mappings between integer IDs (1-based) and the time series object references */
     public final ObservableMap<Integer, TimeSeries> timeSeries = FXCollections.observableMap(this);
     /** This observable list contains the indices of all currently loaded time series. It can be used to monitor the currently loaded time series via a simply integer list view display (no conversion between time series and their indices necessary). */
     private final ObservableList<TimeSeries> loadedSeries = FXCollections.observableArrayList();
-    
+
+    /** These cache the minimum and maximum Y value of the current dataset. Are invalidated (set to null) when time series are added or removed. */
+    private Double minY = null;
+    private Double maxY = null;
+
     public DataModel(){
         timeSeries.addListener(new MapChangeListener<Integer, TimeSeries>() {
             @Override public void onChanged(MapChangeListener.Change<? extends Integer, ? extends TimeSeries> change) {
                 if(change.wasRemoved()){
                     loadedSeries.remove(change.getValueRemoved());
-                } 
+                    minY = null;
+                    maxY = null;
+                }
                 if( change.wasAdded()){
+//                    Logger.getAnonymousLogger().log(Level.INFO, String.format("Datamodel extended by time series %s: %s",change.getValueAdded().getId(), change.getValueAdded()));
                     loadedSeries.add(change.getValueAdded());
                     loadedSeries.sort(null);
+                    minY = null;
+                    maxY = null;
                 }
             }
         });
@@ -67,9 +80,6 @@ public class DataModel extends TreeMap<Integer, TimeSeries> {
 //        }
     }
 
-    /** These cache the minimum and maximum Y value of the current dataset. Are invalidated (set to null) when time series are added or removed. */
-    private Double minY = null;
-    private Double maxY = null;
     public double getMinY() {
         // compute if not cached
         if(minY == null){
@@ -104,4 +114,9 @@ public class DataModel extends TreeMap<Integer, TimeSeries> {
         return Math.ceil(upperBound-lowerBound);
     }
 
+    /** Returns the length of all time series. Is assummed to be equal for all time series.
+     * @param sharedData*/
+    public int getTimeSeriesLength(SharedData sharedData){
+        return correlationSetA.get(0).getDataItems().length;
+    }
 }

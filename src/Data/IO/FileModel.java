@@ -18,6 +18,15 @@ import java.util.function.Predicate;
  * Abstracts from the way a number of time seriese is stored in a text file.
  * This specific model parses a number matrix from the string data.
  * It also encapsulates the conventions on how to interpret these numbers (i.e. how x- and y-values are stored within the matrix).
+ *
+ * Method overview:
+ *   getXValues, getYValues
+ *      retrieve the data
+ *   getLoadFileService
+ *      returns an object for asynchronous (and progress bar enabled) file parsing
+ *   persist
+ *      write data in the specified format (used for tests)
+ *
  * @author Carl Witt
  */
 public class FileModel {
@@ -27,7 +36,7 @@ public class FileModel {
     private double[] firstColumn; // cached first column of the matrix
     
     private static final String DEFAULT_ENCODING = "UTF-8";
-    
+
     private final StringProperty filename = new SimpleStringProperty();
     public final void setFilename(String value) { filename.set(value); }
     final String getFilename() { return filename.get(); }

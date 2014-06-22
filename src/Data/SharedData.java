@@ -21,10 +21,6 @@ public class SharedData extends Observable {
     /** The globally available time series. */
     public final DataModel dataModel = new DataModel();
     
-    /** each time series in input set A will be cross correlated with each time series in input set B */
-    public final ObservableList<TimeSeries> correlationSetA = FXCollections.observableArrayList();
-    public final ObservableList<TimeSeries> correlationSetB = FXCollections.observableArrayList();
-    
     /** time series for which a preview shall be rendered (e.g. selected in the loaded series list) */
     public final ObservableList<TimeSeries> previewTimeSeries = FXCollections.observableArrayList();
     
@@ -62,11 +58,5 @@ public class SharedData extends Observable {
         return getCorrelationMatrix().getResultItems().get(x);
     }
 
-    /** Returns the length of all time series. Is assummed to be equal for all time series. */
-    public int getTimeSeriesLength(){
-        return correlationSetA.get(0).getDataItems().length;
-    }
-    
-    
-    
+
 }

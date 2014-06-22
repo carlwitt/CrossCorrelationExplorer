@@ -229,7 +229,7 @@ public class CrossCorrelationTest {
         int numTimeSeries = 5;
         List<TimeSeries> ts = new ArrayList<>(numTimeSeries);
         for (int i = 0; i < numTimeSeries; i++) {
-            TimeSeries randomTs = new TimeSeries(i, new double[timeSeriesLength], new double[timeSeriesLength]);
+            TimeSeries randomTs = new TimeSeries(new double[timeSeriesLength], new double[timeSeriesLength]);
             for (int j = 0; j < timeSeriesLength; j++) {
                 randomTs.getDataItems().re[j] = j;
                 randomTs.getDataItems().im[j] = Math.random();
@@ -253,7 +253,7 @@ public class CrossCorrelationTest {
         double yOffset = 1;  // the second time series is shifted by that amount along the y axis
 
         // create reference time series as a brownian motion
-        TimeSeries reference = new TimeSeries(0, new double[timeSeriesLength], new double[timeSeriesLength]);
+        TimeSeries reference = new TimeSeries(new double[timeSeriesLength], new double[timeSeriesLength]);
         reference.getDataItems().re[0] = 0;
         reference.getDataItems().im[0] = 0;
         double lastVal = 0;
@@ -275,7 +275,7 @@ public class CrossCorrelationTest {
         // and falls to min lag until 3/3 of the signal are reached
         double maxLag = 100;
         double minLag = -100;
-        TimeSeries lagged = new TimeSeries(1, new double[timeSeriesLength], new double[timeSeriesLength]);
+        TimeSeries lagged = new TimeSeries(new double[timeSeriesLength], new double[timeSeriesLength]);
         int lag = 0;
         for (int j = 0; j < timeSeriesLength; j++) {
             double progress = 1.*j/timeSeriesLength;

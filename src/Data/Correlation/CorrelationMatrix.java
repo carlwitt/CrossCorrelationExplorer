@@ -82,11 +82,10 @@ public class CorrelationMatrix {
      */
     private void initComputation(){
         columns = new ArrayList<>();
-
         // partition the input set A among the threads
         int maxThreads = Math.max(metadata.setA.size(), metadata.setB.size());   // each thread gets at least one time series of an input set (the larger input set)
         int minThreads = 1;
-        int stdThreads = Runtime.getRuntime().availableProcessors() - 1; // leaving one thread for the system usually gives better results
+        int stdThreads = Runtime.getRuntime().availableProcessors(); // leaving one thread for the system usually gives better results
         numThreads = Math.max(minThreads, Math.min(maxThreads, stdThreads));
 
         // caches reusable terms (for base window computations) of the lag windows across all time series of set B
@@ -158,7 +157,7 @@ public class CorrelationMatrix {
                     int maxTau = maxLagWindowStartIdx - baseWindowStartIdx;
 
                     // precompute the data needed for this base window in parallel
-                    for (int tsBIdx = fromB; tsBIdx < Math.min(toB, metadata.setB.size()); tsBIdx++) {
+                    for (int tsBIdx = fromB; tsBIdx < toB; tsBIdx++) {
                         precomputeLagWindowData(tsBIdx, baseWindowStartIdx, minTau, maxTau, lagWindowCache);
                     }
 
@@ -617,6 +616,7 @@ public class CorrelationMatrix {
                     System.out.println("Raw data computation: "+(timeSpent-aggregationTime));
                     System.out.println("Aggregation: "+aggregationTime);
 
+//                    System.out.println(toRMatrix(MEAN));
                     return CorrelationMatrix.this;
                 }
                 @Override protected void cancelled() {
@@ -632,6 +632,23 @@ public class CorrelationMatrix {
                 }
             };
         }
+    }
+
+    public String toRMatrix(int STATISTIC){
+
+        StringBuffer buffer = new StringBuffer();
+        int rows = metadata.tauMax - metadata.tauMin + 1;
+        for (int i = 0; i < rows; i++) {
+            for (CorrelationColumn column : columns){
+                if(i < column.data[STATISTIC].length)
+                    buffer.append(String.format("%.3f",column.data[STATISTIC][i]) + ",");
+                else
+                    buffer.append("-0,");
+            }
+
+        }
+        buffer.deleteCharAt(buffer.length()-1);// remove trailing comma
+        return String.format("matrix(ncol=%s, nrow=%s, data=c(%s))",columns.size(), rows, buffer.toString());
     }
 
 

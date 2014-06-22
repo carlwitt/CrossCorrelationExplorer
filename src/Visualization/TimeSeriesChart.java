@@ -86,6 +86,8 @@ public class TimeSeriesChart extends CanvasChart {
             // shift only those in correlation set B
             boolean drawShift  = coloredSet.getKey().equals(setBColor) && highlightTimeLag < Integer.MAX_VALUE;
 
+//            gc.setStroke(coloredSet.getKey().deriveColor(0,1,1,0.1));
+//            gc.setStroke(coloredSet.getKey().deriveColor(0,1,1,0.01));
             gc.setStroke(coloredSet.getKey());
             gc.setLineWidth(1.5);
 
@@ -189,11 +191,11 @@ public class TimeSeriesChart extends CanvasChart {
 //                    widthOnScreen, getHeight());
 //        }
 //
-//        if(sharedData.correlationSetA.size() == 0) return;
+//        if(sharedData.dataModel.correlationSetA.size() == 0) return;
 //        // cluster time series
 //        int k = 3; // number of clusters
 //        int n = 20; // max number of iterations
-//        int timeSeriesLength = sharedData.correlationSetA.get(0).getDataItems().im.length;
+//        int timeSeriesLength = sharedData.dataModel.correlationSetA.get(0).getDataItems().im.length;
 //        KMeansPlusPlusClusterer<DoublePoint> clusterer = new KMeansPlusPlusClusterer<DoublePoint>(k, n);
 //
 //        HashMap<Color, ObservableList<TimeSeries>> clusteredSets = new HashMap<>();
@@ -203,7 +205,7 @@ public class TimeSeriesChart extends CanvasChart {
 //            ObservableList<TimeSeries> newList = FXCollections.observableArrayList();
 //            // add empty time series
 //            for (int result = 0; result < k; result++) {
-//                newList.add(new TimeSeries((int)(Math.random()*10000),sharedData.correlationSetA.get(0).getDataItems().re, new double[timeSeriesLength]));
+//                newList.add(new TimeSeries((int)(Math.random()*10000),sharedData.dataModel.correlationSetA.get(0).getDataItems().re, new double[timeSeriesLength]));
 //            }
 //            clusteredSets.put(coloredSet.getKey(), newList);
 //        }

@@ -16,17 +16,17 @@ public class TimeSeries implements Comparable<TimeSeries> {
     private ComplexSequence values = null;
     
     /** To automatically generate ids, decrements of the maximum int value are used. */
-    private static int nextId = Integer.MAX_VALUE;
+    private static int nextId = 1;
     
     /**
      * @param values The x and y values, specified in the real and imaginary parts of a complex sequence.
      */
     public TimeSeries(@NotNull ComplexSequence values){
-        this.id = nextId--;
+        this.id = nextId++;
         this.values = values;
     }
-    public TimeSeries(int id, @NotNull double[] xValues, @NotNull double[] yValues){
-        this.id = id;
+    public TimeSeries(@NotNull double[] xValues, @NotNull double[] yValues){
+        this.id = nextId++;
         this.values = ComplexSequence.create(xValues, yValues);
     }
     

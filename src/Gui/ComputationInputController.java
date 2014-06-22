@@ -3,33 +3,29 @@ package Gui;
 import Data.Correlation.CorrelationMatrix;
 import Data.Correlation.CrossCorrelation;
 import Data.CorrelogramStore;
+import Data.DataModel;
 import Data.SharedData;
 import Data.TimeSeries;
 import Data.Windowing.WindowMetadata;
 import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
 import javafx.concurrent.WorkerStateEvent;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
-import javafx.scene.control.*;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
-import org.controlsfx.dialog.Dialogs;
-
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Random;
-import java.util.ResourceBundle;
+import javafx.scene.control.Button;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleGroup;
 
 /**
- * Controls the loading of text files and the selection of time series from the text file to work with.
+ * Method overview:
+ *   compute()
+ *      Passes the input parameters (correlation sets, window size, overlap, etc.) to the computation routines.
+ *      Handles asynchronous computation of the result.
  *
  * @author Carl Witt
  */
-public class ComputationInputController implements Initializable {
+public class ComputationInputController {
     
     // -------------------------------------------------------------------------
     // business logic data
@@ -39,18 +35,13 @@ public class ComputationInputController implements Initializable {
     // is set by the main controller on startup
     private SharedData sharedData;
     
-    // time series for computation input. set A and set B are cross correlated (in cross-product manner) and the available series is a view on the data model
-    private ObservableList<TimeSeries> loadedTimeSeries;
-    
     ProgressLayer progressLayer;
-    
+
+    DataModel dataModel;
+
     // -------------------------------------------------------------------------
     // injected control elements
     // -------------------------------------------------------------------------
-    
-    @FXML private ListView<TimeSeries> setAList;
-    @FXML private ListView<TimeSeries> loadedList;
-    @FXML private ListView<TimeSeries> setBList;
     
     // input file separator selection
     @FXML private ToggleGroup nanStrategy;
@@ -62,16 +53,7 @@ public class ComputationInputController implements Initializable {
     @FXML private TextField timeLagMinText;
     @FXML private TextField timeLagMaxText;
     @FXML private TextField significanceLevelText;
-    
-    // list control buttons
-    @FXML private Button loadAllSetAButton;
-    @FXML private Button loadSelectedSetAButton;
-    @FXML private Button loadSelectedSetBButton;
-    @FXML private Button loadRandomSetAButton;
-    @FXML private Button unloadAllSetAButton;
-    @FXML private Button unloadSelectedSetAButton;
-    @FXML private Button unloadSelectedSetBButton;
-    
+
     @FXML private Button runButton;
     
     // -------------------------------------------------------------------------
@@ -83,76 +65,17 @@ public class ComputationInputController implements Initializable {
         this.sharedData = sharedData;
         
         // bind loaded series and correlation input sets
-        loadedTimeSeries = sharedData.dataModel.getObservableLoadedSeries();
-        loadedList.setItems(loadedTimeSeries);
-        setAList.setItems(sharedData.correlationSetA);
-        setBList.setItems(sharedData.correlationSetB);
-        
-        // push selected time series to be rendered as preview
-        loadedList.getSelectionModel().getSelectedItems().addListener(new ListChangeListener<TimeSeries>() {
-            @Override public void onChanged(ListChangeListener.Change<? extends TimeSeries> change) {
-                sharedData.previewTimeSeries.setAll(loadedList.getSelectionModel().getSelectedItems());
-            }
-        });
-        
-        // bind min/max time lag input 
-//        timeLagMinText.textProperty().bindBidirectional(sharedData.progressMessageProperty(), new StringConverter<Point2D>() {
-//            @Override public String toString(Point2D t) {
-//                return "" + t.getX();
-//            }
-//            @Override public Point2D fromString(String string) {
-//                Point2D currentBounds = sharedData.getProgressMessage();
-//                try{ return new Point2D(Double.parseDouble(string), currentBounds.getY()); }
-//                catch(NumberFormatException e) { return currentBounds; }
-//            }
-//        });
-//        timeLagMaxText.textProperty().bindBidirectional(sharedData.progressMessageProperty(), new StringConverter<Point2D>() {
-//            @Override public String toString(Point2D t) {
-//                return "" + t.getY();
-//            }
-//            @Override public Point2D fromString(String string) {
-//                Point2D currentBounds = sharedData.getProgressMessage();
-//                try{ return new Point2D(currentBounds.getX(), Double.parseDouble(string)); }
-//                catch(NumberFormatException e) { return currentBounds; }
-//            }
-//        });
-        
-        // enable computation run button only if both sets contain at least one element
-        ListChangeListener<TimeSeries> checkNonEmpty = new ListChangeListener<TimeSeries>() {
-            @Override public void onChanged(ListChangeListener.Change<? extends TimeSeries> change) {
-                runButton.setDisable(sharedData.correlationSetA.size() == 0 || sharedData.correlationSetB.size() == 0);
-            }
-        };
-        sharedData.correlationSetA.addListener(checkNonEmpty);
-        sharedData.correlationSetB.addListener(checkNonEmpty);
-        
-        
-    }
-    /**
-     * Initializes the controller class.
-     */
-    @Override
-    public void initialize(URL url, ResourceBundle rb) {
-        
-         // enable multi-select on list views
-        loadedList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        setAList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        setBList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        dataModel = sharedData.dataModel;
 
-        // enable load on double click
-        setAList.setOnMouseClicked(new EventHandler<MouseEvent>() {
-            @Override public void handle(MouseEvent t) {
-                if( t.getClickCount() == 2){ unloadSelected(new ActionEvent(unloadSelectedSetAButton, null)); }
-            }
-        });
-        setBList.setOnMouseClicked(new EventHandler<MouseEvent>() {
-            @Override public void handle(MouseEvent t) {
-                if( t.getClickCount() == 2){ unloadSelected(new ActionEvent(null, null)); }
-            }
-        });
+        // enable computation run button only if both sets contain at least one element
+        ListChangeListener<TimeSeries> checkNonEmpty = change ->
+                runButton.setDisable(dataModel.correlationSetA.size() == 0 || dataModel.correlationSetB.size() == 0);
+        dataModel.correlationSetA.addListener(checkNonEmpty);
+        dataModel.correlationSetB.addListener(checkNonEmpty);
+        
         
     }
-    
+
     public void compute(){
     
         // parse values from text inputs
@@ -165,7 +88,7 @@ public class ComputationInputController implements Initializable {
         // the window size must be at least two (otherwise, the pearson correlation coefficient is undefined)
         // and at most the length of the time series (otherwise the correlation matrix will have no columns)
         // TODO: inform the user if the window size is invalid
-        windowSize = Math.min(sharedData.getTimeSeriesLength(), Math.max(2, windowSize));
+        windowSize = Math.min(sharedData.dataModel.getTimeSeriesLength(sharedData), Math.max(2, windowSize));
 
         // display the parsed values
         windowSizeText.setText(""+windowSize); // to display what was parsed
@@ -175,15 +98,15 @@ public class ComputationInputController implements Initializable {
 
         
         // NaN handle strategy
-        Toggle selectedNanStrategy = nanStrategy.getSelectedToggle();
-        CrossCorrelation.NA_ACTION naAction = CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED;
-        if(selectedNanStrategy == nanLeaveRadio){
-            naAction = CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED;
-        } else if(selectedNanStrategy == nanSetToZeroRadio){
-            naAction = CrossCorrelation.NA_ACTION.REPLACE_WITH_ZERO;
-        }
-        
-        WindowMetadata metadata = new WindowMetadata(sharedData.correlationSetA, sharedData.correlationSetB, windowSize, tauMin, tauMax, naAction, baseWindowOffset);
+//        Toggle selectedNanStrategy = nanStrategy.getSelectedToggle();
+//        CrossCorrelation.NA_ACTION naAction = CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED;
+//        if(selectedNanStrategy == nanLeaveRadio){
+//            naAction = CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED;
+//        } else if(selectedNanStrategy == nanSetToZeroRadio){
+//            naAction = CrossCorrelation.NA_ACTION.REPLACE_WITH_ZERO;
+//        }
+
+        WindowMetadata metadata = new WindowMetadata(dataModel.correlationSetA, dataModel.correlationSetB, windowSize, tauMin, tauMax, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED, baseWindowOffset);
         CorrelationMatrix.setSignificanceLevel(metadata, significanceLevel);
 
         // get result from cache or execute an asynchronuous compute service
@@ -225,137 +148,5 @@ public class ComputationInputController implements Initializable {
         }
         
     }
-    
-    // -------------------------------------------------------------------------
-    // time series list controls 
-    // -------------------------------------------------------------------------
-    
-    // loads all time series from the file into the data model
-    public void loadAll(ActionEvent e){
-        ListView<TimeSeries> sourceView = loadedList;
-        ObservableList<TimeSeries> targetList;
-        if(e.getSource() == loadAllSetAButton){
-            targetList = sharedData.correlationSetA;
-        } else  /*if(e.getSource() == loadAllSetBButton)*/{
-            targetList = sharedData.correlationSetB;
-        }
-        sourceView.getSelectionModel().selectAll();
-        loadSelected(sourceView, targetList);
-    }
-    // loads a random number of available time series
-    public void loadRandom(ActionEvent e){
-        
-        ListView<TimeSeries> sourceView = loadedList;
-        ObservableList<TimeSeries> targetList;
-        if(e.getSource() == loadRandomSetAButton){
-            targetList = sharedData.correlationSetA;
-        } else  /*if(e.getSource() == loadRandomSetBButton)*/{
-            targetList = sharedData.correlationSetB;
-        }
-        
-        String response = Dialogs.create()
-                .title("Number of random time series")
-                .showTextInput("200");
-        int number = Integer.parseInt(response);
-        
-        sourceView.getSelectionModel().clearSelection();
-        
-        ArrayList<TimeSeries> availableValues = new ArrayList<>(loadedTimeSeries);
-        ArrayList<TimeSeries> randomSelection = new ArrayList<>(number);
-        
-        // pick random elements
-        Random r = new Random(System.currentTimeMillis());
-        while(number > 0 && availableValues.size() > 0){
-            int randomIndex = r.nextInt(availableValues.size());
-            randomSelection.add(availableValues.get(randomIndex));
-            availableValues.remove(randomIndex);
-            number--;
-        }
-        
-        // select those in the 
-        for (TimeSeries element : randomSelection) {
-            sourceView.getSelectionModel().select(element);
-        }
-        loadSelected(sourceView, targetList);
-    }
-    public void loadSelected(ActionEvent e){
-        ListView<TimeSeries> sourceView = loadedList;
-        ObservableList<TimeSeries> targetList;
-        if(e.getSource() == loadSelectedSetAButton){
-            targetList = sharedData.correlationSetA;
-        } else  /*if(e.getSource() == loadSelectedSetBButton)*/{
-            targetList = sharedData.correlationSetB;
-        }
-        loadSelected(sourceView, targetList);
-    }
-    void loadSelected(ListView<TimeSeries> sourceView, ObservableList<TimeSeries> targetList){
-        // make a copy of the selection, because removing list items changes the selection
-        Object[] selectionCopy = sourceView.getSelectionModel().getSelectedItems().toArray();
-        
-        ArrayList<TimeSeries> newIndices = new ArrayList<>();
-        
-        for (Object item : selectionCopy) {
-            // time series id and visible list elements are both 1-based indices
-            TimeSeries ts = (TimeSeries) item;
-            if(targetList.contains(ts)){
-                continue; // don't add time series more than once to a correlation input set
-            }
-            newIndices.add(ts);
-        }
-        // by adding all time series in a single step, repeated updates of the observers are avoided
-        targetList.addAll(newIndices);
-        targetList.sort(null);
-    }
-    
-    // removes all loaded time series from the data model
-    public void unloadAll(ActionEvent e){
-        ListView<TimeSeries> sourceView;
-        if(e.getSource() == unloadAllSetAButton){
-            sourceView = setAList;
-        } else  /*if(e.getSource() == unloadAllSetBButton)*/{
-            sourceView = setBList;
-        }
-        sourceView.getSelectionModel().selectAll();
-        unloadSelected(sourceView);
-    }
-    public void unloadSelected(ActionEvent e){
-        ListView<TimeSeries> sourceView;
-        if(e.getSource() == unloadSelectedSetAButton){
-            sourceView = setAList;
-        } else  /*if(e.getSource() == unloadSelectedSetBButton)*/{
-            sourceView = setBList;
-        }
-        unloadSelected(sourceView);
-    }
-    // removes the selected time series
-    void unloadSelected(ListView<TimeSeries> sourceView){
-        // make a copy of the selection, because removing list items changes the selection
-        Object[] selectionCopy = sourceView.getSelectionModel().getSelectedItems().toArray();
-        for (Object item : selectionCopy) {
-            sourceView.getItems().remove(item);
-        }
-    }
-    
-    public void loadedListKeyTyped(KeyEvent t) {
-        if(t.getCode() ==  KeyCode.LEFT){
-            loadSelectedSetAButton.fire();
-        } else if(t.getCode() ==  KeyCode.RIGHT){
-            loadSelectedSetBButton.fire();
-        }
-    }
-    
-    public void setAListKeyTyped(KeyEvent t) {
-        if(t.getCode() ==  KeyCode.RIGHT){
-            unloadSelectedSetAButton.fire();
-        } 
-    }
-    
-    public void setBListKeyTyped(KeyEvent t) {
-        if(t.getCode() ==  KeyCode.LEFT){
-            unloadSelectedSetBButton.fire();
-        } 
-    }
-    
-    
-    
+
 }

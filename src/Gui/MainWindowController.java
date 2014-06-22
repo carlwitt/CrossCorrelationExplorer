@@ -27,7 +27,8 @@ public class MainWindowController implements Initializable {
     @FXML private TabPane inputTabPane;
     
     // controller responsible for loading files and filling the data model
-    @FXML private FileInputController fileInputController;
+    @FXML private FileInputController fileInputAController;
+    @FXML private FileInputController fileInputBController;
     @FXML private TimeSeriesViewController timeSeriesViewController;
     @FXML private ComputationInputController computationInputController;
     @FXML private ComputationOutputController computationOutputController;
@@ -48,11 +49,13 @@ public class MainWindowController implements Initializable {
         progressLayer.messageLabel = progressLabel;
         progressLayer.cancelButton = progressCancelButton;
         
-        fileInputController.progressLayer = progressLayer;
+        fileInputAController.progressLayer = progressLayer;
+        fileInputBController.progressLayer = progressLayer;
         computationInputController.progressLayer = progressLayer;
         computationOutputController.progressLayer = progressLayer;
 
-        fileInputController.setSharedData(sharedData);
+        fileInputAController.setSharedData(sharedData, sharedData.dataModel.correlationSetA);
+        fileInputBController.setSharedData(sharedData, sharedData.dataModel.correlationSetB);
         timeSeriesViewController.setSharedData(sharedData);
         computationInputController.setSharedData(sharedData);
 
@@ -66,8 +69,8 @@ public class MainWindowController implements Initializable {
 //                    //                if(change.getAddedSize()>0){
 //                    try { Thread.sleep(1000); } catch (InterruptedException ex) { Logger.getLogger(MainWindowController.class.getName()).log(Level.SEVERE, null, ex); }
 //                    fileInputController.loadAllButton.fire();
-//                    sharedData.correlationSetA.add(sharedData.dataModel.get(1));
-//                    sharedData.correlationSetB.add(sharedData.dataModel.get(2));
+//                    sharedData.dataModel.correlationSetA.add(sharedData.dataModel.get(1));
+//                    sharedData.dataModel.correlationSetB.add(sharedData.dataModel.get(2));
 //                    inputTabPane.getSelectionModel().select(1);
 ////                }
 //            }
@@ -78,17 +81,17 @@ public class MainWindowController implements Initializable {
 //            }
 //        });
 //          fileInputController.fileModel.setFilename("/Users/macbookdata/IdeaProjects/CrossCorrelationExplorer/data/simpleNumbers.txt");
-        fileInputController.fileModel.setFilename("/Users/macbookdata/Documents/Arbeit/GFZ/CrossCorrelationExplorer/data/dongge_realisations.txt");
+//        fileInputAController.fileModel.setFilename("/Users/macbookdata/Documents/Arbeit/GFZ/CrossCorrelationExplorer/data/dongge_realisations.txt");
 
 //        fileInputController.fileModel.setFilename("/Users/macbookdata/lianhua_realisations.txt");
 //        fileInputController.fileModel.setFilename("/Users/macbookdata/dongge_realisations.txt");
 //        fileInputController.fileModel.setFilename("/Users/macbookdata/inputDataSimple.txt");
 //        fileInputController.fileModel.setFilename("/Users/macbookdata/inputDataTab.txt");
         
-        fileInputController.loadButton.fire();
+//        fileInputAController.loadButton.fire();
 
         // Todo: remove test support
-        inputTabPane.getSelectionModel().select(1);
+//        inputTabPane.getSelectionModel().select(2);
 
     }
     

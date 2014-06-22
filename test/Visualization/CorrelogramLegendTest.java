@@ -35,16 +35,16 @@ public class CorrelogramLegendTest {
         System.out.println("valueRangeSample");
 
         // compute a correlation matrix
-        sharedData.correlationSetA.clear();
-        sharedData.correlationSetB.clear();
-        sharedData.correlationSetA.add(sharedData.dataModel.get(1));
-        sharedData.correlationSetA.add(sharedData.dataModel.get(2));
-        sharedData.correlationSetA.add(sharedData.dataModel.get(3));
-        sharedData.correlationSetB.add(sharedData.dataModel.get(2));
-        sharedData.correlationSetB.add(sharedData.dataModel.get(3));
+        sharedData.dataModel.correlationSetA.clear();
+        sharedData.dataModel.correlationSetB.clear();
+        sharedData.dataModel.correlationSetA.add(sharedData.dataModel.get(1));
+        sharedData.dataModel.correlationSetA.add(sharedData.dataModel.get(2));
+        sharedData.dataModel.correlationSetA.add(sharedData.dataModel.get(3));
+        sharedData.dataModel.correlationSetB.add(sharedData.dataModel.get(2));
+        sharedData.dataModel.correlationSetB.add(sharedData.dataModel.get(3));
 
         int windowSize = 2;
-        WindowMetadata metadata = new WindowMetadata(sharedData.correlationSetA, sharedData.correlationSetB, windowSize, -2, 2, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED, 1);
+        WindowMetadata metadata = new WindowMetadata(sharedData.dataModel.correlationSetA, sharedData.dataModel.correlationSetB, windowSize, -2, 2, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED, 1);
         CorrelationMatrix.setSignificanceLevel(metadata, 0.05);
         CorrelationMatrix correlationMatrix = new CorrelationMatrix(metadata);
         correlationMatrix.compute();
@@ -76,13 +76,13 @@ public class CorrelogramLegendTest {
         System.out.println("valueRangeSample edge case");
 
         // compute a correlation matrix
-        sharedData.correlationSetA.clear();
-        sharedData.correlationSetB.clear();
-        sharedData.correlationSetA.add(sharedData.dataModel.get(3));
-        sharedData.correlationSetB.add(sharedData.dataModel.get(3));
+        sharedData.dataModel.correlationSetA.clear();
+        sharedData.dataModel.correlationSetB.clear();
+        sharedData.dataModel.correlationSetA.add(sharedData.dataModel.get(3));
+        sharedData.dataModel.correlationSetB.add(sharedData.dataModel.get(3));
 
         int windowSize = 2;
-        WindowMetadata metadata = new WindowMetadata(sharedData.correlationSetA, sharedData.correlationSetB, windowSize, -2, 2, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED, 1);
+        WindowMetadata metadata = new WindowMetadata(sharedData.dataModel.correlationSetA, sharedData.dataModel.correlationSetB, windowSize, -2, 2, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED, 1);
         CorrelationMatrix correlationMatrix = new CorrelationMatrix(metadata);
         correlationMatrix.compute();
 
@@ -118,13 +118,13 @@ public class CorrelogramLegendTest {
         System.out.println("valueRangeSample edge case");
 
         // compute a correlation matrix
-        sharedData.correlationSetA.clear();
-        sharedData.correlationSetB.clear();
-        sharedData.correlationSetA.add(sharedData.dataModel.get(3));
-        sharedData.correlationSetB.add(sharedData.dataModel.get(3));
+        sharedData.dataModel.correlationSetA.clear();
+        sharedData.dataModel.correlationSetB.clear();
+        sharedData.dataModel.correlationSetA.add(sharedData.dataModel.get(3));
+        sharedData.dataModel.correlationSetB.add(sharedData.dataModel.get(3));
 
         int windowSize = 2;
-        WindowMetadata metadata = new WindowMetadata(sharedData.correlationSetA, sharedData.correlationSetB, windowSize, -2, 2, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED, 1);
+        WindowMetadata metadata = new WindowMetadata(sharedData.dataModel.correlationSetA, sharedData.dataModel.correlationSetB, windowSize, -2, 2, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED, 1);
         CorrelationMatrix correlationMatrix = new CorrelationMatrix(metadata);
         correlationMatrix.compute();
 

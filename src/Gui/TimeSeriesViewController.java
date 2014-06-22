@@ -42,8 +42,8 @@ public class TimeSeriesViewController {
         this.sharedData = sharedData;
         
         seriesSets.put(new Color(0, 0, 0, 0.5), sharedData.previewTimeSeries);
-        seriesSets.put(Color.web("#00cc52").deriveColor(0, 1, 1, 0.5), sharedData.correlationSetA);
-        seriesSets.put(Color.web("#4333ff").deriveColor(0, 1, 1, 0.5), sharedData.correlationSetB);
+        seriesSets.put(Color.web("#00cc52").deriveColor(0, 1, 1, 0.5), sharedData.dataModel.correlationSetA);
+        seriesSets.put(Color.web("#4333ff").deriveColor(0, 1, 1, 0.5), sharedData.dataModel.correlationSetB);
         
         timeSeriesChart.sharedData = sharedData;
         timeSeriesChart.seriesSets = seriesSets;
@@ -86,8 +86,8 @@ public class TimeSeriesViewController {
             }
         };
         sharedData.previewTimeSeries.addListener(drawContentListener);
-        sharedData.correlationSetA.addListener(drawContentListener);
-        sharedData.correlationSetB.addListener(drawContentListener);
+        sharedData.dataModel.correlationSetA.addListener(drawContentListener);
+        sharedData.dataModel.correlationSetB.addListener(drawContentListener);
         
     }
 
@@ -147,10 +147,10 @@ public class TimeSeriesViewController {
                     
             // adjust detail slider: max reduction to 50px per data point, max detail 0.5px per data paint
             double maxPixPerPoint = 30;
-            double availablePoints = sharedData.dataModel.getNumDataPointsInRange(timeSeriesChart.xAxis.getLowerBound(), timeSeriesChart.xAxis.getUpperBound());
+            double availableTimeSteps = sharedData.dataModel.getNumDataPointsInRange(timeSeriesChart.xAxis.getLowerBound(), timeSeriesChart.xAxis.getUpperBound());
             double availableWidth = timeSeriesChart.chartCanvas.getWidth();
-            double pointsToShow = availableWidth / maxPixPerPoint;
-            int maxSkipPoints = (int) Math.ceil(availablePoints / pointsToShow);
+            double timeStepsToShow = availableWidth / maxPixPerPoint;
+            int maxSkipPoints = (int) Math.ceil(availableTimeSteps / timeStepsToShow);
 
             detailSlider.setMin(1);
 //            detailSlider.setMin(Math.max(1, 0.5*pointsPerPix)); // highest resolution is 2 points per pix
