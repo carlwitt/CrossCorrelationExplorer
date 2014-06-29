@@ -5,20 +5,26 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Text?>
-<StackPane minHeight="600.0" minWidth="800.0" prefHeight="768.0" prefWidth="1024.0" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.MainWindowController">
-  <SplitPane dividerPositions="0.1762402088772846, 0.5104438642297651" focusTraversable="true" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0">
+<VBox minHeight="600.0" minWidth="800.0" prefHeight="768.0" prefWidth="1024.0" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.MainWindowController">
+  <!--<MenuBar>
+    <menus>
+      <Menu mnemonicParsing="false" text="Views">
+        <items>
+          <CheckMenuItem mnemonicParsing="false" text="Correlation Cell Distribution Viewer" />
+        </items>
+      </Menu>
+    </menus>
+  </MenuBar>-->
+  <SplitPane dividerPositions="0.18929503916449086" focusTraversable="true" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0" VBox.vgrow="ALWAYS">
     <AnchorPane fx:id="inputPane" minHeight="0.0" prefHeight="144.0" prefWidth="1022.0" style="-fx-background-color: gainsboro;">
-      <Text layoutX="-39.0" layoutY="55.0" rotate="270.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Input Selection" translateX="0.0" />
+      <Text layoutX="-8.0" layoutY="25.0" rotate="270.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Input" translateX="0.0" />
       <StackPane minHeight="0.0" prefHeight="165.0" visible="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
         <TabPane fx:id="inputTabPane" minHeight="0.0" prefHeight="165.0" prefWidth="200.0" rotateGraphic="false" style="-fx-background-color: white;" tabClosingPolicy="UNAVAILABLE" tabMaxHeight="26.0" tabMinHeight="0.0">
-          <Tab closable="false" style="" text="File 1">
-            <fx:include fx:id="fileInputA" source="FileInputTab.fxml" alignment="TOP_LEFT" />
-          </Tab>
-          <Tab closable="false" style="" text="File 2">
-            <fx:include fx:id="fileInputB" source="FileInputTab.fxml" alignment="TOP_LEFT" />
-          </Tab>
-          <Tab closable="false" text="Computation Input">
+          <Tab closable="false" text="Correlograms">
             <fx:include fx:id="computationInput" source="ComputationInputTab.fxml" alignment="TOP_LEFT" />
+          </Tab>
+          <Tab closable="false" text="Time Series View">
+            <fx:include fx:id="timeSeriesView" source="TimeSeriesView.fxml" />
           </Tab>
           <Tab text="Computation Output">
             <fx:include fx:id="computationOutput" source="ComputationOutputTab.fxml" />
@@ -32,11 +38,6 @@
           <Button fx:id="progressCancelButton" mnemonicParsing="false" prefHeight="25.0" prefWidth="99.0" text="Cancel" translateY="40.0" StackPane.alignment="CENTER" />
         </StackPane>
       </StackPane>
-    </AnchorPane>
-    <!--Time Series View-->
-    <AnchorPane prefHeight="-1.0" prefWidth="200.0" style="-fx-background-color: gainsboro;">
-      <Text rotate="270.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Time Series View" translateX="0.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="-45.0" AnchorPane.topAnchor="50.0" />
-      <fx:include fx:id="timeSeriesView" source="TimeSeriesView.fxml" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
     </AnchorPane>
     <!--Correlogram View-->
     <AnchorPane prefHeight="-1.0" prefWidth="200.0" style="-fx-background-color: gainsboro;">
@@ -64,4 +65,4 @@
       <!--</Button>-->
     </AnchorPane>
   </SplitPane>
-</StackPane>
+</VBox>

@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- * This class describes how to compare time series by taking windows from them and then comparing the windows.<br/>
+ * This class describes how to compute something from a pair of time series by taking windows from them and then comparing the windows.<br/>
  * This is called metadata because it describes the input of a computation that gives a {@link Data.Statistics.StatisticsMatrix}.<br/><br/>
  *
  * Definitions:<br/>

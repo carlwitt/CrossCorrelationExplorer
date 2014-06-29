@@ -10,7 +10,9 @@ import Data.TimeSeries;
  * used in the outer, slow running loop.
  *
  * Created by Carl Witt on 14.05.14.
+ * @deprecated  use the {@link Data.Correlation.LagWindowCache} for exploiting precomputed values for correlation computation
  */
+@Deprecated
 public class BaseWindowStatistics extends AbstractWindowStatistics {
 
     /**

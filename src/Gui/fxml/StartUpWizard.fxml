@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+<BorderPane id="BorderPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="434.0" prefWidth="600.0" rotate="0.0" snapToPixel="true" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.StartUpWizardController">
+  <center>
+    <GridPane hgap="50.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="338.0" prefWidth="661.0" vgap="0.0">
+      <children>
+        <Button mnemonicParsing="false" text="Create" GridPane.columnIndex="0" GridPane.halignment="CENTER" GridPane.rowIndex="2" />
+        <AnchorPane prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="0" GridPane.rowIndex="1">
+          <children>
+            <Button layoutX="4.0" layoutY="32.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="164.0" style="-fx-border-color: transparent;&#10;-fx-focus-color: transparent;&#10;-fx-border-radius: 4px 0 0 4px;" text="Choose File..." textAlignment="LEFT">
+              <tooltip>
+                <Tooltip text="Choose a text file containing time series." />
+              </tooltip>
+            </Button>
+            <Button layoutX="4.0" layoutY="106.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="164.0" style="-fx-border-color:transparent;&#10;-fx-focus-color:transparent;&#10;-fx-border-radius: 4px 0 0 4px;" text="Choose File..." textAlignment="CENTER">
+              <tooltip>
+                <Tooltip text="Choose a text file containing time series." />
+              </tooltip>
+            </Button>
+            <Label layoutX="4.0" layoutY="-1.0" prefHeight="33.0" prefWidth="256.0" text="Time Series File 1" />
+            <Label layoutX="4.0" layoutY="73.0" prefHeight="33.0" prefWidth="256.0" text="Time Series File 2 (optional)" />
+            <MenuButton layoutX="167.0" layoutY="32.0" mnemonicParsing="false" prefHeight="26.0" style="-fx-border-color: transparent;&#10;-fx-focus-color: transparent;&#10;-fx-border-radius: 0 4px 4px 0;" text="Separator">
+              <items>
+                <RadioMenuItem mnemonicParsing="false" selected="true" text="Fixed Width">
+                  <graphic>
+                    <TextField id="fixedWidthSeparatorText" prefWidth="40.0" promptText="" style="" text="16" />
+                  </graphic>
+                  <toggleGroup>
+                    <ToggleGroup fx:id="file1Separator" />
+                  </toggleGroup>
+                </RadioMenuItem>
+                <RadioMenuItem mnemonicParsing="false" text="Character" toggleGroup="$file1Separator">
+                  <graphic>
+                    <TextField id="characterSeparatorText" editable="true" prefWidth="40.0" promptText="" />
+                  </graphic>
+                </RadioMenuItem>
+                <RadioMenuItem mnemonicParsing="false" text="Tab" toggleGroup="$file1Separator" />
+              </items>
+            </MenuButton>
+            <MenuButton layoutX="167.0" layoutY="106.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="-1.0" style="-fx-focus-color:transparent;&#10;-fx-border-color:transparent;&#10;-fx-border-radius: 0 4px 4px 0;" text="Separator">
+              <items>
+                <RadioMenuItem mnemonicParsing="false" selected="true" text="Fixed Width">
+                  <graphic>
+                    <TextField id="fixedWidthSeparatorText" prefWidth="40.0" promptText="" style="" text="16" />
+                  </graphic>
+                  <toggleGroup>
+                    <ToggleGroup fx:id="file2Separator" />
+                  </toggleGroup>
+                </RadioMenuItem>
+                <RadioMenuItem mnemonicParsing="false" text="Character" toggleGroup="$file2Separator">
+                  <graphic>
+                    <TextField id="characterSeparatorText" editable="true" prefWidth="40.0" promptText="" />
+                  </graphic>
+                </RadioMenuItem>
+                <RadioMenuItem mnemonicParsing="false" text="Tab" toggleGroup="$file2Separator" />
+              </items>
+            </MenuButton>
+          </children>
+        </AnchorPane>
+        <Label prefWidth="107.9998779296875" text="New Experiment" GridPane.columnIndex="0" GridPane.halignment="CENTER" GridPane.rowIndex="0" />
+        <Label text="Existing Experiments" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="0" />
+        <HBox id="HBox" alignment="CENTER" spacing="5.0" GridPane.columnIndex="1" GridPane.rowIndex="2">
+          <children>
+            <Button mnemonicParsing="false" style=";" text="Load" />
+          </children>
+        </HBox>
+        <VBox prefHeight="200.0" prefWidth="100.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
+          <children>
+            <Label prefHeight="33.0" prefWidth="256.0" text="Experiment File" />
+            <Button mnemonicParsing="false" prefHeight="26.0" prefWidth="300.0000999999975" style="-fx-border-color:transparent;&#10;-fx-focus-color:transparent;&#10;-fx-border-radius: 4px 0 0 4px;" text="Choose File..." textAlignment="CENTER">
+              <tooltip>
+                <Tooltip text="Choose a text file containing time series." />
+              </tooltip>
+            </Button>
+            <Label prefHeight="33.0" prefWidth="256.0" text="Recent Experiments" />
+            <ListView prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS" />
+          </children>
+        </VBox>
+      </children>
+      <columnConstraints>
+        <ColumnConstraints hgrow="SOMETIMES" maxWidth="367.0" minWidth="10.0" prefWidth="279.0" />
+        <ColumnConstraints hgrow="ALWAYS" maxWidth="1.7976931348623157E308" minWidth="10.0" prefWidth="271.0" />
+      </columnConstraints>
+      <padding>
+        <Insets />
+      </padding>
+      <rowConstraints>
+        <RowConstraints maxHeight="-1.0" minHeight="-1.0" prefHeight="-1.0" vgrow="NEVER" />
+        <RowConstraints maxHeight="1.7976931348623157E308" minHeight="-Infinity" prefHeight="-1.0" vgrow="ALWAYS" />
+        <RowConstraints maxHeight="278.0" minHeight="10.0" prefHeight="-1.0" vgrow="NEVER" />
+      </rowConstraints>
+      <BorderPane.margin>
+        <Insets bottom="5.0" top="5.0" />
+      </BorderPane.margin>
+    </GridPane>
+  </center>
+  <top>
+    <AnchorPane prefHeight="-1.0" prefWidth="200.0" style="-fx-border-width: 0 0 1px 0 ;&#10;-fx-border-color: gray;&#10;-fx-background-color:white;">
+      <children>
+        <Label text="Cross Correlation Explorer" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="7.0">
+          <font>
+            <Font size="26.0" />
+          </font>
+        </Label>
+        <ImageView fitHeight="79.80007673360599" fitWidth="114.00010681152344" pickOnBounds="true" preserveRatio="true" smooth="true" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="5.0">
+          <image>
+            <Image url="@../img/logo_gfz_de.gif" />
+          </image>
+        </ImageView>
+        <Label layoutY="60.0" text="Carl Witt" AnchorPane.leftAnchor="10.0" />
+        <Label layoutY="41.0" text="Patrick Köthur" AnchorPane.leftAnchor="10.0" />
+        <Label layoutY="60.0" text="carl.witt@gfz-potsdam.de" AnchorPane.leftAnchor="130.0" />
+        <Label layoutY="41.0" text="patrick.koethur@gfz-potsdam.de" AnchorPane.leftAnchor="130.0" />
+      </children>
+    </AnchorPane>
+  </top>
+</BorderPane>

@@ -111,7 +111,7 @@
 //    }
 //
 //    /** Reusable concurrent execution logic for loading and parsing files with progress reporting.
-//     * The service can be used to load and parse the file contents asynchronously (non-UI-blocking) and to display progress.  */
+//     * The service can be used to load and execute the file contents asynchronously (non-UI-blocking) and to display progress.  */
 //    public class ComputeService extends Service<NaiveCorrelationMatrix> {
 //
 ////        NaiveCorrelationMatrix input, result;

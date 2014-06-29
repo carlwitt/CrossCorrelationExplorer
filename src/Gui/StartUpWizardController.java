@@ -3,14 +3,10 @@ package Gui;
 import Data.Correlation.CorrelationMatrix;
 import Data.Correlation.CrossCorrelation;
 import Data.DataModel;
-import Data.Experiment;
 import Data.SharedData;
 import Data.TimeSeries;
 import Data.Windowing.WindowMetadata;
 import javafx.collections.ListChangeListener;
-import javafx.concurrent.WorkerStateEvent;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.RadioButton;
@@ -25,7 +21,7 @@ import javafx.scene.control.ToggleGroup;
  *
  * @author Carl Witt
  */
-public class ComputationInputController {
+public class StartUpWizardController {
     
     // -------------------------------------------------------------------------
     // business logic data
@@ -109,46 +105,6 @@ public class ComputationInputController {
         WindowMetadata metadata = new WindowMetadata(dataModel.correlationSetA, dataModel.correlationSetB, windowSize, tauMin, tauMax, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED, baseWindowOffset);
         CorrelationMatrix.setSignificanceLevel(metadata, significanceLevel);
 
-        // get result from cache or execute an asynchronuous compute service
-        CorrelationMatrix result;
-        Experiment experiment= null;
-        if(experiment.correlograms.containsKey(metadata)){
-            result = experiment.correlograms.get(metadata);
-            sharedData.setcorrelationMatrix(result);
-        } else {
-            result = new CorrelationMatrix(metadata);
-            final CorrelationMatrix.ComputeService service = result.computeService;
-            
-            // remove partial state if previous computation was cancelled
-            service.reset();
-            
-            // after the computation, put correlation result in the shared data object 
-            service.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
-                @Override public void handle(WorkerStateEvent t) {
-                    progressLayer.hide();
-                    experiment.correlograms.put(metadata,result);
-                    sharedData.setcorrelationMatrix(service.getValue());
-//                    System.out.println("Columns in the matrix: "+service.getValue().getSize());
-                }
-            });
-            
-            // on cancel: hide the progress layer. wire the cancel button to that action.
-            service.setOnCancelled(new EventHandler<WorkerStateEvent>() {
-                @Override public void handle(WorkerStateEvent t) { progressLayer.hide(); }
-            });
-            progressLayer.cancelButton.setOnAction(new EventHandler<ActionEvent>() {
-                @Override public void handle(ActionEvent t) { System.err.println(String.format("cancel computation! success: %s",service.cancel())); progressLayer.hide(); }
-            });
-            
-            // bind progress display elements
-            progressLayer.progressBar.progressProperty().bind(service.progressProperty());
-            progressLayer.messageLabel.textProperty().bind(service.messageProperty());
-        
-            progressLayer.show();
-            
-            service.start();
-        }
-        
     }
 
 }

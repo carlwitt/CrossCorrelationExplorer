@@ -20,7 +20,7 @@ public class Main extends Application {
     public void start(Stage primaryStage) {
 
         try {
-            Pane rootNode = FXMLLoader.load(MainWindowController.class.getResource("fxml/MainWindow.fxml"));
+            Pane rootNode = FXMLLoader.load(MainWindowController.class.getResource("fxml/StartUpWizard.fxml"));
             Scene scene = new Scene(rootNode);
             primaryStage.setScene(scene);
             primaryStage.setTitle("Cross Correlation Explorer");

@@ -1,6 +1,5 @@
 package Gui;
 
-import Data.CorrelogramStore;
 import Data.IO.FileModel;
 import Data.SharedData;
 import Data.TimeSeries;
@@ -92,7 +91,6 @@ public class FileInputController implements Initializable {
     public List<String> getRecentFiles(){
 
         Preferences prefs = Preferences.userNodeForPackage(FileInputController.class);
-        System.out.println(String.format("prefs: %s", prefs));
         List<String> recentFiles = new LinkedList<>();
         for (int i = 0; i < MAX_RECENT_FILES; i++) {
             String recentFile = prefs.get("recentFile" + i, null);
@@ -128,8 +126,6 @@ public class FileInputController implements Initializable {
             fileChooserButton.getItems().add(item);
         }
 
-
-        System.out.println(String.format("buttons: %s", fileChooserButton.getItems()));
 
         availableList.setItems(availableTimeSeries);
         loadedList.setItems(targetCollection);
@@ -223,12 +219,11 @@ public class FileInputController implements Initializable {
 
             // clear existing data
             targetCollection.clear();
-            CorrelogramStore.clear();
             availableTimeSeries.clear();
             targetCollection.clear();
             // remove all previously loaded time series
-            for(TimeSeries ts : targetCollection)
-                sharedData.dataModel.remove(ts.getId());
+//            for(TimeSeries ts : targetCollection)
+//                sharedData.dataModel.remove(ts.getId());
 
             ArrayList<Integer> toAdd = new ArrayList<>(fileModel.getNumberOfTimeSeries());
             // add representative list entries for the time series
@@ -244,7 +239,7 @@ public class FileInputController implements Initializable {
         fileModel.loadFileService.setOnFailed(t -> {
             progressLayer.hide();
 
-            sharedData.dataModel.clear();
+//            sharedData.dataModel.clear();
             availableTimeSeries.clear();
         });
         

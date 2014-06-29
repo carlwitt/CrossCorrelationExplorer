@@ -27,8 +27,9 @@ import Data.TimeSeries;
  * Since base and lag windows usually overlap, the means can be computed much faster by using an incremental mean formula.
  *
  * Created by Carl Witt on 14.05.14.
- *
+ * @deprecated  use the {@link Data.Correlation.LagWindowCache} for exploiting precomputed values for correlation computation
  */
+@Deprecated
 public abstract class AbstractWindowStatistics {
 
     // -----------------------------------------------------------------------------------------------------------------

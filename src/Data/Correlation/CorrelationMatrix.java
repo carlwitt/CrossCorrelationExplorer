@@ -65,8 +65,9 @@ public class CorrelationMatrix {
         assert significanceLevel != null : "Please add a significance level to the computation metadata (using CorrelationMatrix.setSignificanceLevel(metadata, pValue) )";
         return significanceLevel;
     }
-    public static void setSignificanceLevel(WindowMetadata metadata, double significanceLevel){
+    public static WindowMetadata setSignificanceLevel(WindowMetadata metadata, double significanceLevel){
         metadata.customParameters.put("significanceLevel", significanceLevel);
+        return metadata;
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -641,7 +642,7 @@ public class CorrelationMatrix {
         for (int i = 0; i < rows; i++) {
             for (CorrelationColumn column : columns){
                 if(i < column.data[STATISTIC].length)
-                    buffer.append(String.format("%.3f",column.data[STATISTIC][i]) + ",");
+                    buffer.append(String.format("%.3f",column.data[STATISTIC][i])).append(",");
                 else
                     buffer.append("-0,");
             }

@@ -23,9 +23,9 @@ public class CorrelogramLegendTest {
         instance = new CorrelogramLegend(new Correlogram(new MultiDimensionalPaintScale(1200,400)), new MultiDimensionalPaintScale(24,4));
         sharedData = new  SharedData();
 
-        sharedData.dataModel.put(1, new TimeSeries(1,1,1,1));
-        sharedData.dataModel.put(2, new TimeSeries(1,2,3,4));
-        sharedData.dataModel.put(3, new TimeSeries(1,4,1,8));
+        sharedData.dataModel.put(0, 1, new TimeSeries(1,1,1,1));
+        sharedData.dataModel.put(0, 2, new TimeSeries(1,2,3,4));
+        sharedData.dataModel.put(0, 3, new TimeSeries(1,4,1,8));
 
         instance.setSharedData(sharedData);
 

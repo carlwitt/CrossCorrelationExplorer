@@ -4,17 +4,15 @@
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
 <VBox fx:id="correlogramView" prefHeight="326.9999000000025" prefWidth="1119.0" style="-fx-background-color: gainsboro;" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.CorrelogramController">
-    <TabPane id="visualizationSwitcher" fx:id="visualizationSelector" maxHeight="27.0" minHeight="0.0" prefHeight="27.0"
-             prefWidth="1119.0" style="-fx-background-color: white;" styleClass="mainFxmlClass"
-             tabClosingPolicy="UNAVAILABLE" tabMaxHeight="26.0" tabMinHeight="0.0">
-        <Tab text=""/>
-        <Tab text=""/>
-        <Tab text=""/>
-        <Tab text=""/>
-        <Tab text=""/>
-    </TabPane>
+  <TabPane id="visualizationSwitcher" fx:id="visualizationSelector" maxHeight="27.0" minHeight="28.0" prefHeight="27.0" prefWidth="1119.0" style="-fx-background-color: white;" styleClass="mainFxmlClass" tabClosingPolicy="UNAVAILABLE" tabMaxHeight="26.0" tabMinHeight="20.0" VBox.vgrow="NEVER">
+    <Tab text="" />
+    <Tab text="" />
+    <Tab text="" />
+    <Tab text="" />
+    <Tab text="" />
+  </TabPane>
   <StackPane fx:id="correlogramPane" alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="-1.0" prefWidth="-1.0" style="/*-fx-background-color:white;*/" VBox.vgrow="ALWAYS" />
-  <StackPane fx:id="legendPane" maxHeight="280.0" maxWidth="1.7976931348623157E308" prefHeight="400.0" prefWidth="-1.0" style="/*-fx-background-color:blue;*/" VBox.vgrow="NEVER">
+  <StackPane fx:id="legendPane" maxHeight="280.0" maxWidth="1.7976931348623157E308" prefHeight="172.0" prefWidth="1119.0" style="/*-fx-background-color:blue;*/" VBox.vgrow="NEVER">
     <Button cancelButton="false" contentDisplay="GRAPHIC_ONLY" defaultButton="false" graphicTextGap="0.0" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" onAction="#resetView" prefHeight="20.0" prefWidth="20.0" style=";" text="" translateX="-20.0" StackPane.alignment="BOTTOM_LEFT">
       <graphic>
         <ImageView fitHeight="14.0" fitWidth="14.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" smooth="false">
@@ -35,7 +33,7 @@
         <Tooltip text="Link horizontal zoom and pan with time series view" />
       </tooltip>
     </ToggleButton>
-    <ToggleButton id="linkWithTimeSeriesViewToggle" fx:id="scatterPlotToggle" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" selected="true" text="" translateX="-20.0" translateY="-60.0" StackPane.alignment="BOTTOM_LEFT">
+    <ToggleButton id="linkWithTimeSeriesViewToggle" fx:id="scatterPlotToggle" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" selected="false" text="" translateX="-20.0" translateY="-60.0" StackPane.alignment="BOTTOM_LEFT">
       <graphic>
         <ImageView fitHeight="14.0" fitWidth="14.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" smooth="false">
           <Image url="@../img/glyphicons_185_screenshot.png" />
@@ -43,6 +41,16 @@
       </graphic>
       <tooltip>
         <Tooltip text="Show distribution of the correlation matrix values as scatterplot overlay." />
+      </tooltip>
+    </ToggleButton>
+    <ToggleButton id="linkWithTimeSeriesViewToggle" fx:id="distributionProbingToggle" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" selected="false" text="" translateX="-20.0" translateY="-100.0" StackPane.alignment="BOTTOM_LEFT">
+      <graphic>
+        <ImageView fitHeight="14.0" fitWidth="14.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" smooth="false">
+          <Image url="@../img/histogram.png" />
+        </ImageView>
+      </graphic>
+      <tooltip>
+        <Tooltip text="Enable correlation distribution probing via hovering correlogram cells" />
       </tooltip>
     </ToggleButton>
   </StackPane>

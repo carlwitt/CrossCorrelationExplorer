@@ -8,7 +8,9 @@ import Data.TimeSeries;
  * All indices are zero-based.
  *
  * Created by Carl Witt on 13.05.14.
+ * @deprecated  use the {@link Data.Correlation.LagWindowCache} for exploiting precomputed values for correlation computation
  */
+@Deprecated
 public class LagWindowStatistics extends AbstractWindowStatistics {
 
     /** The minimum and maximum desired time lag in the cross-correlation computation. */

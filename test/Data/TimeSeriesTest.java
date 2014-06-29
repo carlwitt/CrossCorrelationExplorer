@@ -4,7 +4,7 @@
  */
 package Data;
 
-import org.junit.*;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,15 +20,48 @@ public class TimeSeriesTest {
     
     TimeSeries instance;
     public TimeSeriesTest() {
-        instance = new TimeSeries(new double[]{1.,2.,3.,4.});
+        instance = new TimeSeries(new double[]{1,2,3,4},new double[]{1.,2.,3.,4.});
     }
     
-    @BeforeClass
-    public static void setUpClass() {
+    @Test public void testGetSize() {
+        System.out.println("getSize");
+        
+        int expResult = 4;
+        int result = instance.getSize();
+        assertEquals(expResult, result);
     }
     
-    @AfterClass
-    public static void tearDownClass() {
+    @Test
+    public void testGetItemById() {
+        System.out.println("getItemById");
+        int id = 1;
+        Double expResult = 2.;
+        Double result = instance.getItemById(id);
+        assertEquals(expResult, result);
+    }
+    
+    @Test public void testGetMinY() {
+        System.out.println("getMinY");
+        Double expResult = 1.;
+        Object result = instance.getMinY();
+        assertEquals(expResult, result);
+    }
+
+    @Test public void testGetMaxX() {
+        System.out.println("getMaxX");
+        Double expResult = 4.;
+        Object result = instance.getMaxX();
+        assertEquals(expResult, result);
+    }
+
+    @Test public void testEquals(){
+        List<TimeSeries> randomSeries = randomTimeSerieses(1000, 10000);
+        for (int i = 0; i < randomSeries.size(); i++) {
+            for (int j = 0; j < randomSeries.size(); j++) {
+                boolean isEqual = i==j;
+                assertEquals(isEqual, randomSeries.get(i).equals(randomSeries.get(j)));
+            }
+        }
     }
 
     public static List<TimeSeries> randomTimeSerieses(int numTimeSeries, int timeSeriesLength) {
@@ -44,67 +77,4 @@ public class TimeSeriesTest {
         return set;
     }
 
-    @Before
-    public void setUp() {
-    }
-    
-    @After
-    public void tearDown() {
-    }
-
-    /**
-     * Test of getSize method, of class TimeSeries.
-     */
-    @Test
-    public void testGetSize() {
-        System.out.println("getSize");
-        
-        int expResult = 4;
-        int result = instance.getSize();
-        assertEquals(expResult, result);
-    }
-    
-//    @Test
-//    public void testAppend() {
-//        System.out.println("append");
-//        TimeSeries expResult = new TimeSeries(0, null, new double[]{1.,2.,3.,4.});
-//        instance.append(4.);
-//        assertEquals(expResult, instance);
-//        assertTrue(instance.getMaxX() == 4.);
-//    }
-
-    /**
-     * Test of getItemById method, of class TimeSeries.
-     */
-    @Test
-    public void testGetItemById() {
-        System.out.println("getItemById");
-        int id = 1;
-        Double expResult = 2.;
-        Double result = instance.getItemById(id);
-        assertEquals(expResult, result);
-    }
-    
-    /**
-     * Test of getMinY method, of class TimeSeries.
-     */
-    @Test
-    public void testGetMinItem() {
-        System.out.println("getMinY");
-        Double expResult = 1.;
-        Object result = instance.getMinY();
-        assertEquals(expResult, result);
-    }
-
-    /**
-     * Test of getMaxX method, of class TimeSeries.
-     */
-    @Test
-    public void testGetMaxItem() {
-        System.out.println("getMaxX");
-        Double expResult = 4.;
-        Object result = instance.getMaxX();
-        assertEquals(expResult, result);
-    }
-    
 }

@@ -38,6 +38,7 @@ public class CrossCorrelation {
         LEAVE_UNCHANGED
     }
 
+    static PearsonsCorrelation correlation = new PearsonsCorrelation();
     /**
      * Computes the pearson correlation coefficient.
      * Naïve reference implementation for testing.
@@ -48,7 +49,6 @@ public class CrossCorrelation {
      * @param tau the window start and end indices in the second time series result from adding tau to the indices in the first time series.
      * @return normalized cross correlation between the two windows
      */
-    static PearsonsCorrelation correlation = new PearsonsCorrelation();
     public static double correlationCoefficient(TimeSeries a, TimeSeries b, int from, int to, int tau){
 
         // time series data

@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.function.Predicate;
 
 /**
  * Abstracts from the way a number of time seriese is stored in a text file.
@@ -37,9 +36,12 @@ public class FileModel {
     
     private static final String DEFAULT_ENCODING = "UTF-8";
 
+    boolean isExecuted = false;
+
+    // TODO: think about making the filename immutable. may be safer with the isExecuted flag.
     private final StringProperty filename = new SimpleStringProperty();
     public final void setFilename(String value) { filename.set(value); }
-    final String getFilename() { return filename.get(); }
+    public final String getFilename() { return filename.get(); }
     public final StringProperty filenameProperty() { return filename; }
         
     /** The separator to split up lines of text into pieces before parsing them. */
@@ -51,6 +53,7 @@ public class FileModel {
             
     public FileModel(String filename, LineParser lineParser){
         setFilename(filename);
+//        this.filename.set(filename);
         this.separator = lineParser;
     }
     
@@ -86,6 +89,173 @@ public class FileModel {
         return result;
     }
 
+    // -------------------------------------------------------------------------
+    // set up and usage
+    // -------------------------------------------------------------------------
+
+    // define the input format of the file by specifying how to split lines into string representing numbers
+    public void setSeparatorWidth(int fixedWidth){
+        separator = new LineParser(fixedWidth);
+    }
+    public void setSeparatorCharacter(String separatorCharacter) {
+        separator = new LineParser(separatorCharacter);
+    }
+    public LoadFileService getLoadFileService() {
+        return loadFileService;
+    }
+    
+    /** Reusable concurrent execution logic for loading and parsing files with progress reporting.
+     * The service can be used to load and execute the file contents asynchronously (non-UI-blocking) and to display progress.  */
+    public class LoadFileService extends Service<Void> {
+                
+        @Override protected Task<Void> createTask() {
+            final String _filename = getFilename();
+            return new Task<Void>() {
+                
+                private FileModel fail(String message){
+                    System.out.println(String.format("Fail in loadfileservice"));
+                    System.err.println(message);
+                    getException().printStackTrace();
+                    this.updateMessage(message);
+                    return null;
+                }
+                
+                @Override protected Void call() {
+                    
+                    // load file contents as list of lines
+                    updateMessage("Loading File");
+                    File file = new File(_filename);
+
+                    List<String> lines = null;
+                    try { lines = FileUtils.readLines(file, DEFAULT_ENCODING); }
+                    catch (IOException ex) { fail("Error loading file: " + _filename); }
+                    
+                    // remove "empty lines" (those with length 2 or less)
+//                    lines.removeIf(new Predicate<String>() {
+//                        @Override public boolean test(String t) { return t.length() <= 2; }
+//                    });
+                    if(lines.get(lines.size()-1).length() <= 2)lines.remove(lines.size()-1);
+                    
+                    updateMessage("Parsing File");
+                    rowValues = new double[lines.size()][];
+
+                    // execute values concurrently, if possible
+                    int numThreads = Runtime.getRuntime().availableProcessors();  // leave one thread for the application
+                    if(numThreads < 2)
+                        parseLines(lines);
+                    else
+                        parseLinesConcurrent(lines, numThreads);
+
+                    // cache first column
+                    firstColumn = new double[getTimeSeriesLength()];
+                    for (int i = 0; i < firstColumn.length; i++) {
+                        firstColumn[i] = rowValues[i][0] + 1950;
+                    }
+                    
+                    return null;
+                }
+
+                private void parseLines(List<String> lines) {
+                    long before = System.currentTimeMillis();
+                    for (int i = 0; i < lines.size(); i++) {
+                        rowValues[i] = separator.splitToDouble(lines.get(i));
+                        updateProgress(i+1, lines.size());
+                        if (isCancelled()) { break; }
+                    }
+                    System.out.println("needed time: "+(System.currentTimeMillis()-before));
+                }
+
+                @Override protected void failed() {
+                    super.failed();
+                    updateMessage(this.getException().getMessage());
+                    System.err.println(this.getException());
+                }
+                
+            };
+            
+            
+        }
+    }
+
+    public void execute(){
+        if(isExecuted) return;
+        File file = new File(getFilename());
+
+        List<String> lines = null;
+        try { lines = FileUtils.readLines(file, DEFAULT_ENCODING); }
+        catch (IOException ex) { ex.printStackTrace(); }
+
+        // remove trailing empty line if present
+        if(lines.get(lines.size()-1).length() <= 2)lines.remove(lines.size()-1);
+
+        rowValues = new double[lines.size()][];
+
+        // execute values concurrently, if possible
+        int numThreads = Runtime.getRuntime().availableProcessors();  // leave one thread for the application
+
+        for (int i = 0; i < lines.size(); i++) {
+            rowValues[i] = separator.splitToDouble(lines.get(i));
+        }
+
+        // cache first column
+        firstColumn = new double[getTimeSeriesLength()];
+        for (int i = 0; i < firstColumn.length; i++) {
+            firstColumn[i] = rowValues[i][0] + 1950;
+        }
+        isExecuted = true;
+    }
+    /**
+     * Instantiates a number of threads to parallelize the parsing of the array.
+     * Speedup is (for four cores) not significant (usually 1.8s instead of 2.5s) but it also doesn't slow things down.
+     * @param lines
+     */
+    public void parseLinesConcurrent(final List<String> lines, int numThreads) {
+
+//                    long before = System.currentTimeMillis();
+        Thread[] processors = new Thread[numThreads];
+
+        // divide the string array in approximately equally sized partitions
+        int step = lines.size()/numThreads;
+
+        // create a thread for each partition and start it
+        for (int i = 0; i < numThreads; i++) {
+
+            final int from = i * step;
+            final int to = i == numThreads-1 ? lines.size()-1 : (i+1)*step-1;
+
+            processors[i] = new Thread(new Runnable() {
+                final int fromIndex = from;
+                final int toIndex = to;
+                @Override
+                public void run() {
+                    // execute each line in this thread's partition
+                    for (int j = fromIndex; j <= toIndex; j++){
+                        rowValues[j] = separator.splitToDouble(lines.get(j));
+//                                    updateProgress(j-fromIndex,toIndex-fromIndex+1); // slow
+
+                    }
+                }
+            });
+            processors[i].start();
+        }
+
+        // wait for all threads having finished
+        for (int i = 0; i < numThreads; i++) {
+            try {
+                processors[i].join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+//                    System.out.println("needed time: "+(System.currentTimeMillis()-before));
+    }
+
+
+    // -------------------------------------------------------------------------
+    // utility
+    // -------------------------------------------------------------------------
+
     /**
      * Writes a set of time series in the specified format to disk.
      * @param timeSeries the time series (all of them must have the same x values.)
@@ -117,140 +287,6 @@ public class FileModel {
 
         FileUtils.writeLines(new File(targetPath), lines);
 
-    }
-    
-    // -------------------------------------------------------------------------
-    // set up and usage
-    // -------------------------------------------------------------------------
-
-    // define the input format of the file by specifying how to split lines into string representing numbers
-    public void setSeparatorWidth(int fixedWidth){
-        separator = new LineParser(fixedWidth);
-    }
-    public void setSeparatorCharacter(String separatorCharacter) {
-        separator = new LineParser(separatorCharacter);
-    }
-    public LoadFileService getLoadFileService() {
-        return loadFileService;
-    }
-    
-    /** Reusable concurrent execution logic for loading and parsing files with progress reporting.
-     * The service can be used to load and parse the file contents asynchronously (non-UI-blocking) and to display progress.  */
-    public class LoadFileService extends Service<Void> {
-                
-        @Override protected Task<Void> createTask() {
-            final String _filename = getFilename();
-            return new Task<Void>() {
-                
-                private FileModel fail(String message){
-                    System.err.println(message);
-                    this.updateMessage(message);
-                    return null;
-                }
-                
-                @Override protected Void call() {
-                    
-                    // load file contents as list of lines
-                    updateMessage("Loading File");
-                    File file = new File(_filename);
-                    List<String> lines = null;
-                    try {
-                        lines = FileUtils.readLines(file, DEFAULT_ENCODING);
-                    } catch (IOException ex) {
-                        fail("Error loading file: " + _filename);
-                    }
-                    
-                    // remove "empty lines" (those with length 2 or less)
-                    lines.removeIf(new Predicate<String>() {
-                        @Override public boolean test(String t) { return t.length() <= 2; }
-                    });
-                    
-                    updateMessage("Parsing File");
-                    rowValues = new double[lines.size()][];
-
-                    // parse values concurrently, if possible
-                    int numThreads = Runtime.getRuntime().availableProcessors()-1;  // leave one thread for the application
-                    if(numThreads < 2)
-                        parseLines(lines);
-                    else
-                        parseLinesConcurrent(lines, numThreads);
-
-                    // cache first column
-                    firstColumn = new double[getTimeSeriesLength()];
-                    for (int i = 0; i < firstColumn.length; i++) {
-                        firstColumn[i] = rowValues[i][0] + 1950;
-                    }
-                    
-                    return null;
-                }
-
-                /**
-                 * Instantiates a number of threads to parallelize the parsing of the array.
-                 * Speedup is (for four cores) not significant (usually 1.8s instead of 2.5s) but it also doesn't slow things down.
-                 * @param lines
-                 */
-                private void parseLinesConcurrent(final List<String> lines, int numThreads) {
-
-//                    long before = System.currentTimeMillis();
-                    Thread[] processors = new Thread[numThreads];
-
-                    // divide the string array in approximately equally sized partitions
-                    int step = lines.size()/numThreads;
-
-                    // create a thread for each partition and start it
-                    for (int i = 0; i < numThreads; i++) {
-
-                        final int from = i * step;
-                        final int to = i == numThreads-1 ? lines.size()-1 : (i+1)*step-1;
-
-                        processors[i] = new Thread(new Runnable() {
-                            final int fromIndex = from;
-                            final int toIndex = to;
-                            @Override
-                            public void run() {
-                                // parse each line in this thread's partition
-                                for (int j = fromIndex; j <= toIndex; j++){
-                                    rowValues[j] = separator.splitToDouble(lines.get(j));
-//                                    updateProgress(j-fromIndex,toIndex-fromIndex+1); // slow
-
-                                }
-                            }
-                        });
-                        processors[i].start();
-                    }
-
-                    // wait for all threads having finished
-                    for (int i = 0; i < numThreads; i++) {
-                        try {
-                            processors[i].join();
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-
-//                    System.out.println("needed time: "+(System.currentTimeMillis()-before));
-                }
-
-                private void parseLines(List<String> lines) {
-                    long before = System.currentTimeMillis();
-                    for (int i = 0; i < lines.size(); i++) {
-                        rowValues[i] = separator.splitToDouble(lines.get(i));
-                        updateProgress(i+1, lines.size());
-                        if (isCancelled()) { break; }
-                    }
-                    System.out.println("needed time: "+(System.currentTimeMillis()-before));
-                }
-
-                @Override protected void failed() {
-                    super.failed();
-                    updateMessage(this.getException().getMessage());
-                    System.err.println(this.getException());
-                }
-                
-            };
-            
-            
-        }
     }
     
 }

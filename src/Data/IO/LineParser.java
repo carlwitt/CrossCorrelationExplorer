@@ -56,7 +56,7 @@ public class LineParser {
                 double parsed = Double.parseDouble(trimmedNumber);
                 result.add(parsed);
             } catch (NumberFormatException e) {
-                System.out.println(String.format("Couldn't parse double from '%s'\nin line %s", trimmedNumber, line));
+                System.out.println(String.format("Couldn't execute double from '%s'\nin line %s", trimmedNumber, line));
             }
         }
         // convert array list to primitive array (.toArray works only for Double)

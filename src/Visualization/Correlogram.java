@@ -1,11 +1,13 @@
 package Visualization;
 
 import Data.Correlation.CorrelationMatrix;
+import Data.Correlation.CrossCorrelation;
 import Data.SharedData;
 import Data.TimeSeries;
 import Data.Windowing.WindowMetadata;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Point2D;
@@ -18,6 +20,7 @@ import javafx.scene.shape.StrokeType;
 import javafx.scene.transform.Affine;
 import javafx.scene.transform.NonInvertibleTransformException;
 import javafx.scene.transform.Translate;
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import java.awt.*;
 import java.util.List;
@@ -64,6 +67,7 @@ public class Correlogram extends CanvasChart {
     // METHODS
     // -----------------------------------------------------------------------------------------------------------------
 
+    DescriptiveStatistics descriptiveStatistics = new DescriptiveStatistics();
     public Correlogram(MultiDimensionalPaintScale paintScale){
         this.paintScale=paintScale;
         xAxis.setMinTickUnit(1);
@@ -98,10 +102,11 @@ public class Correlogram extends CanvasChart {
                 int activeTimeWindowIdx = (int) Math.floor((dataCoordinates.getX() - windowOffset) / blockWidth);
 
                 Point activeCell;
+                CorrelationMatrix.CorrelationColumn activeTimeWindow = null;
                 // check whether the mouse points to any column
                 if (activeTimeWindowIdx >= 0 && activeTimeWindowIdx < matrix.getResultItems().size()) {
 
-                    CorrelationMatrix.CorrelationColumn activeTimeWindow = matrix.getColumn(activeTimeWindowIdx);
+                     activeTimeWindow = matrix.getColumn(activeTimeWindowIdx);
 
                     int posOnYAxis = (int) Math.floor(dataCoordinates.getY() - blockYOffset);
 
@@ -118,6 +123,42 @@ public class Correlogram extends CanvasChart {
 //                System.out.println("left/right out.");
                     activeCell = new Point(Integer.MAX_VALUE, Integer.MAX_VALUE);
                 }
+
+                // test how fast live computation of the correlation distribution is
+                if(activeTimeWindow != null && activeCell.getY() >= 0){
+                    int timeLag = activeCell.y + activeTimeWindow.tauMin;
+                    ObservableList<TimeSeries> setA = sharedData.dataModel.correlationSetA;
+                    ObservableList<TimeSeries> setB = sharedData.dataModel.correlationSetB;
+                    int windowLength = activeTimeWindow.getSize();
+                    int nans = 0;
+                    descriptiveStatistics.clear();
+//                    double correlations[] = new double[setA.size()*setB.size()];
+
+//                    for (int i = 0; i < setA.size(); i++) {
+//                        for (int j = 0; j < setB.size(); j++) {
+//                                correlations[setB.size()*i+j] =
+                    for (TimeSeries tsA : setA){
+                        for( TimeSeries tsB : setB){
+
+
+                            double correlation = CrossCorrelation.correlationCoefficient(
+//                                    setA.get(i),setB.get(j),
+                                    tsA, tsB,
+                                    activeTimeWindow.windowStartIndex,activeTimeWindow.windowStartIndex+windowLength-1,
+                                    timeLag);
+                            if(! Double.isNaN(correlation)) descriptiveStatistics.addValue(correlation);
+                            else nans++;
+                        }
+                    }
+
+                    System.out.println(String.format("median %s iqr %s windowStartIndex %s timeLag %s nans %s",
+                            descriptiveStatistics.getPercentile(50),
+                            descriptiveStatistics.getPercentile(75)-descriptiveStatistics.getPercentile(25),
+                            activeTimeWindow.windowStartIndex,
+                            timeLag,
+                            nans));
+                }
+
 
                 // report only if changes have occured
                 if (!sharedData.getHighlightedCell().equals(activeCell)) {

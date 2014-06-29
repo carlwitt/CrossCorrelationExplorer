@@ -384,14 +384,14 @@ public class TimeSeriesChart extends CanvasChart {
     
     public void resetView() {
         // TODO: add a padding of max(5px, 2.5% of the pixel width/height of the canvas)
-        double xRange = sharedData.dataModel.getMaxX() - sharedData.dataModel.getMinX();
-        double yRange = sharedData.dataModel.getMaxY() - sharedData.dataModel.getMinY();
+        double xRange = sharedData.dataModel.getMaxX(0) - sharedData.dataModel.getMinX(0);
+        double yRange = sharedData.dataModel.getMaxY(0) - sharedData.dataModel.getMinY(0);
         if(xRange < 0 || yRange < 0){
             xRange = 1;
             yRange = 1;
                     
         }
-        Rectangle2D newVisibleRange = new Rectangle2D(sharedData.dataModel.getMinX(), sharedData.dataModel.getMinY(), xRange, yRange);
+        Rectangle2D newVisibleRange = new Rectangle2D(sharedData.dataModel.getMinX(0), sharedData.dataModel.getMinY(0), xRange, yRange);
 
         axesRanges.set(newVisibleRange);
         drawContents();

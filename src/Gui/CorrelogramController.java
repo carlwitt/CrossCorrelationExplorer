@@ -11,6 +11,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Cursor;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.Tooltip;
@@ -30,6 +31,7 @@ import java.text.DecimalFormat;
  */
 public class CorrelogramController {
 
+
     /** Data that is shared between views to implement linked views. */
     private SharedData sharedData;
 
@@ -43,6 +45,7 @@ public class CorrelogramController {
     @FXML StackPane legendPane;
     @FXML ToggleButton linkWithTimeSeriesViewToggle;
     @FXML ToggleButton scatterPlotToggle;
+    @FXML ToggleButton distributionProbingToggle;
     @FXML TabPane visualizationSelector;
 
     private static final String[] renderModeLabels = new String[]{
@@ -106,9 +109,17 @@ public class CorrelogramController {
                 legend.drawContents();
             }
         });
-//        correlogram.setPaintScale(paintScale);
-//        legend.setPaintScale(paintScale);
-        
+
+        distributionProbingToggle.selectedProperty().addListener(new ChangeListener<Boolean>() {
+            @Override public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                if(newValue){
+                    correlogram.chartCanvas.setCursor(Cursor.CROSSHAIR);
+                } else {
+                    correlogram.chartCanvas.setCursor(Cursor.DEFAULT);
+                }
+            }
+        });
+
     }
     
     public void setSharedData(final SharedData sharedData) {
