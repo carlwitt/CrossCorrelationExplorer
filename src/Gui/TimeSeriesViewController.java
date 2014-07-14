@@ -1,16 +1,15 @@
 package Gui;
 
-import Data.Correlation.CorrelationMatrix;
 import Data.SharedData;
 import Data.TimeSeries;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
 import javafx.util.converter.NumberStringConverter;
@@ -42,27 +41,37 @@ public class TimeSeriesViewController {
         this.sharedData = sharedData;
         
         seriesSets.put(new Color(0, 0, 0, 0.5), sharedData.previewTimeSeries);
-        seriesSets.put(Color.web("#00cc52").deriveColor(0, 1, 1, 0.5), sharedData.dataModel.correlationSetA);
-        seriesSets.put(Color.web("#4333ff").deriveColor(0, 1, 1, 0.5), sharedData.dataModel.correlationSetB);
+        seriesSets.put(Color.web("#00cc52").deriveColor(0, 1, 1, 0.5), sharedData.experiment.dataModel.correlationSetA);
+        seriesSets.put(Color.web("#4333ff").deriveColor(0, 1, 1, 0.5), sharedData.experiment.dataModel.correlationSetB);
         
         timeSeriesChart.sharedData = sharedData;
         timeSeriesChart.seriesSets = seriesSets;
         
         timeSeriesChart.drawEachNthDataPointProperty().bind(detailSlider.valueProperty());
-        
-        sharedData.highlightedCellProperty().addListener(new ChangeListener() {
-            @Override public void changed(ObservableValue ov, Object t, Object t1) {
-                timeSeriesChart.drawContents();
+
+        // TODO remove transparency test code
+        timeSeriesChart.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            int curIdx = 0;
+            double[] transparencies = new double[]{0.01, 0.05, 0.1, 0.2, 0.5, 1};
+            @Override public void handle(MouseEvent event) {
+               timeSeriesChart.transparency = transparencies[(++curIdx)%transparencies.length];
+               timeSeriesChart.drawContents();
+                System.out.println(String.format("timeSeriesChart.transparency: %s", timeSeriesChart.transparency));
+//                File file = new File("./outTransparency"+timeSeriesChart.transparency+".png");
+//                try {
+//                    ImageIO.write(SwingFXUtils.fromFXImage(timeSeriesChart.getCurrentViewAsImage(), null), "png", file);
+//                } catch (Exception s) {
+//                    System.out.println("Couldn't write the correlogram image.");
+//                    s.printStackTrace();
+//                }
             }
         });
+
+        sharedData.highlightedCellProperty().addListener((ov, t, t1) -> timeSeriesChart.drawContents());
         
         // listen to and report changes in zoom and pan 
         sharedData.visibleTimeRangeProperty().bindBidirectional(timeSeriesChart.axesRangesProperty());
-        sharedData.visibleTimeRangeProperty().addListener(new ChangeListener() {
-            @Override public void changed(ObservableValue ov, Object t, Object t1) {
-                timeSeriesChart.drawContents();
-            }
-        });
+        sharedData.visibleTimeRangeProperty().addListener((ov, t, t1) -> timeSeriesChart.drawContents());
         
         // when loading additional time series, reset the view to show the whole time span
 //        sharedData.dataModel.timeSeries.addListener(new MapChangeListener<Integer, TimeSeries>() {
@@ -73,21 +82,15 @@ public class TimeSeriesViewController {
 //        });
         
         // when a new correlation matrix has been computed, reset the view 
-        sharedData.correlationMatrixProperty().addListener(new ChangeListener<CorrelationMatrix>() {
-            @Override public void changed(ObservableValue<? extends CorrelationMatrix> ov, CorrelationMatrix t, CorrelationMatrix t1) {
-                resetView(null);  
-            }
-        });
+        sharedData.correlationMatrixProperty().addListener((ov, t, t1) -> resetView());
         
-        ListChangeListener<TimeSeries> drawContentListener = new ListChangeListener<TimeSeries>() {
-            @Override public void onChanged(ListChangeListener.Change<? extends TimeSeries> change) {
-                if(timeSeriesChart.getAxesRanges() == null) timeSeriesChart.resetView();
-                timeSeriesChart.drawContents();
-            }
-        };
-        sharedData.previewTimeSeries.addListener(drawContentListener);
-        sharedData.dataModel.correlationSetA.addListener(drawContentListener);
-        sharedData.dataModel.correlationSetB.addListener(drawContentListener);
+//        ListChangeListener<TimeSeries> drawContentListener = change -> {
+//            if(timeSeriesChart.getAxesRanges() == null) timeSeriesChart.resetView();
+//            timeSeriesChart.drawContents();
+//        };
+//        sharedData.previewTimeSeries.addListener(drawContentListener);
+//        sharedData.dataModel.correlationSetA.addListener(drawContentListener);
+//        sharedData.dataModel.correlationSetB.addListener(drawContentListener);
         
     }
 
@@ -101,13 +104,11 @@ public class TimeSeriesViewController {
         AnchorPane.setLeftAnchor(timeSeriesChart, 0.);
 
         // when changing the level of detail, show the results immediately
-        detailSlider.valueProperty().addListener(new ChangeListener<Number>() {
-            @Override public void changed(ObservableValue<? extends Number> ov, Number t, Number t1) {
-                levelOfDetailLabel.setText("show every N-th point: "+Math.round((Double)t1));
+        detailSlider.valueProperty().addListener((ov, t, t1) -> {
+            levelOfDetailLabel.setText("show every N-th point: "+Math.round((Double)t1));
 //                if( ! detailSlider.isPressed() || ! detailSlider.isValueChanging()){
-                timeSeriesChart.drawContents();
+            timeSeriesChart.drawContents();
 //                }
-            }
         });
         // auto adjust tick labels and detail slider
         timeSeriesChart.xAxis.lowerBoundProperty().addListener(axisRangeChanged);
@@ -147,22 +148,24 @@ public class TimeSeriesViewController {
                     
             // adjust detail slider: max reduction to 50px per data point, max detail 0.5px per data paint
             double maxPixPerPoint = 30;
-            double availableTimeSteps = sharedData.dataModel.getNumDataPointsInRange(timeSeriesChart.xAxis.getLowerBound(), timeSeriesChart.xAxis.getUpperBound());
+            double availableTimeSteps = sharedData.experiment.dataModel.getNumDataPointsInRange(timeSeriesChart.xAxis.getLowerBound(), timeSeriesChart.xAxis.getUpperBound());
             double availableWidth = timeSeriesChart.chartCanvas.getWidth();
             double timeStepsToShow = availableWidth / maxPixPerPoint;
             int maxSkipPoints = (int) Math.ceil(availableTimeSteps / timeStepsToShow);
 
-            detailSlider.setMin(1);
+//            detailSlider.setMin(1);
 //            detailSlider.setMin(Math.max(1, 0.5*pointsPerPix)); // highest resolution is 2 points per pix
-            
-            detailSlider.setMax(Math.max(1, maxSkipPoints)); 
+//            detailSlider.setMax(Math.max(1, maxSkipPoints));
         }
     };
     
-    public void resetView(ActionEvent e) {
+    public void resetView() {
         timeSeriesChart.resetView();
     }
-    
-    
-    
+
+
+    public void drawContents() {
+        if(timeSeriesChart.getAxesRanges() == null) timeSeriesChart.resetView();
+        timeSeriesChart.drawContents();
+    }
 }

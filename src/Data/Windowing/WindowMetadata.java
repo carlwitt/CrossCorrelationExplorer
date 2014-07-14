@@ -1,11 +1,13 @@
 package Data.Windowing;
 
+import Data.Correlation.CorrelationMatrix;
 import Data.Correlation.CrossCorrelation;
 import Data.TimeSeries;
 import com.google.common.base.Joiner;
 import com.sun.istack.internal.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
@@ -40,7 +42,8 @@ public class WindowMetadata {
      */
     public final int baseWindowOffset;
 
-    /** the number of base windows that completely fit in the time series (no shorter windows than |w|) */
+    /** The number of base windows that completely fit in the time series (no shorter windows than |w|).
+     * This equals the number of columns in the correlation matrix.  */
     public final int numBaseWindows;
 
     /** The number of lag windows that are needed both in the cross-correlation computation of a base window b and its subsequent base window b'.
@@ -51,18 +54,18 @@ public class WindowMetadata {
     public final List<TimeSeries> setA;
     public final List<TimeSeries> setB;
 
-    public final CrossCorrelation.NA_ACTION naAction;
+    public final CrossCorrelation.NA_ACTION naAction = CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED;
 
     public final HashMap<String, Object> customParameters = new HashMap<>();
 
-    public WindowMetadata(@NotNull TimeSeries seriesA, @NotNull TimeSeries seriesB, int windowSize, int tauMin, int tauMax, CrossCorrelation.NA_ACTION naAction, int baseWindowOffset){
+    public WindowMetadata(@NotNull TimeSeries seriesA, @NotNull TimeSeries seriesB, int windowSize, int tauMin, int tauMax, int baseWindowOffset){
         this.tauMin = tauMin;
         this.tauMax = tauMax;
         setA = new ArrayList<>(1);
         setA.add(seriesA);
         setB = new ArrayList<>(1);
         setB.add(seriesB);
-        this.naAction = naAction;
+//        this.naAction = naAction;
         this.windowSize = windowSize;
         this.baseWindowOffset = baseWindowOffset;
 
@@ -70,12 +73,12 @@ public class WindowMetadata {
         lagRangeOverlap = getLagRangeOverlap();
     }
 
-    public WindowMetadata(@NotNull List<TimeSeries> setA, @NotNull List<TimeSeries> setB, int windowSize, int tauMin, int tauMax, CrossCorrelation.NA_ACTION naAction, int baseWindowOffset) {
-        this.setA = setA;
-        this.setB = setB;
+    public WindowMetadata(@NotNull List<TimeSeries> setA, @NotNull List<TimeSeries> setB, int windowSize, int tauMin, int tauMax, int baseWindowOffset) {
+        this.setA = new ArrayList<>(setA);
+        this.setB = new ArrayList<>(setB);
         this.tauMin = tauMin;
         this.tauMax = tauMax;
-        this.naAction = naAction;
+//        this.naAction = naAction;
         this.windowSize = windowSize;
         this.baseWindowOffset = baseWindowOffset;
 
@@ -83,17 +86,58 @@ public class WindowMetadata {
         lagRangeOverlap = getLagRangeOverlap();
     }
 
+    private WindowMetadata(Builder builder){
+        this.setA = new ArrayList<>(builder.setA);
+        this.setB = new ArrayList<>(builder.setB);
+        this.tauMin = builder.tauMin;
+        this.tauMax = builder.tauMax;
+//        this.naAction = builder.naAction;
+        this.windowSize = builder.windowSize;
+        this.baseWindowOffset = builder.baseWindowOffset;
+        CorrelationMatrix.setSignificanceLevel(this, builder.pValue);
+        numBaseWindows = getNumberOfBaseWindows();
+        lagRangeOverlap = getLagRangeOverlap();
+    }
 
+    /** Computes {@link #numBaseWindows}. */
     private int getNumberOfBaseWindows() {
         int timeSeriesLength = setA.get(0).getSize();
         int largestValidWindowStartIndex = timeSeriesLength - windowSize; // N-windowSize+1 would be one-based
 
-        // the number of base windows that completely fit in the time series (no shorter windows than |w|)
         return largestValidWindowStartIndex / baseWindowOffset + 1;    // +1: the first window is located at index zero
     }
 
     int getLagRangeOverlap() {
         return tauMax - tauMin - baseWindowOffset + 1;
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // Builder constructor pattern
+    // -----------------------------------------------------------------------------------------------------------------
+
+    public static class Builder{
+
+        public final int tauMin;
+        public final int tauMax;
+        public final int windowSize;
+        public final int baseWindowOffset;
+        public double pValue = 0.05;
+        final List<TimeSeries> setA = new ArrayList<>();
+        final List<TimeSeries> setB = new ArrayList<>();
+        CrossCorrelation.NA_ACTION naAction = CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED;
+        public Builder(int tauMin, int tauMax, int windowSize, int baseWindowOffset) {
+            this.tauMin = tauMin;
+            this.tauMax = tauMax;
+            this.windowSize = windowSize;
+            this.baseWindowOffset = baseWindowOffset;
+        }
+        public Builder tsA(TimeSeries ts){ setA.add(ts); return this; }
+        public Builder tsA(Collection<TimeSeries> ts){ setA.addAll(ts); return this; }
+        public Builder tsB(TimeSeries ts){ setB.add(ts); return this; }
+        public Builder tsB(Collection<TimeSeries> ts){ setB.addAll(ts); return this; }
+        public Builder pValue(double v) { this.pValue = pValue; return this; }
+        //        public Builder naAction(CrossCorrelation.NA_ACTION naAction){ this.naAction = naAction; return this; }
+        public WindowMetadata build(){return new WindowMetadata(this);}
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -140,4 +184,12 @@ public class WindowMetadata {
         result = 31 * result + customParameters.hashCode();
         return result;
     }
+
+    /** These methods are used to display metadata objects in the results table. */
+    public Integer getInputSet1Size(){return setA.size(); }
+    public Integer getInputSet2Size(){return setB.size(); }
+    public Integer getWindowSize(){ return windowSize; }
+    public Integer getOverlap(){ return windowSize-baseWindowOffset; }
+    public Double getSignificanceLevel(){ return CorrelationMatrix.getSignificanceLevel(this); }
+    public String getLagRange(){ return String.format("[%s, %s]",tauMin,tauMax); }
 }

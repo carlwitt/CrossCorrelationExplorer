@@ -23,8 +23,15 @@ public class CorrelationMatrix {
     private static final int NUM_META_STATS = 2;                // how many statistics about the statistics are measured (minimum and maximum)
 
     /** These constants can be used to conveniently refer to certain statistics.
-     * {@link #POSITIVE_SIGNIFICANT} percentage of statistically significant (t-test) positive correlation values.
+     * <pre>
+     * {@link #MEAN} the average correlation in a cell.
+     * {@link #STD_DEV} the standard deviation of all correlation values within a cell.
+     * {@link #MEDIAN} the 50th percentile of all correlation values within a cell.
+     * {@link #IQR} the interquartile range (i.e. 75th percentile - 25th percentile) of all correlation values within a cell.
+     * {@link #ABSOLUTE_SIGNIFICANT} percentage of statistically significant (by means of a t-test) positive or negative correlation values.
+     * {@link #POSITIVE_SIGNIFICANT} percentage of statistically significant positive correlation values.
      * {@link #NEGATIVE_SIGNIFICANT} percentage of statistically significant negative correlation values.
+     * </pre>
      */
     public final static int MEAN = 0, STD_DEV = 1, MEDIAN = 2, IQR = 3, POSITIVE_SIGNIFICANT = 4, NEGATIVE_SIGNIFICANT = 5, ABSOLUTE_SIGNIFICANT = 6;
     public final static int NUM_STATS = 7;                     // how many statistics are measured
@@ -138,15 +145,15 @@ public class CorrelationMatrix {
         for (int i = 0; i < numThreads; i++) {
 
             // assign each thread a partition of the input time series sets
-            int stepSizeA = (int) Math.ceil((double)metadata.setA.size()/numThreads);   // each thread is assigned at least one time series
-            int stepSizeB = (int) Math.ceil((double)metadata.setB.size()/numThreads);
+            int stepSizeA = (int) Math.floor((double) metadata.setA.size() / numThreads);   // each thread is assigned at least one time series
+            int stepSizeB = (int) Math.floor((double) metadata.setB.size() / numThreads);
             final int fromA = i*stepSizeA,
                       toA   = i == numThreads - 1 ? metadata.setA.size() : (i+1)*stepSizeA;   // last time series A for which this thread is responsible (index is exclusive)
             final int fromB = i*stepSizeB,
                       toB   = i == numThreads - 1 ? metadata.setB.size() : (i+1)*stepSizeB;   // last time series B for which this thread is responsible (index is exclusive)
 
             System.out.println(String.format("thread %s range for set A [%s,%s[ for set B [%s,%s[", i, fromA, toA, fromB, toB ));
-            threads[i] = new Thread(new Runnable() { @Override public void run() {
+            threads[i] = new Thread(() -> {
 
                 // create the result column by column to avoid having to keep too much data in main memory
                 for (int baseWindowStartIdx = 0; baseWindowStartIdx <= timeSeriesLength - metadata.windowSize; baseWindowStartIdx += metadata.baseWindowOffset) {
@@ -177,7 +184,7 @@ public class CorrelationMatrix {
 
                 }
 
-            } });
+            });
 
             threads[i].start();
 
@@ -357,21 +364,26 @@ public class CorrelationMatrix {
         return columns.get(0).windowStartIndex;
     }
 
-    /** @return the index of the last time series value of the last column (time window). */
+    /** @return the time series value index where the last window ends (window corresponding to the maximum lag in the last column). */
     int getEndOffsetInTimeSeries(){
-        if(columns.size() == 0)return 0; // the matrix can have no columns if the winodw size exceeds the length of the time series
+        if(columns.size() == 0)
+            return 0; // the matrix can have no columns if the winodw size exceeds the length of the time series
         CorrelationColumn lastColumn = columns.get(columns.size()-1);
-        return lastColumn.windowStartIndex + lastColumn.tauMin + lastColumn.mean.length - 1;
+        assert lastColumn.data[MEAN] != null : String.format("Column has no mean! %s", lastColumn);
+        return lastColumn.windowStartIndex + lastColumn.tauMin + lastColumn.data[MEAN].length - 1;
     }
 
     /** @return the first point in time covered by the matrix. */
     public double getStartXValueInTimeSeries(){
+        assert(metadata.setA.size() > 0) : "Metadata problem " + metadata;
         return metadata.setA.get(0).getDataItems().re[getStartOffsetInTimeSeries()];
     }
 
     /** @return the last point in time covered by the matrix. */
     public double getEndXValueInTimeSeries(){
-        return metadata.setA.get(0).getDataItems().re[getEndOffsetInTimeSeries()];
+        double[] re = metadata.setA.get(0).getDataItems().re;
+//        assert re.length > getEndOffsetInTimeSeries() : String.format("getEndOffset returned %s where the max val is actually %s",getEndOffsetInTimeSeries(),re[re.length-1]);
+        return re[re.length-1];
     }
 
     public void append(CorrelationColumn c) { columns.add(c); }
@@ -387,7 +399,7 @@ public class CorrelationMatrix {
     /** @return the largest lag used on any column */
     public int maxLag(){
         if(columns.size()==0)return 0;
-        return columns.get(0).tauMin + columns.get(0).mean.length - 1;
+        return columns.get(0).tauMin + columns.get(0).data[MEAN].length - 1;
     }
 
     /**
@@ -426,22 +438,13 @@ public class CorrelationMatrix {
     public class CorrelationColumn {
 
         /** Stores the actual column values along all cells. First index refers to the statistic (use {@link #MEAN}, {@link #STD_DEV}, etc. for indexing).
-         * Second dimension refers to the time lag. */
+         * Second dimension refers to the time lag index. */
         public final double[][] data; // = new double[NUM_STATS][];
 
         /** Contains the minimal/maximal value of the given statistic along this column.
          * E.g. extrema[STD_DEV][MINIMUM] gives the minimum standard deviation among all time lags for the window represented by this column.
          */
         final Double[][] extrema = new Double[NUM_STATS][NUM_META_STATS];
-
-        /** Aliases for clearer code. Points to the data stored in the values field.
-         * Using the aliases, references to re and im can be avoided. */
-        public final double[] mean;
-        public final double[] stdDev;
-        public final double[] median;
-        public final double[] positiveSignificant;
-        public final double[] negativeSignificant;
-        public final double[] absoluteSignificant;
 
         /** Each columns represents the results of a window of the x-axis. This is the x-value where the window starts (where it ends follows from the column length). */
         public final int windowStartIndex;
@@ -453,12 +456,6 @@ public class CorrelationMatrix {
             this.windowStartIndex = builder.windowStartIndex;
             this.tauMin = builder.tauMin;
             data = builder.data;
-            mean = data[MEAN];
-            stdDev = data[STD_DEV];
-            median = data[MEDIAN];
-            negativeSignificant = data[NEGATIVE_SIGNIFICANT];
-            positiveSignificant = data[POSITIVE_SIGNIFICANT];
-            absoluteSignificant = data[ABSOLUTE_SIGNIFICANT];
         }
 
         double getExtremum(int STATISTIC, int MINMAX){
@@ -571,7 +568,7 @@ public class CorrelationMatrix {
                         long time = Math.round(totalTime*(1-percentFinished));
                         long minutes = time / (60 * 1000);
                         long seconds = (time / 1000) % 59 + 1;
-                        updateMessage(String.format("Processing base window %s of %s. %d min %02d sec left.",finishedBaseWindows,totalWork, minutes, seconds));
+                        updateMessage(String.format("Processing base window %s of %s. %d min %02d sec left.",finishedBaseWindows, totalWork, minutes, seconds));
                         updateProgress(finishedBaseWindows, totalWork);
                     }
                 }
@@ -652,5 +649,23 @@ public class CorrelationMatrix {
         return String.format("matrix(ncol=%s, nrow=%s, data=c(%s))",columns.size(), rows, buffer.toString());
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
+        CorrelationMatrix that = (CorrelationMatrix) o;
+
+        if (columns != null ? !columns.equals(that.columns) : that.columns != null) return false;
+        if (metadata != null ? !metadata.equals(that.metadata) : that.metadata != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = columns != null ? columns.hashCode() : 0;
+        result = 31 * result + (metadata != null ? metadata.hashCode() : 0);
+        return result;
+    }
 }

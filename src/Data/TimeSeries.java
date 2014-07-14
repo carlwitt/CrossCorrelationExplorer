@@ -21,26 +21,29 @@ public class TimeSeries implements Comparable<TimeSeries> {
     private ComplexSequence values = null;
     
     /** To automatically generate ids, decrements of the maximum int value are used. */
-    private static int nextId = 1;
+//    private static int nextId = 1;
     
     /**
+     * @param id
      * @param values The x and y values, specified in the real and imaginary parts of a complex sequence.
      */
-    public TimeSeries(@NotNull ComplexSequence values){
-        this.id = nextId++;
+    public TimeSeries(int id, @NotNull ComplexSequence values){
+        this.id = id;
+//        this.id = nextId++;
         this.values = values;
     }
-    public TimeSeries(@NotNull double[] xValues, @NotNull double[] yValues){
-        this(nextId++, xValues, yValues);
-    }
-    
+//    public TimeSeries(@NotNull double[] xValues, @NotNull double[] yValues){
+//        this(nextId++, xValues, yValues);
+//    }
+
     /** Create time series by specifying only the function values, useful if the x-coordinates don't matter.
      * This will use an efficient way to represent some x-values.
      * Note that the array is taken as is, meaning any changes to the passed array will write through to the time series and vice versa.
+     * @param id
      * @param d The sequence of function values
      */
-    public TimeSeries(double... d) {
-        this.id = nextId--;
+    public TimeSeries(int id, double... d) {
+        this.id = id;
         this.values = ComplexSequence.create(new double[d.length], d);
     }
 

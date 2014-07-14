@@ -1,14 +1,10 @@
 package Data;
 
 import javafx.collections.FXCollections;
-import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * Stores time series and aggregated data on them.
@@ -18,60 +14,80 @@ import java.util.TreeMap;
  * Note: The treemap class might not be the most efficient data structure, but it is convenient since it can be used to retrieve any time series from the set (e.g. using the firstEntry() function).
  * Since there are only very few operations on the data structure, this is perfectly o.k.
  *
- * TODO: the {@link #allTimeSeries} data structures is a materialized (set theoretic) union of the time series sets stored in {@link #timeSeriesByFile}. providing an iterator might be a more elegant solution.
  * @author Carl Witt
  */
 public class DataModel {
 
     /** Stores the time series by their file id (input file A = 0 or input file B = 1) and their time series ID, which, nevertheless, should be unique. */
-    private TreeMap<Integer, TimeSeries> allTimeSeries = new TreeMap<>();
-    private List<TreeMap<Integer,TimeSeries>> timeSeriesByFile = Arrays.asList(new TreeMap<>(), new TreeMap<>());
+    private List<ObservableMap<Integer,TimeSeries>> timeSeriesByFile;
 
-    /** each time series in input set A will be cross correlated with each time series in input set B */
+    /** each time series in input set A will be cross correlated with each time series in input set B. should be a set, actually but sequential access is useful for caching routines in cross correlation computations. */
     public final ObservableList<TimeSeries> correlationSetA = FXCollections.observableArrayList();
     public final ObservableList<TimeSeries> correlationSetB = FXCollections.observableArrayList();
 
-    /** Contains the mappings between integer IDs (1-based) and the time series object references */
-    public final ObservableMap<Integer, TimeSeries> timeSeries = FXCollections.observableMap(allTimeSeries);
-    /** This observable list contains the indices of all currently loaded time series. It can be used to monitor the currently loaded time series via a simply integer list view display (no conversion between time series and their indices necessary). */
-    private final ObservableList<TimeSeries> loadedSeries = FXCollections.observableArrayList();
+//    public FXCollections.
+    public ObservableList<TimeSeries> timeSeriesA = FXCollections.observableArrayList();
+    public ObservableList<TimeSeries> timeSeriesB = FXCollections.observableArrayList();
+
 
     /** These cache the minimum and maximum Y value of the current dataset. Are invalidated (set to null) when time series are added or removed. */
     private Double minY = null;
     private Double maxY = null;
 
+    public DataModel(Collection<Collection<TimeSeries>> tsByFile){
+
+        timeSeriesByFile = new ArrayList<>();
+        for (Collection<TimeSeries> tss : tsByFile){
+            HashMap<Integer, TimeSeries> map = new HashMap<>();
+            for(TimeSeries ts : tss) map.put(ts.getId(), ts);
+            timeSeriesByFile.add(FXCollections.observableMap(map));
+        }
+
+        timeSeriesA = FXCollections.observableArrayList(timeSeriesByFile.get(0).values());
+        timeSeriesB = FXCollections.observableArrayList(timeSeriesByFile.get(1).values());
+
+    }
     public DataModel(){
-        timeSeries.addListener(new MapChangeListener<Integer, TimeSeries>() {
-            @Override public void onChanged(MapChangeListener.Change<? extends Integer, ? extends TimeSeries> change) {
-                if(change.wasRemoved()){
-                    loadedSeries.remove(change.getValueRemoved());
-                    minY = null;
-                    maxY = null;
-                }
-                if( change.wasAdded()){
-//                    Logger.getAnonymousLogger().log(Level.INFO, String.format("Datamodel extended by time series %s: %s",change.getValueAdded().getId(), change.getValueAdded()));
-                    loadedSeries.add(change.getValueAdded());
-                    loadedSeries.sort(null);
-                    minY = null;
-                    maxY = null;
-                }
-            }
-        });
+        timeSeriesByFile = Arrays.asList(
+                FXCollections.observableMap(new HashMap<>()),
+                FXCollections.observableMap(new HashMap<>()));
+//        timeSeries.addListener(new MapChangeListener<Integer, TimeSeries>() {
+//            @Override public void onChanged(MapChangeListener.Change<? extends Integer, ? extends TimeSeries> change) {
+//                if(change.wasRemoved()){
+//                    loadedSeries.remove(change.getValueRemoved());
+//                    minY = null;
+//                    maxY = null;
+//                }
+//                if( change.wasAdded()){
+////                    Logger.getAnonymousLogger().log(Level.INFO, String.format("Datamodel extended by time series %s: %s",change.getValueAdded().getId(), change.getValueAdded()));
+//                    TimeSeries newTS = change.getValueAdded();
+//                    loadedSeries.add(newTS);
+//                    if(timeSeriesByFile.get(0).containsKey(newTS.getId()))
+//                        timeSeriesA.add(newTS);
+//                    else
+//                        timeSeriesB.add(newTS);
+//
+//                    loadedSeries.sort(null);
+//                    minY = null;
+//                    maxY = null;
+//                }
+//            }
+//        });
     }
 
     public int getTimeSeriesLength(int fileID) {
-        if (allTimeSeries.isEmpty()) {
+        if (timeSeriesByFile.get(fileID).isEmpty()) {
             return 0;
         }
-        return timeSeriesByFile.get(fileID).firstEntry().getValue().getDataItems().re.length;
-//        return allTimeSeries.column(fileID).values().iterator().next().getDataItems().re.length;
+        return timeSeriesByFile.get(fileID).values().iterator().next().getDataItems().re.length;
     }
 
     /** @return the smallest x value among all time series. It is assumed that it is the same for each time series.
-     * @param fileID*/
+     * @param fileID the time series group among which the smallest x value is found.
+     */
     public double getMinX(int fileID) {
 
-        TimeSeries anyTimeSeries = timeSeriesByFile.get(fileID).firstEntry().getValue();
+        TimeSeries anyTimeSeries = timeSeriesByFile.get(fileID).values().iterator().next();
 //        TimeSeries anyTimeSeries = allTimeSeries.column(fileID).values().iterator().next();
         if(anyTimeSeries.getSize() == 0) return 0;
         return anyTimeSeries.getDataItems().re[0];
@@ -83,10 +99,11 @@ public class DataModel {
     }
 
     /** @return the largest x value among all time series. It is assumed that it is the same for each time series.
-     * @param fileID*/
+     * @param fileID the time series group among which the largest x value is found.
+     */
     public double getMaxX(int fileID) {
 
-        TimeSeries anyTimeSeries = timeSeriesByFile.get(fileID).firstEntry().getValue();
+        TimeSeries anyTimeSeries = timeSeriesByFile.get(fileID).values().iterator().next();
 //        TimeSeries anyTimeSeries = allTimeSeries.column(fileID).values().iterator().next();
         if(anyTimeSeries.getSize() == 0) return 0;
         return anyTimeSeries.getDataItems().re[anyTimeSeries.getDataItems().re.length-1];
@@ -126,30 +143,22 @@ public class DataModel {
         return maxY;
     }
 
-    public ObservableList<TimeSeries> getObservableLoadedSeries() {
-        return loadedSeries;
-    }
-
     /** @return the number of data points in the specified interval (e.g. time period) */
     public double getNumDataPointsInRange(double lowerBound, double upperBound) {
         return Math.ceil(upperBound-lowerBound);
     }
 
-    /** Returns the length of all time series. Is assummed to be equal for all time series.
-     * @param sharedData*/
-    public int getTimeSeriesLength(SharedData sharedData){
-        return correlationSetA.get(0).getDataItems().length;
-    }
-
     public void put(int fileID, int timeSeriesID, TimeSeries timeSeries) {
         timeSeriesByFile.get(fileID).put(timeSeriesID, timeSeries);
-        allTimeSeries.put(timeSeriesID,timeSeries);
-//        allTimeSeries.put(fileID, timeSeriesID, timeSeries);
+        if(fileID == 0)timeSeriesA.add(timeSeries);
+        if(fileID == 1)timeSeriesB.add(timeSeries);
     }
 
-    public TimeSeries get(int i) {
-        return allTimeSeries.get(i);
-//        return allTimeSeries.column(1).get(i);
+    public TimeSeries get(int fileIdx, int i) {
+        TimeSeries timeSeries = timeSeriesByFile.get(fileIdx).get(i);
+        if(timeSeries != null) return timeSeries;
+        assert false : String.format("Time series with the given ID %s doesn't exist in the data model.", i);
+        return null;
     }
 
     public Map<Integer, TimeSeries> getFileSeries(int fileID) {
@@ -157,12 +166,40 @@ public class DataModel {
     }
 
     public void clear() {
-        timeSeriesByFile.get(0).clear();
-        timeSeriesByFile.get(1).clear();
-        allTimeSeries.clear();
+        for (ObservableMap<Integer,TimeSeries> m :timeSeriesByFile){
+            m.clear();
+        }
     }
 
     public int getNumFiles() {
         return timeSeriesByFile.size();
+    }
+
+    public Iterator<TimeSeries> getTimeSeriesIterator() {
+        return new Iterator<TimeSeries>() {
+            int fileIdx = 0;
+            Iterator<TimeSeries> currentIterator = timeSeriesByFile.get(fileIdx).values().iterator();
+            @Override public boolean hasNext() {
+                ObservableMap<Integer, TimeSeries> nextSet = timeSeriesByFile.get(fileIdx + 1);
+                return currentIterator.hasNext() || (nextSet != null && nextSet.size() > 0);
+            }
+
+            @Override public TimeSeries next() {
+                if(!currentIterator.hasNext()){
+                    fileIdx++;
+                    currentIterator = timeSeriesByFile.get(fileIdx).values().iterator();
+                }
+                return currentIterator.next();
+            }
+        };
+    }
+
+    public int getNumberOfTimeSeries() {
+        int count = 0;
+        for (Map<Integer, TimeSeries> map : timeSeriesByFile) count += map.size();
+        return count;
+    }
+    public int getNumberOfTimeSeries(int fileIdx) {
+        return timeSeriesByFile.get(fileIdx).size();
     }
 }

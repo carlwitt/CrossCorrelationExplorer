@@ -36,11 +36,11 @@ public class FileModel {
     
     private static final String DEFAULT_ENCODING = "UTF-8";
 
-    boolean isExecuted = false;
+    private boolean isExecuted = false;
 
     // TODO: think about making the filename immutable. may be safer with the isExecuted flag.
     private final StringProperty filename = new SimpleStringProperty();
-    public final void setFilename(String value) { filename.set(value); }
+    final void setFilename(String value) { filename.set(value); }
     public final String getFilename() { return filename.get(); }
     public final StringProperty filenameProperty() { return filename; }
         
@@ -52,7 +52,7 @@ public class FileModel {
     public final LoadFileService loadFileService = new LoadFileService();
             
     public FileModel(String filename, LineParser lineParser){
-        setFilename(filename);
+        if(filename != null) setFilename(new File(filename).getAbsolutePath());
 //        this.filename.set(filename);
         this.separator = lineParser;
     }
@@ -71,10 +71,9 @@ public class FileModel {
     }
 
     /** 
-     * @param index one-based
      * @return x values of the time series
      */
-    public double[] getXValues(int index){
+    public double[] getXValues(){
         return firstColumn;
     }
     /** 
@@ -209,7 +208,7 @@ public class FileModel {
      * Speedup is (for four cores) not significant (usually 1.8s instead of 2.5s) but it also doesn't slow things down.
      * @param lines
      */
-    public void parseLinesConcurrent(final List<String> lines, int numThreads) {
+    void parseLinesConcurrent(final List<String> lines, int numThreads) {
 
 //                    long before = System.currentTimeMillis();
         Thread[] processors = new Thread[numThreads];

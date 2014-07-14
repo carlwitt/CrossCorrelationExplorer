@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.web.WebView?>
+<BorderPane id="BorderPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="768.0" prefWidth="1024.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.HelpWindowController">
+  <center>
+    <WebView fx:id="browser" prefHeight="200.0" prefWidth="200.0" />
+  </center>
+  <top>
+    <ToolBar>
+      <items>
+        <Button mnemonicParsing="false" onAction="#goHome" text="Home" />
+        <Button mnemonicParsing="false" onAction="#back" text="&lt;" />
+        <Button mnemonicParsing="false" onAction="#forward" text="&gt;" />
+      </items>
+    </ToolBar>
+  </top>
+</BorderPane>

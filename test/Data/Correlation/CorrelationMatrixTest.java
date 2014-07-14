@@ -33,7 +33,7 @@ public class CorrelationMatrixTest {
 //        }
 
         int windowSize = 10, baseWindowOffset = 3, tauMin = -2, tauMax = 2;
-        WindowMetadata metadata = new WindowMetadata(setA, setB, windowSize, tauMin, tauMax, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED, baseWindowOffset);
+        WindowMetadata metadata = new WindowMetadata(setA, setB, windowSize, tauMin, tauMax, baseWindowOffset);
         CorrelationMatrix.setSignificanceLevel(metadata, 0.05);
 
         CorrelationMatrix expected = CrossCorrelation.naiveCrossCorrelation(metadata);
@@ -53,12 +53,8 @@ public class CorrelationMatrixTest {
         for (int i = 0; i < expected.columns.size(); i++) {
             CorrelationMatrix.CorrelationColumn expectedColumn = expected.getColumn(i);
             CorrelationMatrix.CorrelationColumn resultColumn = result.getColumn(i);
-            assertArrayEquals(expectedColumn.mean, resultColumn.mean, 1e-15);
-            assertArrayEquals(expectedColumn.stdDev, resultColumn.stdDev, 1e-15);
-            assertArrayEquals(expectedColumn.median, resultColumn.median, 1e-15);
-            assertArrayEquals(expectedColumn.negativeSignificant, resultColumn.negativeSignificant, 1e-15);
-            assertArrayEquals(expectedColumn.positiveSignificant, resultColumn.positiveSignificant, 1e-15);
-            assertArrayEquals(expectedColumn.absoluteSignificant, resultColumn.absoluteSignificant, 1e-15);
+            for (int stat = 0; stat < CorrelationMatrix.NUM_STATS; stat++)
+                assertArrayEquals(expectedColumn.data[stat], resultColumn.data[stat], 1e-15);
         }
 
 
@@ -67,16 +63,16 @@ public class CorrelationMatrixTest {
 
     @Test public void testCompute() throws Exception {
 
-        TimeSeries ts1 = new TimeSeries(1,10,7,4,3,12);
-        TimeSeries ts2 = new TimeSeries(1,2,3,2,0,1);
-        TimeSeries ts3 = new TimeSeries(2,3,4,-5,-3,0);
+        TimeSeries ts1 = new TimeSeries(1, 1,10,7,4,3,12);
+        TimeSeries ts2 = new TimeSeries(1, 1,2,3,2,0,1);
+        TimeSeries ts3 = new TimeSeries(1, 2,3,4,-5,-3,0);
 
         // crossCorrelation({A}, {B,C})
         List<TimeSeries> setA = Arrays.asList(new TimeSeries[]{ts1});
         List<TimeSeries> setB = Arrays.asList(new TimeSeries[]{ts2,ts3});
 
         int windowSize = 3, baseWindowOffset = 1, tauMin = 0, tauMax = 0;
-        WindowMetadata metadata = new WindowMetadata(setA, setB, windowSize, tauMin, tauMax, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED, baseWindowOffset);
+        WindowMetadata metadata = new WindowMetadata(setA, setB, windowSize, tauMin, tauMax, baseWindowOffset);
 
         CorrelationMatrix instance = new CorrelationMatrix(metadata);
         instance.compute();
@@ -87,14 +83,14 @@ public class CorrelationMatrixTest {
 
         System.out.println(String.format("%s", instance));
 //        System.out.println(String.format("correlogram store\n%s", CorrelogramStore.correlationMatricesByMetadata.entrySet()));
-        assertEquals(1, instance.getColumn(0).mean[0], 1e-5);
-        assertEquals(4, instance.getColumn(1).mean[0], 1e-5);
-        assertEquals(9, instance.getColumn(2).mean[0], 1e-5);
+        assertEquals(1, instance.getColumn(0).data[CorrelationMatrix.MEAN][0], 1e-5);
+        assertEquals(4, instance.getColumn(1).data[CorrelationMatrix.MEAN][0], 1e-5);
+        assertEquals(9, instance.getColumn(2).data[CorrelationMatrix.MEAN][0], 1e-5);
 
         // from wolfram alpha
-        assertEquals(1.33333, instance.getColumn(0).stdDev[0], 1e-4);
-        assertEquals(2.40370, instance.getColumn(1).stdDev[0], 1e-4);
-        assertEquals(3.52766, instance.getColumn(2).stdDev[0], 1e-4);
+        assertEquals(1.33333, instance.getColumn(0).data[CorrelationMatrix.STD_DEV][0], 1e-4);
+        assertEquals(2.40370, instance.getColumn(1).data[CorrelationMatrix.STD_DEV][0], 1e-4);
+        assertEquals(3.52766, instance.getColumn(2).data[CorrelationMatrix.STD_DEV][0], 1e-4);
         
     }
 
@@ -102,7 +98,9 @@ public class CorrelationMatrixTest {
 
     }
 
-    @Test public void testAggregate() throws Exception {
+    @Test public void testEquals() throws Exception {
+
+
 
     }
 }

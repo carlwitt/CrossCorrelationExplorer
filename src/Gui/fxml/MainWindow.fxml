@@ -6,39 +6,47 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Text?>
 <VBox minHeight="600.0" minWidth="800.0" prefHeight="768.0" prefWidth="1024.0" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.MainWindowController">
-  <!--<MenuBar>
+  <MenuBar maxHeight="20.0">
     <menus>
-      <Menu mnemonicParsing="false" text="Views">
+      <Menu mnemonicParsing="false" text="File">
         <items>
-          <CheckMenuItem mnemonicParsing="false" text="Correlation Cell Distribution Viewer" />
+          <MenuItem mnemonicParsing="false" onAction="#showStartUpWizard" text="Create or Open Experiment..." />
+          <MenuItem mnemonicParsing="false" onAction="#save" text="Save" />
+          <MenuItem mnemonicParsing="false" onAction="#saveAs" text="Save as..." />
+          <MenuItem mnemonicParsing="false" onAction="#exportCorrelogramImage" text="Export Correlogram as Image..." />
+          <SeparatorMenuItem mnemonicParsing="false" />
+          <MenuItem mnemonicParsing="false" onAction="#quit" text="Quit" />
+        </items>
+      </Menu>
+      <Menu mnemonicParsing="false" text="Help">
+        <items>
+          <MenuItem mnemonicParsing="false" onAction="#showGitHubWiki" text="Wiki Pages" />
+          <MenuItem mnemonicParsing="false" onAction="#showGitHubIssues" text="Report a bug (GitHub account required)" />
         </items>
       </Menu>
     </menus>
-  </MenuBar>-->
-  <SplitPane dividerPositions="0.18929503916449086" focusTraversable="true" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0" VBox.vgrow="ALWAYS">
-    <AnchorPane fx:id="inputPane" minHeight="0.0" prefHeight="144.0" prefWidth="1022.0" style="-fx-background-color: gainsboro;">
-      <Text layoutX="-8.0" layoutY="25.0" rotate="270.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Input" translateX="0.0" />
-      <StackPane minHeight="0.0" prefHeight="165.0" visible="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-        <TabPane fx:id="inputTabPane" minHeight="0.0" prefHeight="165.0" prefWidth="200.0" rotateGraphic="false" style="-fx-background-color: white;" tabClosingPolicy="UNAVAILABLE" tabMaxHeight="26.0" tabMinHeight="0.0">
-          <Tab closable="false" text="Correlograms">
-            <fx:include fx:id="computationInput" source="ComputationInputTab.fxml" alignment="TOP_LEFT" />
-          </Tab>
-          <Tab closable="false" text="Time Series View">
-            <fx:include fx:id="timeSeriesView" source="TimeSeriesView.fxml" />
-          </Tab>
-          <Tab text="Computation Output">
-            <fx:include fx:id="computationOutput" source="ComputationOutputTab.fxml" />
-          </Tab>
-        </TabPane>
-        <StackPane fx:id="progressPane" disable="false" minHeight="0.0" opacity="1.0" prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: rgba(0,0,0,0.5);" visible="false">
-          <StackPane prefHeight="40.0" prefWidth="446.0" visible="true" StackPane.alignment="CENTER">
-            <ProgressBar fx:id="progressBar" maxHeight="40.0" prefHeight="40.0" prefWidth="500.0" progress="0.0" />
-            <Label fx:id="progressLabel" alignment="CENTER" contentDisplay="RIGHT" prefHeight="40.000099999997474" prefWidth="500.0" text="Loading file contents...&#10;1 of 100" StackPane.alignment="CENTER" />
-          </StackPane>
-          <Button fx:id="progressCancelButton" mnemonicParsing="false" prefHeight="25.0" prefWidth="99.0" text="Cancel" translateY="40.0" StackPane.alignment="CENTER" />
+  </MenuBar>
+  <SplitPane dividerPositions="0.2560646900269542" focusTraversable="false" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0" VBox.vgrow="ALWAYS">
+    <StackPane minHeight="0.0" prefHeight="132.0" prefWidth="1002.0" visible="true">
+      <TabPane fx:id="inputTabPane" minHeight="0.0" prefHeight="165.0" prefWidth="200.0" rotateGraphic="false" style="-fx-background-color: white;" tabClosingPolicy="UNAVAILABLE" tabMaxHeight="26.0" tabMinHeight="0.0">
+        <Tab closable="false" text="Correlograms">
+          <fx:include fx:id="computation" source="ComputationTab.fxml" alignment="TOP_LEFT" />
+        </Tab>
+        <Tab closable="false" text="Cell Distribution">
+          <fx:include fx:id="cellDistributionView" source="CellDistributionView.fxml" prefHeight="147.0" prefWidth="988.0" />
+        </Tab>
+        <Tab closable="false" text="Time Series">
+          <fx:include fx:id="timeSeriesView" source="TimeSeriesView.fxml" />
+        </Tab>
+      </TabPane>
+      <StackPane fx:id="progressPane" disable="false" minHeight="0.0" opacity="1.0" prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: rgba(0,0,0,0.5);" visible="false">
+        <StackPane prefHeight="40.0" prefWidth="446.0" visible="true" StackPane.alignment="CENTER">
+          <ProgressBar fx:id="progressBar" maxHeight="40.0" prefHeight="40.0" prefWidth="500.0" progress="0.0" />
+          <Label fx:id="progressLabel" alignment="CENTER" contentDisplay="RIGHT" prefHeight="40.000099999997474" prefWidth="500.0" text="Loading file contents...&#10;1 of 100" StackPane.alignment="CENTER" />
         </StackPane>
+        <Button fx:id="progressCancelButton" mnemonicParsing="false" prefHeight="25.0" prefWidth="99.0" text="Cancel" translateY="40.0" StackPane.alignment="CENTER" />
       </StackPane>
-    </AnchorPane>
+    </StackPane>
     <!--Correlogram View-->
     <AnchorPane prefHeight="-1.0" prefWidth="200.0" style="-fx-background-color: gainsboro;">
       <Text fontSmoothingType="GRAY" rotate="270.0" smooth="true" strikethrough="false" strokeType="OUTSIDE" strokeWidth="0.0" text="Correlation View" translateX="0.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="-45.0" AnchorPane.topAnchor="50.0" />

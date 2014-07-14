@@ -115,6 +115,7 @@ public class LagWindowCache {
     protected boolean hasWindow(int timeSeriesIndex, int startIndex){
 
         // the last window start index covered
+        // TODO: this sometimes fails! (e.g. 5x5 gives java.lang.ArrayIndexOutOfBoundsException: 5 in the following line)
         int rangeEnd = rangeStart[timeSeriesIndex] + numberOfElements[timeSeriesIndex] - 1;
         return startIndex >= rangeStart[timeSeriesIndex] && startIndex <= rangeEnd;
 

@@ -1,7 +1,6 @@
 package Visualization;
 
 import Data.Correlation.CorrelationMatrix;
-import Data.Correlation.CrossCorrelation;
 import Data.SharedData;
 import Data.TimeSeries;
 import Data.Windowing.WindowMetadata;
@@ -23,9 +22,9 @@ public class CorrelogramLegendTest {
         instance = new CorrelogramLegend(new Correlogram(new MultiDimensionalPaintScale(1200,400)), new MultiDimensionalPaintScale(24,4));
         sharedData = new  SharedData();
 
-        sharedData.dataModel.put(0, 1, new TimeSeries(1,1,1,1));
-        sharedData.dataModel.put(0, 2, new TimeSeries(1,2,3,4));
-        sharedData.dataModel.put(0, 3, new TimeSeries(1,4,1,8));
+        sharedData.experiment.dataModel.put(0, 1, new TimeSeries(1, 1,1,1,1));
+        sharedData.experiment.dataModel.put(0, 2, new TimeSeries(1, 1,2,3,4));
+        sharedData.experiment.dataModel.put(0, 3, new TimeSeries(1, 1,4,1,8));
 
         instance.setSharedData(sharedData);
 
@@ -35,16 +34,16 @@ public class CorrelogramLegendTest {
         System.out.println("valueRangeSample");
 
         // compute a correlation matrix
-        sharedData.dataModel.correlationSetA.clear();
-        sharedData.dataModel.correlationSetB.clear();
-        sharedData.dataModel.correlationSetA.add(sharedData.dataModel.get(1));
-        sharedData.dataModel.correlationSetA.add(sharedData.dataModel.get(2));
-        sharedData.dataModel.correlationSetA.add(sharedData.dataModel.get(3));
-        sharedData.dataModel.correlationSetB.add(sharedData.dataModel.get(2));
-        sharedData.dataModel.correlationSetB.add(sharedData.dataModel.get(3));
+        sharedData.experiment.dataModel.correlationSetA.clear();
+        sharedData.experiment.dataModel.correlationSetB.clear();
+        sharedData.experiment.dataModel.correlationSetA.add(sharedData.experiment.dataModel.get(0,1));
+        sharedData.experiment.dataModel.correlationSetA.add(sharedData.experiment.dataModel.get(0,2));
+        sharedData.experiment.dataModel.correlationSetA.add(sharedData.experiment.dataModel.get(0,3));
+        sharedData.experiment.dataModel.correlationSetB.add(sharedData.experiment.dataModel.get(0,2));
+        sharedData.experiment.dataModel.correlationSetB.add(sharedData.experiment.dataModel.get(0,3));
 
         int windowSize = 2;
-        WindowMetadata metadata = new WindowMetadata(sharedData.dataModel.correlationSetA, sharedData.dataModel.correlationSetB, windowSize, -2, 2, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED, 1);
+        WindowMetadata metadata = new WindowMetadata(sharedData.experiment.dataModel.correlationSetA, sharedData.experiment.dataModel.correlationSetB, windowSize, -2, 2, 1);
         CorrelationMatrix.setSignificanceLevel(metadata, 0.05);
         CorrelationMatrix correlationMatrix = new CorrelationMatrix(metadata);
         correlationMatrix.compute();
@@ -76,13 +75,13 @@ public class CorrelogramLegendTest {
         System.out.println("valueRangeSample edge case");
 
         // compute a correlation matrix
-        sharedData.dataModel.correlationSetA.clear();
-        sharedData.dataModel.correlationSetB.clear();
-        sharedData.dataModel.correlationSetA.add(sharedData.dataModel.get(3));
-        sharedData.dataModel.correlationSetB.add(sharedData.dataModel.get(3));
+        sharedData.experiment.dataModel.correlationSetA.clear();
+        sharedData.experiment.dataModel.correlationSetB.clear();
+        sharedData.experiment.dataModel.correlationSetA.add(sharedData.experiment.dataModel.get(0,3));
+        sharedData.experiment.dataModel.correlationSetB.add(sharedData.experiment.dataModel.get(0,3));
 
         int windowSize = 2;
-        WindowMetadata metadata = new WindowMetadata(sharedData.dataModel.correlationSetA, sharedData.dataModel.correlationSetB, windowSize, -2, 2, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED, 1);
+        WindowMetadata metadata = new WindowMetadata(sharedData.experiment.dataModel.correlationSetA, sharedData.experiment.dataModel.correlationSetB, windowSize, -2, 2, 1);
         CorrelationMatrix correlationMatrix = new CorrelationMatrix(metadata);
         correlationMatrix.compute();
 
@@ -118,13 +117,13 @@ public class CorrelogramLegendTest {
         System.out.println("valueRangeSample edge case");
 
         // compute a correlation matrix
-        sharedData.dataModel.correlationSetA.clear();
-        sharedData.dataModel.correlationSetB.clear();
-        sharedData.dataModel.correlationSetA.add(sharedData.dataModel.get(3));
-        sharedData.dataModel.correlationSetB.add(sharedData.dataModel.get(3));
+        sharedData.experiment.dataModel.correlationSetA.clear();
+        sharedData.experiment.dataModel.correlationSetB.clear();
+        sharedData.experiment.dataModel.correlationSetA.add(sharedData.experiment.dataModel.get(0,3));
+        sharedData.experiment.dataModel.correlationSetB.add(sharedData.experiment.dataModel.get(0,3));
 
         int windowSize = 2;
-        WindowMetadata metadata = new WindowMetadata(sharedData.dataModel.correlationSetA, sharedData.dataModel.correlationSetB, windowSize, -2, 2, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED, 1);
+        WindowMetadata metadata = new WindowMetadata(sharedData.experiment.dataModel.correlationSetA, sharedData.experiment.dataModel.correlationSetB, windowSize, -2, 2, 1);
         CorrelationMatrix correlationMatrix = new CorrelationMatrix(metadata);
         correlationMatrix.compute();
 

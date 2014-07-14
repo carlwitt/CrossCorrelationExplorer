@@ -1,9 +1,7 @@
 package Data.Correlation;
 
 import Data.TimeSeries;
-import Data.Windowing.LagWindowStatistics;
 import Data.Windowing.WindowMetadata;
-import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import java.util.ArrayList;
@@ -38,7 +36,6 @@ public class CrossCorrelation {
         LEAVE_UNCHANGED
     }
 
-    static PearsonsCorrelation correlation = new PearsonsCorrelation();
     /**
      * Computes the pearson correlation coefficient.
      * Naïve reference implementation for testing.
@@ -125,7 +122,7 @@ public class CrossCorrelation {
 
     }
 
-    protected static CorrelationMatrix naiveCrossCorrelation(WindowMetadata metadata){
+    public static CorrelationMatrix naiveCrossCorrelation(WindowMetadata metadata){
 
         final int numMatrices = metadata.setA.size() * metadata.setB.size();
 
@@ -134,7 +131,7 @@ public class CrossCorrelation {
         int nextFreeSlot = 0;
         for(TimeSeries tsA : metadata.setA){
             for(TimeSeries tsB : metadata.setB){
-                WindowMetadata partialMetadata = new WindowMetadata(tsA, tsB, metadata.windowSize, metadata.tauMin, metadata.tauMax, metadata.naAction, metadata.baseWindowOffset);
+                WindowMetadata partialMetadata = new WindowMetadata(tsA, tsB, metadata.windowSize, metadata.tauMin, metadata.tauMax, metadata.baseWindowOffset);
                 CorrelationMatrix.setSignificanceLevel(partialMetadata, CorrelationMatrix.getSignificanceLevel(metadata));
                 partialResults[nextFreeSlot++] = naiveCrossCorrelationAtomic(partialMetadata);
             }
@@ -163,7 +160,7 @@ public class CrossCorrelation {
                 DescriptiveStatistics descriptiveStatistics = new DescriptiveStatistics();
                 int numNegSig = 0, numPosSig = 0;
                 for (int tsIdx = 0; tsIdx < numMatrices; tsIdx++) {
-                    double r = partialResults[tsIdx].getResultItems().get(colIdx).mean[lag];
+                    double r = partialResults[tsIdx].getResultItems().get(colIdx).data[CorrelationMatrix.MEAN][lag];
                     descriptiveStatistics.addValue(r);
                     if(tester.significanceTest(Math.abs(r))){
                         if(r < 0) numNegSig++;
@@ -197,42 +194,6 @@ public class CrossCorrelation {
     }
 
     /**
-     * Computes the normalized cross-correlation between two windows of two time series.
-     * @param a Precomputed data for the first time series.
-     * @param b Precomputed data for the second time series.
-     * @param windowStartIndexA The zero based index of the value where the window in the first time series starts.
-     * @param tau The offset (relative to windowStartIndexA) of the window in the second time series.
-     * @return Normalized correlation coefficient.
-     * TODO remove
-     */
-    public static double correlationCoefficient(LagWindowStatistics a, LagWindowStatistics b, int windowStartIndexA, int tau){
-
-        int windowStartIndexB = windowStartIndexA + tau;
-
-        int windowNumberA = a.getWindowNumberForStartIndex(windowStartIndexA);
-        int windowNumberB = b.getWindowNumberForStartIndex(windowStartIndexB);
-
-        // rootOfSummedSquares of both windows
-        double summedSquaresA = a.rootOfSummedSquares[windowNumberA],
-               summedSquaresB = b.rootOfSummedSquares[windowNumberB];
-
-        double[] normalizedValuesA = a.getNormalizedValues(windowStartIndexA),
-                 normalizedValuesB = b.getNormalizedValues(windowStartIndexB);
-
-        // the sum of pointwise multiplied normalized measurements (enumerator term)
-        double covariance = 0;
-        for (int i = 0; i < a.windowSize; i++) {
-            covariance += normalizedValuesA[i] * normalizedValuesB[i];
-        }
-
-        // the square root of the product of the rootOfSummedSquares (denominator term)
-        double normalizationTerm = Math.sqrt( summedSquaresA * summedSquaresB );
-
-        return covariance / normalizationTerm;
-
-    }
-
-    /**
      * Computes the average of a window of a time series. This method doesn't perform any index checking.
      * @param a time series
      * @param from start index of the window (inclusive). Must be a valid index in the time series' data array.
@@ -241,7 +202,8 @@ public class CrossCorrelation {
      */
     public static double mean(TimeSeries a, int from, int to){
 
-        if (to < from) throw new AssertionError("Invalid window indices passed to mean computation. First window index needs to be smaller or equal to last window index.");
+        // TODO: there was a case when an error was thrown here.
+        assert from < to : String.format("Invalid window indices passed to mean computation. First window index %s needs to be smaller or equal to last window index %s.", from, to);
         double mean = 0;
         for (int i = from; i <= to; i++) {
             mean += a.getDataItems().im[i];
@@ -301,7 +263,6 @@ public class CrossCorrelation {
      * @param to   range end index (inclusive) within data
      * @param mean the mean within the window (can usually be computed with a rolling mean algorithm to save time.)
      * @param out  the array where to put the data. needs to be of appropriate size. this way, garbage collection time can be reduced significantly.
-     * @return the mean-shifted values
      */
     public static void normalizeValues(double[] data, int from, int to, double mean, double[] out){
         int target = 0;

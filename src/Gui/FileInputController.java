@@ -6,17 +6,14 @@ import Data.TimeSeries;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.stage.FileChooser;
 import org.controlsfx.dialog.Dialogs;
 
-import java.io.File;
 import java.net.URL;
 import java.util.*;
-import java.util.prefs.Preferences;
 
 /**
  * Controls the loading of text files and the selection of time series from the text file to work with.
@@ -44,13 +41,8 @@ public class FileInputController implements Initializable {
     /** the list to which selected time series are added. */
     private ObservableList<TimeSeries> targetCollection;
 
-    // data file input
-    private File file = null;
-    private final FileChooser fileChooser = new FileChooser();
-    private final FileModel fileModel = new FileModel(null, null);
-    
     // progress display layer controls (must be set from parent controller, because it blocks the entire input pane)
-    ProgressLayer progressLayer;
+    private ProgressLayer progressLayer;
     
     // -------------------------------------------------------------------------
     // injected control elements
@@ -88,44 +80,14 @@ public class FileInputController implements Initializable {
         this.targetCollection = targetCollection;
     }
 
-    public List<String> getRecentFiles(){
+    // data file input
+    private final FileChooser fileChooser = new FileChooser();
+    private final FileModel fileModel = new FileModel(null, null);
 
-        Preferences prefs = Preferences.userNodeForPackage(FileInputController.class);
-        List<String> recentFiles = new LinkedList<>();
-        for (int i = 0; i < MAX_RECENT_FILES; i++) {
-            String recentFile = prefs.get("recentFile" + i, null);
-            if(recentFile == null) break;
-            recentFiles.add(recentFile);
-        }
-        return recentFiles;
-    }
-    public void addRecentFile(String filepath){
-        Preferences prefs = Preferences.userNodeForPackage(FileInputController.class);
-        List<String> recentFiles = getRecentFiles();
-        if(recentFiles.size() == MAX_RECENT_FILES) recentFiles.remove(MAX_RECENT_FILES - 1);
-        recentFiles.remove(filepath);
-        recentFiles.add(0, filepath);
-        for (int i = 0; i < recentFiles.size(); i++) {
-//            System.out.println(String.format("recentFiles.peekFirst(): %s", recentFiles.peekFirst()));
-            prefs.put("recentFile"+i,recentFiles.get(i));
-        }
-    }
     @Override
     public void initialize(URL url, ResourceBundle rb) {
 
         fileChooserButton.getItems().clear();
-        for (final String file : getRecentFiles()){
-            if(file == null) continue;
-            MenuItem item = new MenuItem(file);
-            item.setOnAction(new EventHandler<ActionEvent>() {
-                @Override public void handle(ActionEvent event) {
-                    System.out.println(String.format("load %s", file));
-                    loadFile(new File(file));
-                }
-            });
-            fileChooserButton.getItems().add(item);
-        }
-
 
         availableList.setItems(availableTimeSeries);
         loadedList.setItems(targetCollection);
@@ -141,31 +103,13 @@ public class FileInputController implements Initializable {
         // enable load on double click
         final FileInputController instance = this; 
         availableList.setOnMouseClicked(t -> {
-            if( t.getClickCount() == 2){ instance.loadSelected(null); }
+            if( t.getClickCount() == 2){ instance.loadSelected(); }
         });
         loadedList.setOnMouseClicked(t -> {
             if( t.getClickCount() == 2){ instance.unloadSelected(null); }
         });
         
-        // update separator on text change in on of the radio buttons text fields
-        characterSeparatorText.textProperty().addListener((ov, t, newCharacter) -> {
-            if(!newCharacter.equals("")){
-                fileModel.setSeparatorCharacter(newCharacter);
-                characterSeparatorRadio.selectedProperty().set(true);
-            }
-        });
-        fixedWidthSeparatorText.textProperty().addListener((ov, t, newWidth) -> {
-            if( ! newWidth.equals("")){
-                fileModel.setSeparatorWidth(Integer.parseInt(newWidth));
-                fixedWidthSeparatorRadio.selectedProperty().set(true);
-            }
-        });
-        // manually update separator when selecting the tab property
-        separatorSelection.selectedToggleProperty().addListener((ov, oldRadioButton, newRadioButton) -> {
-            if(newRadioButton == tabSeparatorRadio){
-                fileModel.setSeparatorCharacter("\t");
-            }
-        });
+
         
         // set up radio button usability details
         // TODO: these handlers would be better implemented in scripting (no important logic going on)
@@ -180,28 +124,9 @@ public class FileInputController implements Initializable {
     // input file loading logic 
     // -------------------------------------------------------------------------
     
-    // pick a file for loading 
-    public void selectFile(ActionEvent e){
-        // start in the directory where the last file was loaded
-        if(file != null)
-            fileChooser.setInitialDirectory(file.getParentFile());
-        
-        fileChooser.setTitle("Open Time Series Data File");
-        file = fileChooser.showOpenDialog(null);
-
-        loadFile(file);
-    }
-
-    // update display and loader service
-    protected void loadFile(File file) {
-        if(file!=null){
-            fileModel.filenameProperty().set( file.getAbsolutePath() );
-            addRecentFile(file.getAbsolutePath());
-        }
-    }
 
     // load the file, applying the separator options
-    public void loadFile(ActionEvent e) {
+    public void loadFile() {
     
         if(separatorSelection.getSelectedToggle() == fixedWidthSeparatorRadio){
             fileModel.setSeparatorWidth(Integer.parseInt(fixedWidthSeparatorText.getText()));
@@ -259,14 +184,15 @@ public class FileInputController implements Initializable {
     // loads all time series from the file into the data model
     public void loadAll(ActionEvent e){
         availableList.getSelectionModel().selectAll();
-        loadSelected(e);
+        loadSelected();
     }
     // loads a random number of available time series
     public void loadRandom(ActionEvent e){
-        String response = Dialogs.create()
+        Optional<String> response = Dialogs.create()
                 .title("Number of random time series")
                 .showTextInput("200");
-        int number = Integer.parseInt(response);
+        if(! response.isPresent()) return;
+        int number = Integer.parseInt(response.get());
         
         availableList.getSelectionModel().clearSelection();
         
@@ -286,9 +212,9 @@ public class FileInputController implements Initializable {
         for (Integer element : randomSelection) {
             availableList.getSelectionModel().select(element);
         }
-        loadSelected(e);
+        loadSelected();
     }
-    public void loadSelected(ActionEvent e){
+    public void loadSelected(){
         // make a copy of the selection, because removing list items changes the selection
         Object[] selectionCopy = availableList.getSelectionModel().getSelectedItems().toArray();
         
@@ -299,13 +225,13 @@ public class FileInputController implements Initializable {
             // time series id and visible list elements are both 1-based indices
             Integer tsOffset = (Integer) item;
             // create time series and append to data model
-            TimeSeries timeSeries = new TimeSeries(fileModel.getXValues(tsOffset), fileModel.getYValues(tsOffset));
+            TimeSeries timeSeries = new TimeSeries(1, fileModel.getXValues(), fileModel.getYValues(tsOffset));
             newSeries.put(timeSeries.getId(), timeSeries);
             availableTimeSeries.remove(tsOffset);
         }
 
         // by adding all time series in a single step, repeated updates of the observers are avoided
-        sharedData.dataModel.timeSeries.putAll(newSeries);
+//        sharedData.dataModel.timeSeries.putAll(newSeries);
         targetCollection.addAll(newSeries.values());
         loadedList.setItems(targetCollection);
 //        Logger.getLogger(FileInputController.class.getName()).log(Level.INFO, String.format("targetCollection %s (%s elements)",targetCollection, targetCollection.size()));
@@ -323,10 +249,10 @@ public class FileInputController implements Initializable {
         for (Object item : selectionCopy) {
             TimeSeries timeSeries = (TimeSeries) item;
             availableTimeSeries.add(timeSeries.getId()); // insert sorted
-            sharedData.dataModel.timeSeries.remove(timeSeries.getId());
+//            sharedData.dataModel.timeSeries.remove(timeSeries.getId());
             sharedData.previewTimeSeries.remove(timeSeries);
-            sharedData.dataModel.correlationSetA.remove(timeSeries);
-            sharedData.dataModel.correlationSetB.remove(timeSeries);
+            sharedData.experiment.dataModel.correlationSetA.remove(timeSeries);
+            sharedData.experiment.dataModel.correlationSetB.remove(timeSeries);
         }
         availableTimeSeries.sort(null);
     }

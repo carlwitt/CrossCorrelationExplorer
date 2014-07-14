@@ -1,10 +1,11 @@
 package Global;
 
+import Gui.HelpWindowController;
 import Gui.MainWindowController;
+import Gui.StartUpWizardController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
-import javafx.scene.layout.Pane;
+import javafx.scene.Parent;
 import javafx.stage.Stage;
 
 import java.util.logging.Level;
@@ -19,12 +20,33 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) {
 
+        RuntimeConfiguration.configure();
+
+        FXMLLoader mainWindowLoader    = new FXMLLoader(getClass().getResource("../Gui/fxml/MainWindow.fxml")),
+                   helpWindowLoader    = new FXMLLoader(getClass().getResource("../Gui/fxml/HelpWindow.fxml")),
+                   startUpWizardLoader = new FXMLLoader(getClass().getResource("../Gui/fxml/StartUpWizard.fxml"));
+
         try {
-            Pane rootNode = FXMLLoader.load(MainWindowController.class.getResource("fxml/StartUpWizard.fxml"));
-            Scene scene = new Scene(rootNode);
-            primaryStage.setScene(scene);
-            primaryStage.setTitle("Cross Correlation Explorer");
-            primaryStage.show();
+            // create controllers and their windows
+            Parent mainWindowRoot = mainWindowLoader.load();
+            MainWindowController mainWindowController = mainWindowLoader.<MainWindowController>getController();
+            mainWindowController.createStage(mainWindowRoot, "Cross Correlation Explorer");
+            Parent helpWindowRoot = helpWindowLoader.load();
+            HelpWindowController helpWindowController = helpWindowLoader.<HelpWindowController>getController();
+            helpWindowController.createStage(helpWindowRoot, "Help");
+            Parent startUpWizardRoot = startUpWizardLoader.load();
+            StartUpWizardController startUpWizardController = startUpWizardLoader.<StartUpWizardController>getController();
+            startUpWizardController.createStage(startUpWizardRoot, "Create or Load Experiment Files");
+
+            // link controllers with each other
+            mainWindowController.helpWindowController = helpWindowController;
+            mainWindowController.startUpWizardController = startUpWizardController;
+            startUpWizardController.helpWindowController = helpWindowController;
+            startUpWizardController.mainWindowController = mainWindowController;
+
+            // show only the start up wizard when launching the program
+            startUpWizardController.showWindow();
+
         } catch (Exception ex) {
             Logger.getLogger(Gui.MainWindowController.class.getName()).log(Level.SEVERE, null, ex);
         }

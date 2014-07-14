@@ -173,7 +173,7 @@ public class LagWindowStatistics extends AbstractWindowStatistics {
 
     }
 
-    public void computeWindowStartIndices(){
+    protected void computeWindowStartIndices(){
 
         if(! continuousIndices) throw new UnsupportedOperationException("Window start index computation not yet implemented for non continuous lag ranges.");
 

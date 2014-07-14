@@ -165,9 +165,9 @@ public class FileModelTest {
 
         double[] xValues = new double[]{-1,0,1,2,3,4};
         List<TimeSeries> ts = Arrays.asList(
-                new TimeSeries(xValues, new double[]{1,2,3,4,5,6}),
-                new TimeSeries(xValues, new double[]{1e1,1e2,1e3,1e4,1e5,1e6}),
-                new TimeSeries(xValues, new double[]{1e-1,1e-2,1e-3,1e-4,1e-5,1e-6})
+                new TimeSeries(1, xValues, new double[]{1,2,3,4,5,6}),
+                new TimeSeries(2, xValues, new double[]{1e1,1e2,1e3,1e4,1e5,1e6}),
+                new TimeSeries(3, xValues, new double[]{1e-1,1e-2,1e-3,1e-4,1e-5,1e-6})
         );
         // save all time series
         FileModel.persist(ts, "./data/persistTestOutput.txt");
@@ -255,7 +255,7 @@ public class FileModelTest {
                 final ArrayList<TimeSeries> timeSeriesInFile = new ArrayList<TimeSeries>(model.getNumberOfTimeSeries());
 
                 for (int j = 0; j < model.getNumberOfTimeSeries(); j++) {
-                    TimeSeries timeSeries = new TimeSeries(model.getXValues(j), model.getYValues(j));
+                    TimeSeries timeSeries = new TimeSeries(j+1, model.getXValues(), model.getYValues(j));
                     timeSeriesInFile.add(timeSeries);
                     System.out.println("Read time series: " + timeSeries);
                 }
@@ -282,7 +282,7 @@ public class FileModelTest {
 
                         // and compare to the initial parsed ones
                         for (int j = 0; j < modelForPersisted.getNumberOfTimeSeries(); j++) {
-                            TimeSeries timeSeries = new TimeSeries(modelForPersisted.getXValues(j), modelForPersisted.getYValues(j));
+                            TimeSeries timeSeries = new TimeSeries(j+1, modelForPersisted.getXValues(), modelForPersisted.getYValues(j));
                             assertArrayEquals(timeSeriesInFile.get(j).getDataItems().re, timeSeries.getDataItems().re, 1e-15);
                             assertArrayEquals(timeSeriesInFile.get(j).getDataItems().im, timeSeries.getDataItems().im, 1e-15);
                         }

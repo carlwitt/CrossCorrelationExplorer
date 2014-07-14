@@ -1,18 +1,15 @@
 package Data;
 
 import com.sun.istack.internal.NotNull;
+
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
 
 /**
  * Represents a fixed length sequence of complex numbers (consisting of a real and an imaginary part).
  * It is used to represent time series (x and y values) and aggregated correlation results (mean and standard deviation).
  * @author Carl Witt
  */
-public class ComplexSequence implements List<Double> {
+public class ComplexSequence {
 
     /** The precision used to check if two complex sequences are the same. */
     public static final double EQ_COMPARISON_THRESHOLD = 1E-6;
@@ -23,7 +20,7 @@ public class ComplexSequence implements List<Double> {
     public final double[] re;
     public final double[] im;
     
-    public final int length;
+    private final int length;
     private double[] realMinMax;
     private double[] imagMinMax; 
     
@@ -35,7 +32,7 @@ public class ComplexSequence implements List<Double> {
      */
     public static ComplexSequence create(@NotNull ComplexSequence c, int left, int right) {
         double[] re = c.re == null ? new double[right-left+1] : Arrays.copyOfRange(c.re, left, right+1);
-        double[] im = c.im == null ? new double[right-left+1] : Arrays.copyOfRange(c.im, left, right+1);
+        double[] im = Arrays.copyOfRange(c.im, left, right + 1);
         return new ComplexSequence(re, im);
     }
     /**
@@ -96,28 +93,6 @@ public class ComplexSequence implements List<Double> {
         return new double[]{min, max};
     }
     
-    private void multiplyAll(double[] array, double factor){
-        for (int i = 0; i < array.length; i++) {
-            array[i] = factor * array[i];
-        }
-    }
-    // negates all complex parts
-    public ComplexSequence conjugate(){
-        multiplyAll(im,-1);
-        return this;
-    }
-//    public ComplexSequence conjugateReal() {
-//        multiplyAll(re,-1);
-//        return this;
-//    }
-    
-    
-    public static ComplexSequence conjugate(ComplexSequence a){
-        ComplexSequence result = ComplexSequence.create(Arrays.copyOf(a.re, a.size()), Arrays.copyOf(a.im, a.size()));
-        result.conjugate();
-        return result;
-    }
-    
     /** Multiplies the sequence point by point with another sequence. This manipulates the sequence. */
     public ComplexSequence pointWiseProduct(ComplexSequence other) {
         if(size() != other.size()){
@@ -165,17 +140,17 @@ public class ComplexSequence implements List<Double> {
         }
     }
 
-    @Override
+//    @Override
     public int size() {
         return im.length;
     }
 
-    @Override
+//    @Override
     public boolean isEmpty() {
         return re.length == 0;
     }
 
-    @Override
+//    @Override
     public Double get(int i) {
         return re[i];
     }
@@ -214,118 +189,117 @@ public class ComplexSequence implements List<Double> {
         final ComplexSequence other = (ComplexSequence) obj;
         if(other.re.length != re.length) return false;
         for (int i = 0; i < re.length; i++)
-            if( Math.abs(other.re[i]-re[i]) > EQ_COMPARISON_THRESHOLD ) return false;
+            if( (Double.isNaN(other.re[i]) == Double.isNaN(re[i])) && Math.abs(other.re[i]-re[i]) > EQ_COMPARISON_THRESHOLD ) return false;
         
-        if(other.im == null && im != null 
-                || im == null && other.im != null 
-                || im != null && other.im != null && im.length != other.im.length) return false;
+        if(im.length != other.im.length) return false;
         for (int i = 0; i < im.length; i++)
-            if( Math.abs(other.im[i]-im[i]) > EQ_COMPARISON_THRESHOLD ) return false;
+            if( (Double.isNaN(other.im[i]) == Double.isNaN(im[i])) && Math.abs(other.im[i]-im[i]) > EQ_COMPARISON_THRESHOLD ) return false;
+
         return true;
     }
     
     
     
     
-    @Override
-    public boolean contains(Object o) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public Iterator<Double> iterator() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public Object[] toArray() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public <T> T[] toArray(T[] ts) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public boolean add(Double e) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public boolean remove(Object o) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public boolean containsAll(Collection<?> clctn) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public boolean addAll(Collection<? extends Double> clctn) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public boolean addAll(int i, Collection<? extends Double> clctn) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public boolean removeAll(Collection<?> clctn) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public boolean retainAll(Collection<?> clctn) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void clear() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public Double set(int i, Double e) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void add(int i, Double e) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public Double remove(int i) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public int indexOf(Object o) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public int lastIndexOf(Object o) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public ListIterator<Double> listIterator() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public ListIterator<Double> listIterator(int i) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public List<Double> subList(int i, int i1) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
+//    @Override
+//    public boolean contains(Object o) {
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//    }
+//
+//    @Override
+//    public Iterator<Double> iterator() {
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//    }
+//
+//    @Override
+//    public Object[] toArray() {
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//    }
+//
+//    @Override
+//    public <T> T[] toArray(T[] ts) {
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//    }
+//
+//    @Override
+//    public boolean add(Double e) {
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//    }
+//
+//    @Override
+//    public boolean remove(Object o) {
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//    }
+//
+//    @Override
+//    public boolean containsAll(Collection<?> clctn) {
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//    }
+//
+//    @Override
+//    public boolean addAll(Collection<? extends Double> clctn) {
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//    }
+//
+//    @Override
+//    public boolean addAll(int i, Collection<? extends Double> clctn) {
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//    }
+//
+//    @Override
+//    public boolean removeAll(Collection<?> clctn) {
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//    }
+//
+//    @Override
+//    public boolean retainAll(Collection<?> clctn) {
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//    }
+//
+//    @Override
+//    public void clear() {
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//    }
+//
+//    @Override
+//    public Double set(int i, Double e) {
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//    }
+//
+//    @Override
+//    public void add(int i, Double e) {
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//    }
+//
+//    @Override
+//    public Double remove(int i) {
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//    }
+//
+//    @Override
+//    public int indexOf(Object o) {
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//    }
+//
+//    @Override
+//    public int lastIndexOf(Object o) {
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//    }
+//
+//    @Override
+//    public ListIterator<Double> listIterator() {
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//    }
+//
+//    @Override
+//    public ListIterator<Double> listIterator(int i) {
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//    }
+//
+//    @Override
+//    public List<Double> subList(int i, int i1) {
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//    }
 
     
 

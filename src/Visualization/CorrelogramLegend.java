@@ -3,8 +3,6 @@ package Visualization;
 import Data.Correlation.CorrelationMatrix;
 import Data.SharedData;
 import com.sun.javafx.tk.FontLoader;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.geometry.Point2D;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
@@ -43,7 +41,7 @@ public class CorrelogramLegend extends CanvasChart {
     private final static int MAXIMUM = 1;
 
     /** Whether to render an overlay scatter plot that shows the distribution of the matrix values. */
-    private boolean drawScatterPlot = true;
+    private boolean drawScatterPlot = false;
 
     /** determines from which data to draw from the correlation matrix.
      * e.g. sourceStatistic[VERTICAL] = {@link Data.Correlation.CorrelationMatrix#STD_DEV}.
@@ -89,31 +87,27 @@ public class CorrelogramLegend extends CanvasChart {
         this.sharedData = sharedData;
 
         // render the legend if the correlogram has changed
-        sharedData.correlationMatrixProperty().addListener(new ChangeListener<CorrelationMatrix>() {
-            @Override public void changed(ObservableValue<? extends CorrelationMatrix> ov, CorrelationMatrix t, CorrelationMatrix newMatrix) {
-                assert sourceStatistic[HORIZONTAL] != null : "source statistic horizontal not set";
-                // Computes a sample from the full range of the current correlation matrix (its correlation means and standard deviations).
-                setValueRangeSample(valueRangeSample(newMatrix, horizontalResolution, verticalResolution));
-                resetView();
-                drawContents();
-            }
+        sharedData.correlationMatrixProperty().addListener((ov, t, newMatrix) -> {
+            assert sourceStatistic[HORIZONTAL] != null : "source statistic horizontal not set";
+            // Computes a sample from the full range of the current correlation matrix (its correlation means and standard deviations).
+            setValueRangeSample(valueRangeSample(newMatrix, horizontalResolution, verticalResolution));
+            resetView();
+            drawContents();
         });
 
         // when the use hovers over a correlogram cell, extract the mean and standard deviation of this cell for display in the legend (legendTip)
-        sharedData.highlightedCellProperty().addListener(new ChangeListener() {
-            @Override public void changed(ObservableValue ov, Object t, Object t1) {
-                Point activeCell = (Point) t1;
-                // check whether the column exists the
-                if(activeCell.x >= 0 && activeCell.x < sharedData.getCorrelationMatrix().getResultItems().size() ){
-                    CorrelationMatrix.CorrelationColumn activeColumn = sharedData.getCorrelationMatrix().getResultItems().get(activeCell.x);
-                    // check whether the row exists
-                    if(activeCell.y >= 0 && activeCell.y < activeColumn.mean.length){
-                        // get data according to the render mode
-                        highlightValues[HORIZONTAL] = activeColumn.data[sourceStatistic[HORIZONTAL]][activeCell.y];
-                        if(sourceStatistic[VERTICAL] != null)
-                            highlightValues[VERTICAL] = activeColumn.data[sourceStatistic[VERTICAL]][activeCell.y];
-                        drawContents();
-                    }
+        sharedData.highlightedCellProperty().addListener((ov, t, t1) -> {
+            Point activeCell = (Point) t1;
+            // check whether the column exists the
+            if(activeCell.x >= 0 && activeCell.x < sharedData.getCorrelationMatrix().getResultItems().size() ){
+                CorrelationMatrix.CorrelationColumn activeColumn = sharedData.getCorrelationMatrix().getResultItems().get(activeCell.x);
+                // check whether the row exists
+                if(activeCell.y >= 0 && activeCell.y < activeColumn.data[MEAN].length){
+                    // get data according to the render mode
+                    highlightValues[HORIZONTAL] = activeColumn.data[sourceStatistic[HORIZONTAL]][activeCell.y];
+                    if(sourceStatistic[VERTICAL] != null)
+                        highlightValues[VERTICAL] = activeColumn.data[sourceStatistic[VERTICAL]][activeCell.y];
+                    drawContents();
                 }
             }
         });
@@ -178,10 +172,6 @@ public class CorrelogramLegend extends CanvasChart {
 
     /**
      * Adapts the bounds and resolutions of the axes.
-     * @param horizontalMin
-     * @param horizontalMax
-     * @param verticalMin
-     * @param verticalMax
      */
     private void adaptAxes(Double horizontalMin, Double horizontalMax, Double verticalMin, Double verticalMax) {
 
@@ -284,7 +274,10 @@ public class CorrelogramLegend extends CanvasChart {
 
     }
 
-    void drawMatrixValuesScatter(GraphicsContext gc, Affine dataToScreen) {CorrelationMatrix matrix = sharedData.getCorrelationMatrix();
+    void drawMatrixValuesScatter(GraphicsContext gc, Affine dataToScreen) {
+
+        CorrelationMatrix matrix = sharedData.getCorrelationMatrix();
+        if(matrix == null) return;
 
         Integer srcHorizontal = sourceStatistic[HORIZONTAL], srcVertical = sourceStatistic[VERTICAL];
         Integer notNullDirection = sourceStatistic[VERTICAL] == null ? sourceStatistic[HORIZONTAL] : sourceStatistic[VERTICAL];

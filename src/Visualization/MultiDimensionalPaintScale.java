@@ -43,7 +43,7 @@ public class MultiDimensionalPaintScale
         this.saturationDepth  = saturationDepth; //== null ? DEFAULT_SAT_DEPTH : saturationDepth;
 
         compute();
-        
+
     }
     
     /** Uses the state of the palette (primary and secondary color, resolution, bipolar or not) to compute the colors. */

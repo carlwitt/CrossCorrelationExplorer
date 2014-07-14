@@ -10,6 +10,7 @@ import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.canvas.Canvas;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
@@ -62,22 +63,19 @@ abstract class CanvasChart extends AnchorPane {
         
         buildComponents();
         
-        axesRangesProperty().addListener(new ChangeListener() {
-            @Override
-            public void changed(ObservableValue ov, Object t, Object t1) {
+        axesRangesProperty().addListener((ov, t, t1) -> {
 //                if(t1 == null){
 //                    if(t == null) return;
 //                    t1 = t;
 //                }
 //                assert t1 != null : "something went terribly wrong.";
-                Rectangle2D newRanges = (Rectangle2D) t1;
+            Rectangle2D newRanges = (Rectangle2D) t1;
 
 
-                xAxis.setLowerBound(newRanges.getMinX());
-                xAxis.setUpperBound(newRanges.getMaxX());
-                yAxis.setLowerBound(newRanges.getMinY());
-                yAxis.setUpperBound(newRanges.getMaxY());
-            }
+            xAxis.setLowerBound(newRanges.getMinX());
+            xAxis.setUpperBound(newRanges.getMaxX());
+            yAxis.setLowerBound(newRanges.getMinY());
+            yAxis.setUpperBound(newRanges.getMaxY());
         }
         );
     }
@@ -256,7 +254,22 @@ abstract class CanvasChart extends AnchorPane {
             
         }
     };
-    
+
+    /**
+     * @return an image of the current contents of the visualization window
+     */
+    public WritableImage getCurrentViewAsImage(){
+
+        int width = (int) chartCanvas.getWidth(),
+            height = (int) chartCanvas.getHeight();
+
+        WritableImage wim = new WritableImage(width, height);
+
+        chartCanvas.snapshot(null, wim);
+
+        return wim;
+    }
+
     public Rectangle2D getAxesRanges() { return axesRanges.get(); }
     public void setAxesRanges(Rectangle2D value) { axesRanges.set(value); }
     public ObjectProperty axesRangesProperty() { return axesRanges; }

@@ -7,11 +7,8 @@ import Visualization.MultiDimensionalPaintScale;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.embed.swing.SwingFXUtils;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
-import javafx.scene.Cursor;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.Tooltip;
@@ -45,7 +42,7 @@ public class CorrelogramController {
     @FXML StackPane legendPane;
     @FXML ToggleButton linkWithTimeSeriesViewToggle;
     @FXML ToggleButton scatterPlotToggle;
-    @FXML ToggleButton distributionProbingToggle;
+    @FXML ToggleButton columnUncertaintyToggle;
     @FXML TabPane visualizationSelector;
 
     private static final String[] renderModeLabels = new String[]{
@@ -58,7 +55,7 @@ public class CorrelogramController {
 
     public CorrelogramController() {
         correlogram = new Correlogram(new MultiDimensionalPaintScale(1200, 400));
-        legend = new CorrelogramLegend(correlogram, new MultiDimensionalPaintScale(12, 4));
+        legend = new CorrelogramLegend(correlogram, new MultiDimensionalPaintScale(1200, 400));
     }
 
     public void initialize() {
@@ -91,33 +88,26 @@ public class CorrelogramController {
         }
 
         // on selecting different tabs, change the correlogram display mode
-        visualizationSelector.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
-            @Override public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-                Correlogram.RENDER_MODE newMode = Correlogram.RENDER_MODE.values()[(int)newValue];
-                correlogram.setRenderMode(newMode);
-                correlogram.drawContents();
-                legend.updateRenderMode();
-                legend.resetView();
-                legend.drawContents();
-            }
+        visualizationSelector.getSelectionModel().selectedIndexProperty().addListener((observable, oldValue, newValue) -> {
+            Correlogram.RENDER_MODE newMode = Correlogram.RENDER_MODE.values()[(int)newValue];
+            correlogram.setRenderMode(newMode);
+            correlogram.drawContents();
+            legend.updateRenderMode();
+            legend.resetView();
+            legend.drawContents();
         });
 
         // push scatter plot toggle value to legend if changed.
-        scatterPlotToggle.selectedProperty().addListener(new ChangeListener<Boolean>() {
-            @Override public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                legend.setDrawScatterPlot(newValue);
-                legend.drawContents();
-            }
+        scatterPlotToggle.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            legend.setDrawScatterPlot(newValue);
+            legend.drawContents();
         });
 
-        distributionProbingToggle.selectedProperty().addListener(new ChangeListener<Boolean>() {
-            @Override public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                if(newValue){
-                    correlogram.chartCanvas.setCursor(Cursor.CROSSHAIR);
-                } else {
-                    correlogram.chartCanvas.setCursor(Cursor.DEFAULT);
-                }
-            }
+        columnUncertaintyToggle.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            // toggle down means "use column width visualization"
+            if(newValue) correlogram.setUncertaintyVisualization(Correlogram.UNCERTTAINTY_VISUALIZATION.COLUMN_WIDTH);
+            else         correlogram.setUncertaintyVisualization(Correlogram.UNCERTTAINTY_VISUALIZATION.COLOR);
+            if(newValue != oldValue) correlogram.drawContents();
         });
 
     }
@@ -131,25 +121,13 @@ public class CorrelogramController {
         // report navigation in the correlogram to the time series view (via the shared data)
         correlogram.axesRangesProperty().addListener(pushCorrelogramNavigation);
         
-        // listen to navigation in the time series view (via shared data)
-        sharedData.visibleTimeRangeProperty().addListener(new ChangeListener() {
-            @Override
-            public void changed(ObservableValue ov, Object t, Object t1) {
-                if(linkWithTimeSeriesViewToggle.isSelected()){
-                    Rectangle2D newBounds = (Rectangle2D) t1;
-                    correlogram.xAxis.setLowerBound(newBounds.getMinX());
-                    correlogram.xAxis.setUpperBound(newBounds.getMaxX());
-                    correlogram.drawContents();
-                }
-            }
-        });
-        
-        // listen to changes in the min/max time lag
-        sharedData.timeLagBoundsProperty().addListener(new ChangeListener() {
-            @Override public void changed(ObservableValue ov, Object t, Object t1) {
-                Rectangle2D currentRanges = correlogram.getAxesRanges();
-                Point2D newTimeLagBounds = (Point2D) t1;
-                correlogram.setAxesRanges(new Rectangle2D(currentRanges.getMinX(), newTimeLagBounds.getX(), currentRanges.getHeight(), newTimeLagBounds.getY()));
+//        listen to navigation in the time series view (via shared data)
+        sharedData.visibleTimeRangeProperty().addListener((ov, t, t1) -> {
+            if(linkWithTimeSeriesViewToggle.isSelected()){
+                Rectangle2D newBounds = (Rectangle2D) t1;
+                correlogram.xAxis.setLowerBound(newBounds.getMinX());
+                correlogram.xAxis.setUpperBound(newBounds.getMaxX());
+                correlogram.drawContents();
             }
         });
         
@@ -164,17 +142,16 @@ public class CorrelogramController {
             if(linkWithTimeSeriesViewToggle.isSelected() && oldTimeSeriesBounds != null){
                 Rectangle2D newCorrelogramBounds = (Rectangle2D) t1;
                 Rectangle2D newTimeSeriesBounds = new Rectangle2D(
-                        newCorrelogramBounds.getMinX(), 
-                        oldTimeSeriesBounds.getMinY(), 
-                        newCorrelogramBounds.getWidth(), 
+                        newCorrelogramBounds.getMinX(),
+                        oldTimeSeriesBounds.getMinY(),
+                        newCorrelogramBounds.getWidth(),
                         oldTimeSeriesBounds.getHeight());
                 sharedData.setVisibleTimeRange(newTimeSeriesBounds);
             }
         }
-        
     };
 
-    public void resetView(ActionEvent e) {
+    public void resetView() {
         correlogram.resetView();
         correlogram.drawContents();
 //        correlogram.setAxesRanges(new Rectangle2D(correlogram.xAxis.getLowerBound(), correlogram.yAxis.getLowerBound(), correlogram.xAxis.getRange(), correlogram.yAxis.getRange()));

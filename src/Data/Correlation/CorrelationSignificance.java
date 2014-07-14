@@ -15,8 +15,6 @@ public class CorrelationSignificance {
     private final int sampleSize;
     /** The desired level of significance (equals the probability to get a result as strong as the observed by chance). Is usually 0.05 (5%) or 0.01 (1%). */
     private final double significanceLevel;
-    /** The minimum t value that leads to the rejection of the null hypothesis (that there is no correlation). */
-    private final double criticalTValue;
     /** The minimum correlation value that leads to the rejection of the null hypothesis that there is no correlation. */
     final double criticalCorrelationValue;
 
@@ -27,7 +25,8 @@ public class CorrelationSignificance {
     public CorrelationSignificance(int sampleSize, double significanceLevel) {
         this.sampleSize = sampleSize;
         this.significanceLevel = significanceLevel;
-        criticalTValue = criticalTValue(significanceLevel);
+        /* The minimum t value that leads to the rejection of the null hypothesis (that there is no correlation). */
+        double criticalTValue = criticalTValue(significanceLevel);
 
         // since the formula for the standard error for the pearson correlation is strictly increasing,
         // only a single threshold for the correlation needs to be computed.

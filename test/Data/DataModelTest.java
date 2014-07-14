@@ -6,22 +6,11 @@
 
 package Data;
 
-import Data.TimeSeries;
+import javafx.collections.*;
+import javafx.embed.swing.JFXPanel;
+import org.junit.*;
 
 import java.util.Arrays;
-
-import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
-import javafx.collections.MapChangeListener;
-import javafx.collections.ObservableList;
-import javafx.collections.ObservableMap;
-import javafx.embed.swing.JFXPanel;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.Ignore;
 
 /**
  *
@@ -80,9 +69,9 @@ public class DataModelTest {
             }
         });
         
-        index.put(1, new TimeSeries(new double[]{1,2,3}));
-        index.put(1000, new TimeSeries(new double[]{19,20,123}));
-        index.put(1, new TimeSeries(new double[]{1119,112320,12312123}));
+        index.put(1, new TimeSeries(1, new double[]{1,2,3}));
+        index.put(1000, new TimeSeries(1, new double[]{19,20,123}));
+        index.put(1, new TimeSeries(1, new double[]{1119,112320,12312123}));
         
         System.out.println(String.format("Final keyset: %s", Arrays.toString(keys.toArray())));
         

@@ -2,11 +2,9 @@ package Data.Correlation;
 
 import Data.IO.FileModel;
 import Data.TimeSeries;
-import Data.Windowing.LagWindowStatistics;
 import Data.Windowing.WindowMetadata;
 import org.apache.commons.math3.analysis.function.Atanh;
 import org.apache.commons.math3.distribution.TDistribution;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -28,8 +26,8 @@ public class CrossCorrelationTest {
     public void testCrossCorrelationNaive(){
 
         int windowSize = 4, baseWindowOffset = 2, taumin = -1, tauMax = 2;
-        TimeSeries tsA = new TimeSeries(new double[]{10,2,3,4,10,6,7,8,9});
-        TimeSeries tsB = new TimeSeries(new double[]{3,0,6,4,2,1,5,-8,7});
+        TimeSeries tsA = new TimeSeries(1, 10,2,3,4,10,6,7,8,9);
+        TimeSeries tsB = new TimeSeries(1, 3,0,6,4,2,1,5,-8,7);
 
         CorrelationMatrix exp = new CorrelationMatrix(null);
         CorrelationMatrix.CorrelationColumn[] expected = new CorrelationMatrix.CorrelationColumn[]{
@@ -39,9 +37,9 @@ public class CrossCorrelationTest {
         };
 
 
-        CorrelationMatrix result = CrossCorrelation.naiveCrossCorrelation(new WindowMetadata(tsA, tsB, windowSize, taumin, tauMax, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED, baseWindowOffset));
+        CorrelationMatrix result = CrossCorrelation.naiveCrossCorrelation(CorrelationMatrix.setSignificanceLevel(new WindowMetadata(tsA, tsB, windowSize, taumin, tauMax, baseWindowOffset),0.05));
         for (int i = 0; i < 3; i++) {
-            assertArrayEquals(expected[i].mean, result.getColumn(i).mean, 1e-15);
+            assertArrayEquals(expected[i].data[CorrelationMatrix.MEAN], result.getColumn(i).data[CorrelationMatrix.MEAN], 1e-15);
             assertEquals(expected[i].tauMin, result.getColumn(i).tauMin);
             assertEquals(expected[i].windowStartIndex, result.getColumn(i).windowStartIndex);
 //            System.out.println(result.getColumn(i).tauMin);
@@ -55,10 +53,10 @@ public class CrossCorrelationTest {
     public void testCorrelationCoefficientNaive() throws Exception {
 
         TimeSeries[] series = new TimeSeries[]{
-                new TimeSeries(new double[]{1,2,3,4,5}),                // A
-                new TimeSeries(new double[]{4,2,6,-3,11}),              // B1
-                new TimeSeries(new double[]{100,101,102,103,104}),      // B2
-                new TimeSeries(new double[]{-50,-51,-52,-53,-54})       // B3
+                new TimeSeries(1, new double[]{1,2,3,4,5}),                // A
+                new TimeSeries(1, new double[]{4,2,6,-3,11}),              // B1
+                new TimeSeries(1, new double[]{100,101,102,103,104}),      // B2
+                new TimeSeries(1, new double[]{-50,-51,-52,-53,-54})       // B3
         };
 
 
@@ -78,43 +76,6 @@ public class CrossCorrelationTest {
 
     }
 
-    @Test @Ignore
-    public void testCorrelationCoefficientPrecomputed() throws Exception {
-
-        TimeSeries[] series = new TimeSeries[]{
-                new TimeSeries(new double[]{1,2,3,4,5}),
-                new TimeSeries(new double[]{4,2,6,-3,11}),
-                new TimeSeries(new double[]{100,101,102,103,104}),
-                new TimeSeries(new double[]{-50,-51,-52,-53,-54})
-        };
-
-        int windowSize = 5, tau = 0, delta = 1;
-        LagWindowStatistics[] stats = new LagWindowStatistics[]{
-                new LagWindowStatistics(series[0], windowSize, delta, tau, tau),
-                new LagWindowStatistics(series[1], windowSize, delta, tau, tau),
-                new LagWindowStatistics(series[2], windowSize, delta, tau, tau),
-                new LagWindowStatistics(series[3], windowSize, delta, tau, tau),
-        };
-
-
-        double[] results = new double[]{
-                CrossCorrelation.correlationCoefficient(stats[0], stats[1], 0, tau),
-                CrossCorrelation.correlationCoefficient(stats[0], stats[2], 0, tau),
-                CrossCorrelation.correlationCoefficient(stats[0], stats[3], 0, tau),
-        };
-
-        double[] expectedResults = new double[]{
-                0.276432802575278,
-                1,
-                -1
-        };
-
-        assertArrayEquals(expectedResults, results, 1e-14);
-
-    }
-
-
-
     //------------------------------------------------------------------------------------------------------------------
     // mean calculation
     //------------------------------------------------------------------------------------------------------------------
@@ -123,9 +84,9 @@ public class CrossCorrelationTest {
     @Test
     public void testMean() throws Exception {
 
-        assertEquals(3, CrossCorrelation.mean(new TimeSeries(new double[]{1, 2, 3, 4, 5}), 0, 4), 1e-15);
-        assertEquals(1, CrossCorrelation.mean(new TimeSeries(new double[]{1,1,1,1,1}), 0, 4), 1e-15);
-        assertEquals(0, CrossCorrelation.mean(new TimeSeries(new double[]{0}), 0, 0), 1e-15);
+        assertEquals(3, CrossCorrelation.mean(new TimeSeries(1, new double[]{1, 2, 3, 4, 5}), 0, 4), 1e-15);
+        assertEquals(1, CrossCorrelation.mean(new TimeSeries(1, new double[]{1,1,1,1,1}), 0, 4), 1e-15);
+        assertEquals(0, CrossCorrelation.mean(new TimeSeries(1, new double[]{0}), 0, 0), 1e-15);
 
     }
 
@@ -204,7 +165,7 @@ public class CrossCorrelationTest {
     @Test
     public void testIncrementalMean() throws Exception {
 
-        TimeSeries a = new TimeSeries(new double[]{1,2,3,4,5,6,7,8});
+        TimeSeries a = new TimeSeries(1, new double[]{1,2,3,4,5,6,7,8});
 
         double initialMean = CrossCorrelation.mean(a, 0, 2); // 2
 
@@ -229,7 +190,7 @@ public class CrossCorrelationTest {
         int numTimeSeries = 5;
         List<TimeSeries> ts = new ArrayList<>(numTimeSeries);
         for (int i = 0; i < numTimeSeries; i++) {
-            TimeSeries randomTs = new TimeSeries(new double[timeSeriesLength], new double[timeSeriesLength]);
+            TimeSeries randomTs = new TimeSeries(i+1, new double[timeSeriesLength], new double[timeSeriesLength]);
             for (int j = 0; j < timeSeriesLength; j++) {
                 randomTs.getDataItems().re[j] = j;
                 randomTs.getDataItems().im[j] = Math.random();
@@ -253,7 +214,7 @@ public class CrossCorrelationTest {
         double yOffset = 1;  // the second time series is shifted by that amount along the y axis
 
         // create reference time series as a brownian motion
-        TimeSeries reference = new TimeSeries(new double[timeSeriesLength], new double[timeSeriesLength]);
+        TimeSeries reference = new TimeSeries(1, new double[timeSeriesLength], new double[timeSeriesLength]);
         reference.getDataItems().re[0] = 0;
         reference.getDataItems().im[0] = 0;
         double lastVal = 0;
@@ -275,7 +236,7 @@ public class CrossCorrelationTest {
         // and falls to min lag until 3/3 of the signal are reached
         double maxLag = 100;
         double minLag = -100;
-        TimeSeries lagged = new TimeSeries(new double[timeSeriesLength], new double[timeSeriesLength]);
+        TimeSeries lagged = new TimeSeries(2, new double[timeSeriesLength], new double[timeSeriesLength]);
         int lag = 0;
         for (int j = 0; j < timeSeriesLength; j++) {
             double progress = 1.*j/timeSeriesLength;

@@ -43,14 +43,14 @@
         <Tooltip text="Show distribution of the correlation matrix values as scatterplot overlay." />
       </tooltip>
     </ToggleButton>
-    <ToggleButton id="linkWithTimeSeriesViewToggle" fx:id="distributionProbingToggle" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" selected="false" text="" translateX="-20.0" translateY="-100.0" StackPane.alignment="BOTTOM_LEFT">
+    <ToggleButton id="linkWithTimeSeriesViewToggle" fx:id="columnUncertaintyToggle" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" rotate="0.0" selected="false" text="" translateX="-20.0" translateY="-100.0" StackPane.alignment="BOTTOM_LEFT">
       <graphic>
-        <ImageView fitHeight="14.0" fitWidth="14.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" smooth="false">
+        <ImageView fitHeight="14.0" fitWidth="14.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" rotate="90.0" smooth="false">
           <Image url="@../img/histogram.png" />
         </ImageView>
       </graphic>
       <tooltip>
-        <Tooltip text="Enable correlation distribution probing via hovering correlogram cells" />
+        <Tooltip text="Toggle between uncertainty visualization methods color and column width." />
       </tooltip>
     </ToggleButton>
   </StackPane>

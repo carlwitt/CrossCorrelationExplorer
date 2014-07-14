@@ -20,7 +20,7 @@ public class TimeSeriesTest {
     
     TimeSeries instance;
     public TimeSeriesTest() {
-        instance = new TimeSeries(new double[]{1,2,3,4},new double[]{1.,2.,3.,4.});
+        instance = new TimeSeries(1, new double[]{1,2,3,4},new double[]{1.,2.,3.,4.});
     }
     
     @Test public void testGetSize() {
@@ -72,7 +72,7 @@ public class TimeSeriesTest {
         for (int i = 0; i < numTimeSeries; i++) {
             double[] data = new double[timeSeriesLength];
             for (int j = 0; j < timeSeriesLength; j++) data[j] = rdg.nextDouble();
-            set.add(new TimeSeries(data));
+            set.add(new TimeSeries(1, data));
         }
         return set;
     }

@@ -18,18 +18,22 @@ import java.util.Observable;
  */
 public class SharedData extends Observable {
 
+    // -----------------------------------------------------------------------------------------------------------------
+    // PROPERTIES
+    // -----------------------------------------------------------------------------------------------------------------
+
     /** The globally available time series. */
-    public final DataModel dataModel = new DataModel();
-    
+    public final Experiment experiment;
+
     /** time series for which a preview shall be rendered (e.g. selected in the loaded series list) */
     public final ObservableList<TimeSeries> previewTimeSeries = FXCollections.observableArrayList();
     
     /** Represents the current min/max time lag. The minimum is stored in getX() the maximum is stored in getY() */
     private final ObjectProperty<Point2D> timeLagBounds = new ReadOnlyObjectWrapper<>(new Point2D(-10,10));
+
     public Point2D getTimeLagBounds() { return timeLagBounds.get(); }
     public void setTimeLagBounds(Point2D value) { timeLagBounds.set(value); }
-    public ObjectProperty timeLagBoundsProperty() { return timeLagBounds; }
-    
+
     /** The cross correlation result. It can be listened to a change in the result. */
     private final ObjectProperty<CorrelationMatrix> correlationMatrix  = new SimpleObjectProperty<>();
     public final void setcorrelationMatrix(CorrelationMatrix value) { correlationMatrix.set(value); }
@@ -50,6 +54,15 @@ public class SharedData extends Observable {
     public ObjectProperty highlightedCellProperty() { return highlightedCell; }
     public Point getHighlightedCell() { return highlightedCell.get(); }
     public void setHighlightedCell(Point value) { highlightedCell.set(value); }
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // METHODS
+    // -----------------------------------------------------------------------------------------------------------------
+
+    public  SharedData(){ experiment = new Experiment(); }
+    public SharedData(Experiment experiment) {
+        this.experiment = experiment;
+    }
 
     public CorrelationMatrix.CorrelationColumn getHighlightedColumn() {
         if(getCorrelationMatrix() == null) return null;

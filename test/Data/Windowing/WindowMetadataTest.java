@@ -1,6 +1,5 @@
 package Data.Windowing;
 
-import Data.Correlation.CrossCorrelation;
 import Data.TimeSeries;
 import org.junit.Test;
 
@@ -9,9 +8,9 @@ import static org.junit.Assert.assertNotEquals;
 
 public class WindowMetadataTest {
 
-    TimeSeries tsA = new TimeSeries(new double[]{});
-    WindowMetadata a = new WindowMetadata(tsA, tsA, 4, -1, 1, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED, 2);
-    WindowMetadata b = new WindowMetadata(tsA, tsA, 4, -1, 1, CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED, 3);
+    TimeSeries tsA = new TimeSeries(1, new double[]{});
+    WindowMetadata a = new WindowMetadata(tsA, tsA, 4, -1, 1, 2);
+    WindowMetadata b = new WindowMetadata(tsA, tsA, 4, -1, 1, 3);
 
     @Test
     public void testEquals() throws Exception {

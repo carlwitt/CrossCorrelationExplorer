@@ -18,10 +18,9 @@ import java.util.Arrays;
  */
 public class ApproximateMedian {
 
-    /** the data to analyze */
-    private final double[] data;
     public ApproximateMedian(double[] data){
-        this.data = data;
+        /* the data to analyze */
+        double[] data1 = data;
     }
 
     // slow

@@ -2,6 +2,7 @@ package Visualization;
 
 import Data.ComplexSequence;
 import Data.Correlation.CorrelationMatrix;
+import Data.DataModel;
 import Data.SharedData;
 import Data.TimeSeries;
 import javafx.beans.property.IntegerProperty;
@@ -19,25 +20,22 @@ import java.util.Map;
 
 /**
  * Used to draw the time series. Supports basic aggregation by drawing only each N-th data point.
- * TODO: more sophisticated data aggregation. keeping peaks is important to provide an undistorted impression of the overall shape
  * @author Carl Witt
  */
 public class TimeSeriesChart extends CanvasChart {
 
-    //TODO sharedData should be refactored out (the line chart isn't reusable this way)
     public SharedData sharedData;
-    //TODO seriesSets should be replaced with a more generic data structure that makes the class more reusable
     public HashMap<Color, ObservableList<TimeSeries>> seriesSets = new HashMap<>();
     
-    private final IntegerProperty drawEachNthDataPoint = new SimpleIntegerProperty(1);
+    private final IntegerProperty drawEachNthDataPoint = new SimpleIntegerProperty(20);
     public final void setDrawEachNthDataPoint(int step){ drawEachNthDataPoint.set(step); }
     final int getDrawEachNthDataPoint(){ return drawEachNthDataPoint.get(); }
     public final IntegerProperty drawEachNthDataPointProperty(){ return drawEachNthDataPoint; }
 
-    public TimeSeriesChart(){
-        xAxis.setMinTickUnit(1);
-    }
-    
+    public TimeSeriesChart(){ xAxis.setMinTickUnit(1); }
+
+    // TODO check necessity for transparency
+    public double transparency = 0.01;
     @Override public void drawContents() {
 
         GraphicsContext gc = chartCanvas.getGraphicsContext2D();
@@ -87,13 +85,14 @@ public class TimeSeriesChart extends CanvasChart {
             boolean drawShift  = coloredSet.getKey().equals(setBColor) && highlightTimeLag < Integer.MAX_VALUE;
 
 //            gc.setStroke(coloredSet.getKey().deriveColor(0,1,1,0.1));
-//            gc.setStroke(coloredSet.getKey().deriveColor(0,1,1,0.01));
-            gc.setStroke(coloredSet.getKey());
+            gc.setStroke(coloredSet.getKey().deriveColor(0,1,1,transparency));
+//            gc.setStroke(coloredSet.getKey());
             gc.setLineWidth(1.5);
 
+//System.out.print(String.format("\ndrawing: %s",coloredSet.getValue().size()));
             // draw each time series
             for (TimeSeries ts : coloredSet.getValue()) {
-
+//System.out.print(String.format("%s ", ts));
                 ComplexSequence data = ts.getDataItems();
                 Point2D curPoint, prevPoint = dataToScreen.transform(new Point2D(data.re[0], data.im[0]));
 
@@ -384,14 +383,15 @@ public class TimeSeriesChart extends CanvasChart {
     
     public void resetView() {
         // TODO: add a padding of max(5px, 2.5% of the pixel width/height of the canvas)
-        double xRange = sharedData.dataModel.getMaxX(0) - sharedData.dataModel.getMinX(0);
-        double yRange = sharedData.dataModel.getMaxY(0) - sharedData.dataModel.getMinY(0);
+        DataModel dataModel = sharedData.experiment.dataModel;
+        double xRange = dataModel.getMaxX(0) - dataModel.getMinX(0);
+        double yRange = dataModel.getMaxY(0) - dataModel.getMinY(0);
         if(xRange < 0 || yRange < 0){
             xRange = 1;
             yRange = 1;
                     
         }
-        Rectangle2D newVisibleRange = new Rectangle2D(sharedData.dataModel.getMinX(0), sharedData.dataModel.getMinY(0), xRange, yRange);
+        Rectangle2D newVisibleRange = new Rectangle2D(dataModel.getMinX(0), dataModel.getMinY(0), xRange, yRange);
 
         axesRanges.set(newVisibleRange);
         drawContents();

@@ -4,9 +4,9 @@
  */
 package Data;
 
-import Data.ComplexSequence;
 import org.junit.Test;
-import static org.junit.Assert.*;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  *
@@ -52,23 +52,11 @@ public class ComplexSequenceTest {
     }
     
     @Test
-    public void testConjugate(){
-        System.out.println("testConjugate");
-        double[] img = new double[]    {-7, 6,-5, 4,-3, 2,-1,0};
-        double[] imgConj = new double[]{ 7,-6, 5,-4, 3,-2, 1,0};
-        ComplexSequence initial = ComplexSequence.create(new double[]{0,1,2,3,4,5,6,7}, img);
-        initial.conjugate();
-        // test transformation of a real signal
-        for (int number = 0; number < 8; number++)
-            assertEquals(initial.im[number], imgConj[number], 10e-10);
-    }
-    
-    @Test
     public void testPointWiseProduct() {
         System.out.println("pointWiseProduct");
         ComplexSequence instance  = ComplexSequence.create(new double[]{6,5,4,3,2,1}, new double[6]);
         ComplexSequence other     = ComplexSequence.create(new double[]{0,1,2,3,4,5}, new double[6]);
-        ComplexSequence expResult = ComplexSequence.create(new double[]{0,5,8,9,8,5}, new double[6]);;
+        ComplexSequence expResult = ComplexSequence.create(new double[]{0,5,8,9,8,5}, new double[6]);
         ComplexSequence result = instance.pointWiseProduct(other);
         assertEquals(expResult, result);
     }

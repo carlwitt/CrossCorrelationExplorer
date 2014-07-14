@@ -8,8 +8,8 @@ import static org.junit.Assert.assertEquals;
 
 public class BaseWindowStatisticsTest {
 
-    TimeSeries ts = new TimeSeries(new double[]{1,2,3,4,5,6,7,8,9});
-    TimeSeries ts2 = new TimeSeries(new double[]{0.173935289029032, 0.845529697602615, 0.729925303952768, 0.251001720316708, 0.735257865395397, 0.201331031974405, 0.58229084732011, 0.563765180762857, 0.405128265731037});
+    TimeSeries ts = new TimeSeries(1, new double[]{1,2,3,4,5,6,7,8,9});
+    TimeSeries ts2 = new TimeSeries(1, new double[]{0.173935289029032, 0.845529697602615, 0.729925303952768, 0.251001720316708, 0.735257865395397, 0.201331031974405, 0.58229084732011, 0.563765180762857, 0.405128265731037});
 
     @Test
     public void testGetWindowStartIndices() throws Exception {

@@ -11,7 +11,7 @@ public class LagWindowStatisticsTest {
     /** Tests the correct derivation of properties (such as shared windows, window overlap) from the input data. */
     @Test public void testConstructedProperties(){
 
-        TimeSeries ts = new TimeSeries(new double[9]);
+        TimeSeries ts = new TimeSeries(1, new double[9]);
 
         // perfect fit: time series length is a multiple of the window length
         // continuous: untion of lag window ranges has no holes
@@ -48,7 +48,7 @@ public class LagWindowStatisticsTest {
 
     @Test public void testWindowStartIndices(){
 
-        TimeSeries ts = new TimeSeries(new double[9]);
+        TimeSeries ts = new TimeSeries(1, new double[9]);
 
         int tauMin = -1, tauMax = 3, delta = 3, windowSize = 4;
         LagWindowStatistics instance = new LagWindowStatistics(ts, windowSize, delta, tauMin, tauMax);
@@ -60,7 +60,7 @@ public class LagWindowStatisticsTest {
 
     @Test public void testStatisticsForWindows(){
 
-        TimeSeries ts = new TimeSeries(new double[]{1,2,3,4,5,6,7,8,9});
+        TimeSeries ts = new TimeSeries(1, new double[]{1,2,3,4,5,6,7,8,9});
 
         int tauMin = -1, tauMax = 3, delta = 3, windowSize = 4;
         LagWindowStatistics instance = new LagWindowStatistics(ts, windowSize, delta, tauMin, tauMax);
@@ -74,7 +74,7 @@ public class LagWindowStatisticsTest {
             }
         }
 
-        ts = new TimeSeries(new double[]{0.13193934, 0.28683374, 0.72948551, 0.60793923, 0.27034457, 0.24088859, 0.74299995, 0.03423623, 0.47228535});
+        ts = new TimeSeries(1, new double[]{0.13193934, 0.28683374, 0.72948551, 0.60793923, 0.27034457, 0.24088859, 0.74299995, 0.03423623, 0.47228535});
         instance = new LagWindowStatistics(ts, windowSize, delta, tauMin, tauMax);
         double[] expectedMeans = new double[]{0.4390495,0.4736508,0.4621645,0.4655431,0.3221173,0.3726025};
         double[] expectedSummedSquares = new double[]{0.2303631,0.1597188,0.1784687,0.1858311,0.2692962,0.2789712};
