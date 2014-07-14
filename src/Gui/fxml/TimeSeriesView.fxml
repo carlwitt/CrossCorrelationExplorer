@@ -3,10 +3,7 @@
 <!--This file doesn't contain much because most of the markup went into the CanvasChart class,
     but it is necessary because the fx:controller attribute can be used only on the root element of a file. -->
 
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.Slider?>
-<?import javafx.scene.control.Tooltip?>
+<?import javafx.scene.control.*?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
@@ -24,4 +21,6 @@
       <Tooltip text="Reset view" />
     </tooltip>
   </Button>
+  <Slider fx:id="transparencySlider" blockIncrement="0.01" majorTickUnit="0.25" max="1.0" min="0.01" value="0.05" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="165.0" />
+  <Label fx:id="transparencyLabel" text="render transparency: 0.05" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" />
 </AnchorPane>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.web.WebView?>
+<AnchorPane maxHeight="-1.0" maxWidth="-1.0" minHeight="-1.0" minWidth="-1.0" prefHeight="350.0" prefWidth="1200.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.CellDistributionViewController">
+  <!--<HBox minHeight="14.0" prefHeight="18.0" prefWidth="600.0" AnchorPane.bottomAnchor="5.0" AnchorPane.rightAnchor="5.0">
+    <children>
+      <Separator prefWidth="200.0" visible="false" HBox.hgrow="ALWAYS" />
+      <Label fx:id="numBinsLabel" text="10 bins" visible="false">
+        <HBox.margin>
+          <Insets right="5.0" />
+        </HBox.margin>
+      </Label>
+      <Slider fx:id="numBinsSlider" visible="false" />
+    </children>
+    <padding>
+      <Insets bottom="4.0" top="4.0" />
+    </padding>
+  </HBox>-->
+  <WebView fx:id="webView" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+</AnchorPane>

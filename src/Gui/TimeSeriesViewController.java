@@ -5,11 +5,9 @@ import Data.TimeSeries;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
 import javafx.util.converter.NumberStringConverter;
@@ -34,6 +32,8 @@ public class TimeSeriesViewController {
      * this is important since rendering all series with all points takes very long and is not the main purpose of the software. */
     @FXML protected Slider detailSlider;
     @FXML protected Label levelOfDetailLabel;
+    @FXML protected Slider transparencySlider;
+    @FXML protected Label transparencyLabel;
     
     @FXML protected AnchorPane timeSeriesPane;
     
@@ -48,24 +48,6 @@ public class TimeSeriesViewController {
         timeSeriesChart.seriesSets = seriesSets;
         
         timeSeriesChart.drawEachNthDataPointProperty().bind(detailSlider.valueProperty());
-
-        // TODO remove transparency test code
-        timeSeriesChart.setOnMouseClicked(new EventHandler<MouseEvent>() {
-            int curIdx = 0;
-            double[] transparencies = new double[]{0.01, 0.05, 0.1, 0.2, 0.5, 1};
-            @Override public void handle(MouseEvent event) {
-               timeSeriesChart.transparency = transparencies[(++curIdx)%transparencies.length];
-               timeSeriesChart.drawContents();
-                System.out.println(String.format("timeSeriesChart.transparency: %s", timeSeriesChart.transparency));
-//                File file = new File("./outTransparency"+timeSeriesChart.transparency+".png");
-//                try {
-//                    ImageIO.write(SwingFXUtils.fromFXImage(timeSeriesChart.getCurrentViewAsImage(), null), "png", file);
-//                } catch (Exception s) {
-//                    System.out.println("Couldn't write the correlogram image.");
-//                    s.printStackTrace();
-//                }
-            }
-        });
 
         sharedData.highlightedCellProperty().addListener((ov, t, t1) -> timeSeriesChart.drawContents());
         
@@ -122,9 +104,12 @@ public class TimeSeriesViewController {
         timeSeriesChart.xAxis.setLabel("Year as Geotime (t + 1950)");
         timeSeriesChart.yAxis.setLabel("Temperature ˚C");
 
-        // this fires listeners which try to access not yet set properties (data model?)
-//        timeSeriesChart.yAxis.setLowerBound(-10);
-//        timeSeriesChart.yAxis.setUpperBound(10);
+        transparencySlider.valueProperty().addListener((observable, oldValue, newValue) -> {
+            float newTransparency = newValue.floatValue();
+            transparencyLabel.setText(String.format("render transparency: %.2f", newTransparency));
+            timeSeriesChart.transparency = newTransparency;
+            timeSeriesChart.drawContents();
+        });
 
     }
     

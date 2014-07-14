@@ -101,4 +101,7 @@ public class CorrelationSignificance {
         return criticalT;
     }
 
+    public double getCriticalCorrelationValue() {
+        return criticalCorrelationValue;
+    }
 }

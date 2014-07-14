@@ -107,9 +107,12 @@ public class NetCDFComputationResult {
             for (int windowIdx = 0; windowIdx < windowId.getLength(); windowIdx++) {
                 CorrelationMatrix.CorrelationColumn column = matrix.getColumn(windowIdx);
                 if(column.data[stat] == null) continue;
-                for (int timeLagIdx = 0; timeLagIdx < timeLag.getLength(); timeLagIdx++)
-                    try{ valuesForStatistics[stat].set(windowIdx, timeLagIdx, column.data[stat][timeLagIdx]); }
+                for (int timeLagIdx = 0; timeLagIdx < timeLag.getLength(); timeLagIdx++){
+                    int actualLag = metadata.tauMin + timeLagIdx;
+                    int actualLagInColumn = actualLag - column.tauMin; // might be negative or too large, so catch out of bounds errors
+                    try{ valuesForStatistics[stat].set(windowIdx, timeLagIdx, column.data[stat][actualLagInColumn]); }
                     catch(IndexOutOfBoundsException e) { valuesForStatistics[stat].set(windowIdx, timeLagIdx, Double.NaN); }
+                }
             }
         }
 

@@ -312,7 +312,7 @@ public class ComputationController implements Initializable {
 
         public void selectAll(List<TimeSeries> set) {
             listView.getCheckModel().clearSelection();
-            set.forEach(timeSeries -> listView.getCheckModel().select(timeSeries.getId()));
+            set.forEach(timeSeries -> listView.getCheckModel().select(timeSeries.getId()-1));
         }
     }
 

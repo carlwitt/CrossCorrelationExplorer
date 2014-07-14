@@ -22,9 +22,9 @@ public class Main extends Application {
 
         RuntimeConfiguration.configure();
 
-        FXMLLoader mainWindowLoader    = new FXMLLoader(getClass().getResource("../Gui/fxml/MainWindow.fxml")),
-                   helpWindowLoader    = new FXMLLoader(getClass().getResource("../Gui/fxml/HelpWindow.fxml")),
-                   startUpWizardLoader = new FXMLLoader(getClass().getResource("../Gui/fxml/StartUpWizard.fxml"));
+        FXMLLoader mainWindowLoader    = new FXMLLoader(MainWindowController.class.getResource("fxml/MainWindow.fxml")),
+                   helpWindowLoader    = new FXMLLoader(MainWindowController.class.getResource("fxml/HelpWindow.fxml")),
+                   startUpWizardLoader = new FXMLLoader(MainWindowController.class.getResource("fxml/StartUpWizard.fxml"));
 
         try {
             // create controllers and their windows
@@ -49,6 +49,7 @@ public class Main extends Application {
 
         } catch (Exception ex) {
             Logger.getLogger(Gui.MainWindowController.class.getName()).log(Level.SEVERE, null, ex);
+            System.exit(-1);
         }
         
 

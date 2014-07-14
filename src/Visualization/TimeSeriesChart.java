@@ -35,7 +35,7 @@ public class TimeSeriesChart extends CanvasChart {
     public TimeSeriesChart(){ xAxis.setMinTickUnit(1); }
 
     // TODO check necessity for transparency
-    public double transparency = 0.01;
+    public double transparency = 0.05;
     @Override public void drawContents() {
 
         GraphicsContext gc = chartCanvas.getGraphicsContext2D();
