@@ -59,12 +59,12 @@ public class Correlogram extends CanvasChart {
     RENDER_MODE renderMode = defaultRenderMode;
 
     /** How to encode the second number (usually uncertainty) associated with each correlogram cell. */
-    public static enum UNCERTTAINTY_VISUALIZATION{
+    public static enum UNCERTAINTY_VISUALIZATION {
         COLUMN_WIDTH,   // manipulate column width
         COLOR           // manipulate base color (e.g. changing saturation)
     }
-    private final static UNCERTTAINTY_VISUALIZATION defaultUncertaintyVisualization = UNCERTTAINTY_VISUALIZATION.COLOR;
-    private UNCERTTAINTY_VISUALIZATION uncertaintyVisualization = defaultUncertaintyVisualization;
+    public final static UNCERTAINTY_VISUALIZATION DEFAULT_UNCERTAINTY_VISUALIZATION = UNCERTAINTY_VISUALIZATION.COLOR;
+    private UNCERTAINTY_VISUALIZATION uncertaintyVisualization = DEFAULT_UNCERTAINTY_VISUALIZATION;
 
     // -----------------------------------------------------------------------------------------------------------------
     // METHODS
@@ -155,6 +155,13 @@ public class Correlogram extends CanvasChart {
             drawContents();
         });
 
+        sharedData.uncertaintyVisualizationProperty().addListener((observable, oldValue, newValue) -> {
+            if(this.uncertaintyVisualization != newValue){
+                this.uncertaintyVisualization = (UNCERTAINTY_VISUALIZATION) newValue;
+                drawContents();
+            }
+        });
+
     }
 
     boolean configured = false;
@@ -186,7 +193,7 @@ public class Correlogram extends CanvasChart {
         double[] xValues = ts.getDataItems().re;
         List columns = matrix.getResultItems();
 
-        // depending on the render mode, configure the paintscale
+        // depending on the render mode, configure the paintscale (expensive for high-resolution color scales)
         if(!configured){
             configurePaintscale(matrix, paintScale);
             configured = true;
@@ -198,8 +205,8 @@ public class Correlogram extends CanvasChart {
         int columnIdxFrom = 0,
             columnIdxTo = columns.size()-1;
         if(getAxesRanges() != null){
-            columnIdxFrom = (int) Math.max(0., Math.ceil(getAxesRanges().getMinX() - 1950.)/blockWidth-matrix.metadata.baseWindowOffset);
-            columnIdxTo   = (int) Math.min(columns.size()-1, Math.ceil(getAxesRanges().getMaxX()- 1950.)/blockWidth+matrix.metadata.baseWindowOffset);
+            columnIdxFrom = (int) Math.max(0., Math.ceil(getAxesRanges().getMinX())/blockWidth-matrix.metadata.baseWindowOffset);
+            columnIdxTo   = (int) Math.min(columns.size()-1, Math.ceil(getAxesRanges().getMaxX())/blockWidth+matrix.metadata.baseWindowOffset);
         }
 
         // clipping on the resolution
@@ -274,8 +281,8 @@ public class Correlogram extends CanvasChart {
         // preparations for
         double uncertainty;     // relative uncertainty (compared to the maximum uncertainty present in the matrix) in the current cell (only used with UNCERTAINTY_VISUALIZATION.COLUMN_WIDTH)
         double slimDown = 0;    // results from the relative uncertainty. A high uncertainty will make the cell much slimmer, no uncertainty will leave it at its full width.
-        double min = matrix.getMin(DIM2);
-        double max = matrix.getMax(DIM2);
+        double min = 0; //matrix.getMin(DIM2);
+        double max = 1; //matrix.getMax(DIM2);
 
         for (int i = columnIdxFrom; i <= columnIdxTo; i += windowStep) {
 
@@ -290,15 +297,15 @@ public class Correlogram extends CanvasChart {
             int lagIdxFrom = 0,
                 lagIdxTo = column.data[DIM1].length-1;
 
-            // clipping on the lag axis
-            if(getAxesRanges() != null){
-                lagIdxFrom = (int) Math.max(0., Math.floor(getAxesRanges().getMinY() - column.tauMin)-1);
-                lagIdxTo   = (int) Math.min(column.data[DIM1].length-1, Math.ceil(getAxesRanges().getMaxY() - column.tauMin)+1);
-            }
+            // TODO: clipping on the lag axis: gives a small speedup but the formula is erroneous
+//            if(getAxesRanges() != null){
+//                lagIdxFrom = (int) Math.max(0., Math.floor(getAxesRanges().getMinY() - column.tauMin)-1);
+//                lagIdxTo   = (int) Math.min(column.data[DIM1].length-1, Math.ceil(getAxesRanges().getMaxY() - column.tauMin)+1);
+//            }
 
             for (int lag = lagIdxFrom; lag <= lagIdxTo; lag += lagStep) {
 
-                if(uncertaintyVisualization == UNCERTTAINTY_VISUALIZATION.COLUMN_WIDTH){
+                if(uncertaintyVisualization == UNCERTAINTY_VISUALIZATION.COLUMN_WIDTH){
                     uncertainty = (column.data[DIM2][lag] - min) / (max - min);
                     slimDown = blockWidth * uncertainty;
                     if(Double.isNaN(slimDown)) slimDown = 0;
@@ -434,8 +441,8 @@ public class Correlogram extends CanvasChart {
 
     /** @param renderMode see {@link Visualization.Correlogram.RENDER_MODE} */
     public void setRenderMode(RENDER_MODE renderMode) { this.renderMode = renderMode; markPaintScaleDirty(); }
-    /** @param uncertaintyVisualization see {@link Visualization.Correlogram.UNCERTTAINTY_VISUALIZATION} */
-    public void setUncertaintyVisualization(UNCERTTAINTY_VISUALIZATION uncertaintyVisualization) { this.uncertaintyVisualization = uncertaintyVisualization; }
+    /** @param uncertaintyVisualization see {@link Visualization.Correlogram.UNCERTAINTY_VISUALIZATION} */
+    public void setUncertaintyVisualization(UNCERTAINTY_VISUALIZATION uncertaintyVisualization) { this.uncertaintyVisualization = uncertaintyVisualization; }
 
 
 

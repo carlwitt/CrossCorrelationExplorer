@@ -2,6 +2,7 @@ package Gui;
 
 import Data.Experiment;
 import Data.SharedData;
+import Global.Main;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
@@ -46,6 +47,8 @@ public class MainWindowController extends WindowController implements Initializa
     @FXML private ComputationController computationController;
     @FXML private CorrelogramController correlationViewController;
     @FXML private CellDistributionViewController cellDistributionViewController;
+
+    public Main globalMain; // to restart the program
 
     /**
      * Called after the controls have been parsed from the XML. Sets up logic and components that could not be set up using the GUI builder.
@@ -99,8 +102,7 @@ public class MainWindowController extends WindowController implements Initializa
     }
 
     public void showStartUpWizard(){
-        this.hideWindow();
-        startUpWizardController.showWindow();
+        globalMain.start(null);
     }
     public void showGitHubWiki(){
 //        helpWindowController.homePage = "https://github.com/carlwitt/CrossCorrelationExplorer/wiki";

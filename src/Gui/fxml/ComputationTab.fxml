@@ -47,7 +47,7 @@
           </Label>
           <TextField id="significanceLevel" fx:id="significanceLevelText" alignment="TOP_RIGHT" prefWidth="-1.0" text="0.05" GridPane.columnIndex="1" GridPane.rowIndex="4" />
         </GridPane>
-        <Label contentDisplay="RIGHT" style="&#10;" text="Input File 1" textFill="#00cc21" wrapText="true" GridPane.columnIndex="0" GridPane.halignment="CENTER" GridPane.rowIndex="0">
+        <Label fx:id="file1Label" contentDisplay="RIGHT" style="&#10;" text="Input File 1" textFill="#00cc21" wrapText="true" GridPane.columnIndex="0" GridPane.halignment="CENTER" GridPane.rowIndex="0">
           <tooltip>
             <Tooltip text="Defines the size of the windows in which the time series are shifted and cross correlated." />
           </tooltip>
@@ -57,30 +57,25 @@
             <Font size="11.0" fx:id="x2" />
           </font>
         </Button>
-        <Label contentDisplay="RIGHT" text="Input File 2" textFill="#0066ff" wrapText="true" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="0">
+        <Label fx:id="file2Label" contentDisplay="RIGHT" text="Input File 2" textFill="#0066ff" wrapText="true" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="0">
           <tooltip>
             <Tooltip text="Defines the size of the windows in which the time series are shifted and cross correlated." />
           </tooltip>
         </Label>
         <FlowPane alignment="TOP_CENTER" prefHeight="-1.0" prefWidth="-1.0" prefWrapLength="10.0" GridPane.columnIndex="0" GridPane.rowIndex="2">
           <children>
-            <Button id="setAToggleSelectedButton" fx:id="setAAddButton" alignment="CENTER_LEFT" font="$x2" mnemonicParsing="false" prefWidth="-1.0" style="-fx-border-radius:0;" text="add" />
-            <Button id="setAToggleSelectedButton" fx:id="setARemoveButton" alignment="CENTER_LEFT" font="$x2" mnemonicParsing="false" prefWidth="-1.0" style="-fx-border-radius:0;" text="remove" />
-            <Button fx:id="setAAddRandomButton" alignment="CENTER_LEFT" font="$x2" mnemonicParsing="false" prefWidth="-1.0" style="" text="add random" />
+            <Button id="setAToggleSelectedButton" fx:id="setAAllButton" alignment="CENTER_LEFT" font="$x2" mnemonicParsing="false" prefWidth="-1.0" style="-fx-border-radius:0;" text="all" />
+            <Button id="setAToggleSelectedButton" fx:id="setANoneButton" alignment="CENTER_LEFT" font="$x2" mnemonicParsing="false" prefWidth="-1.0" style="-fx-border-radius:0;" text="none" />
+            <Button id="setAAddRandomButton" fx:id="setARandomButton" alignment="CENTER_LEFT" font="$x2" mnemonicParsing="false" prefWidth="-1.0" style="" text="random" />
           </children>
         </FlowPane>
         <FlowPane alignment="TOP_CENTER" prefHeight="-1.0" prefWidth="-1.0" prefWrapLength="10.0" GridPane.columnIndex="1" GridPane.rowIndex="2">
           <children>
-            <Button id="setBToggleSelectedButton" fx:id="setBAddButton" alignment="CENTER_LEFT" font="$x2" mnemonicParsing="false" prefWidth="-1.0" style="-fx-border-radius:0;" text="add" />
-            <Button id="setBToggleSelectedButton" fx:id="setBRemoveButton" alignment="CENTER_LEFT" font="$x2" mnemonicParsing="false" prefWidth="-1.0" style="-fx-border-radius:0;" text="remove" />
-            <Button fx:id="setBAddRandomButton" alignment="CENTER_LEFT" font="$x2" mnemonicParsing="false" prefWidth="-1.0" style="" text="add random" />
+            <Button id="setBToggleSelectedButton" fx:id="setBAllButton" alignment="CENTER_LEFT" font="$x2" mnemonicParsing="false" prefWidth="-1.0" style="-fx-border-radius:0;" text="all" />
+            <Button id="setBToggleSelectedButton" fx:id="setBNoneButton" alignment="CENTER_LEFT" font="$x2" mnemonicParsing="false" prefWidth="-1.0" style="-fx-border-radius:0;" text="none" />
+            <Button id="setBAddRandomButton" fx:id="setBRandomButton" alignment="CENTER_LEFT" font="$x2" mnemonicParsing="false" prefWidth="-1.0" style="" text="random" />
           </children>
         </FlowPane>
-        <Label alignment="CENTER" contentDisplay="CENTER" text="Parameters" textFill="BLACK" wrapText="true" GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.rowIndex="0">
-          <tooltip>
-            <Tooltip text="Defines the size of the windows in which the time series are shifted and cross correlated." />
-          </tooltip>
-        </Label>
         <columnConstraints>
           <ColumnConstraints hgrow="ALWAYS" minWidth="150.0" />
           <ColumnConstraints hgrow="ALWAYS" minWidth="150.0" />
@@ -91,6 +86,11 @@
           <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" prefHeight="92.0" vgrow="SOMETIMES" />
           <RowConstraints fillHeight="true" maxHeight="-1.0" minHeight="-1.0" prefHeight="-1.0" vgrow="NEVER" />
         </rowConstraints>
+        <Label alignment="CENTER" contentDisplay="CENTER" text="Parameters" textFill="BLACK" wrapText="true" GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.rowIndex="0">
+          <tooltip>
+            <Tooltip text="Defines the size of the windows in which the time series are shifted and cross correlated." />
+          </tooltip>
+        </Label>
       </GridPane>
       <VBox id="VBox" alignment="CENTER" spacing="5.0">
         <children>

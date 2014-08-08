@@ -212,7 +212,7 @@ public class TimeSeriesChart extends CanvasChart {
 //
 //        // for each time step
 //        for (int i = 0; i < timeSeriesLength; i++) {
-//            if(i%1000==0) System.out.println(String.format("current time: %s", i+1950));
+//            if(i%1000==0) System.out.println(String.format("current time: %s", i));
 //            // for each set
 //            for (Map.Entry<Color, ObservableList<TimeSeries>> coloredSet : seriesSets.entrySet()) {
 //                // collect all values at that time

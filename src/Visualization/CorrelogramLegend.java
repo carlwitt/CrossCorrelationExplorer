@@ -61,6 +61,8 @@ public class CorrelogramLegend extends CanvasChart {
     private final int verticalResolution = 4;
     private double xTickUnit, yTickUnit;
 
+    Correlogram.UNCERTAINTY_VISUALIZATION uncertaintyVisualization = Correlogram.DEFAULT_UNCERTAINTY_VISUALIZATION;
+
     /** The paintscale used to convert multi-dimensional values into colors.
      *  Using the correlograms paintscale is not possible, since when extending the displayed value range (e.g. to center the zero value along a dimension)
      *  additional values (not occurring in the correlogram) occur which then can not be converted to colors by the correlogram's paintscale. */
@@ -109,6 +111,13 @@ public class CorrelogramLegend extends CanvasChart {
                         highlightValues[VERTICAL] = activeColumn.data[sourceStatistic[VERTICAL]][activeCell.y];
                     drawContents();
                 }
+            }
+        });
+
+        sharedData.uncertaintyVisualizationProperty().addListener((observable, oldValue, newValue) -> {
+            if(this.uncertaintyVisualization != newValue){
+                this.uncertaintyVisualization = (Correlogram.UNCERTAINTY_VISUALIZATION) newValue;
+                drawContents();
             }
         });
 
@@ -249,14 +258,15 @@ public class CorrelogramLegend extends CanvasChart {
 
                 // draw rectangle
                 Paint paint;
-                if(sourceStatistic[VERTICAL] == null)
+                // if there's no source statistic for the vertical axis defined or if uncertainty is encoded via column width, use one dimensional color palette.
+                if(sourceStatistic[VERTICAL] == null || uncertaintyVisualization == Correlogram.UNCERTAINTY_VISUALIZATION.COLUMN_WIDTH)
                     paint = paintScale.getPaint(
                         values[rowIdx][colIdx][HORIZONTAL]
                     );
                 else
                     paint = paintScale.getPaint(
-                            values[rowIdx][colIdx][HORIZONTAL],
-                            values[rowIdx][colIdx][VERTICAL]
+                        values[rowIdx][colIdx][HORIZONTAL],
+                        values[rowIdx][colIdx][VERTICAL]
                     );
                 gc.setFill(paint);  gc.setStroke(paint);
                 gc.fillRect(ulc.getX(), ulc.getY(), brc.getX() - ulc.getX(), ulc.getY() - brc.getY());

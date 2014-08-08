@@ -14,26 +14,29 @@ import java.util.logging.Logger;
 public class Main extends Application {
 
     public static void main(String[] args) {
+
+        RuntimeConfiguration.configure();
         Application.launch(Main.class, (java.lang.String[])null);
+
     }
 
     @Override
     public void start(Stage primaryStage) {
 
-        RuntimeConfiguration.configure();
-
         FXMLLoader mainWindowLoader    = new FXMLLoader(MainWindowController.class.getResource("fxml/MainWindow.fxml")),
-                   helpWindowLoader    = new FXMLLoader(MainWindowController.class.getResource("fxml/HelpWindow.fxml")),
-                   startUpWizardLoader = new FXMLLoader(MainWindowController.class.getResource("fxml/StartUpWizard.fxml"));
+                helpWindowLoader    = new FXMLLoader(MainWindowController.class.getResource("fxml/HelpWindow.fxml")),
+                startUpWizardLoader = new FXMLLoader(MainWindowController.class.getResource("fxml/StartUpWizard.fxml"));
 
         try {
             // create controllers and their windows
             Parent mainWindowRoot = mainWindowLoader.load();
             MainWindowController mainWindowController = mainWindowLoader.<MainWindowController>getController();
             mainWindowController.createStage(mainWindowRoot, "Cross Correlation Explorer");
+
             Parent helpWindowRoot = helpWindowLoader.load();
             HelpWindowController helpWindowController = helpWindowLoader.<HelpWindowController>getController();
             helpWindowController.createStage(helpWindowRoot, "Help");
+
             Parent startUpWizardRoot = startUpWizardLoader.load();
             StartUpWizardController startUpWizardController = startUpWizardLoader.<StartUpWizardController>getController();
             startUpWizardController.createStage(startUpWizardRoot, "Create or Load Experiment Files");
@@ -41,6 +44,8 @@ public class Main extends Application {
             // link controllers with each other
             mainWindowController.helpWindowController = helpWindowController;
             mainWindowController.startUpWizardController = startUpWizardController;
+            mainWindowController.globalMain = this;
+
             startUpWizardController.helpWindowController = helpWindowController;
             startUpWizardController.mainWindowController = mainWindowController;
 
@@ -53,6 +58,6 @@ public class Main extends Application {
         }
         
 
-    }    
-     
+    }
+
 }

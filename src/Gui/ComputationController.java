@@ -6,6 +6,7 @@ import Data.SharedData;
 import Data.TimeSeries;
 import Data.Windowing.WindowMetadata;
 import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
@@ -47,9 +48,9 @@ public class ComputationController implements Initializable {
     // -------------------------------------------------------------------------
     
     // input file separator selection
-    @FXML private ToggleGroup nanStrategy;
-    @FXML private RadioButton nanSetToZeroRadio;
-    @FXML private RadioButton nanLeaveRadio;
+//    @FXML private ToggleGroup nanStrategy;
+//    @FXML private RadioButton nanSetToZeroRadio;
+//    @FXML private RadioButton nanLeaveRadio;
     
     @FXML private GridPane inputGridPane;
 
@@ -59,12 +60,12 @@ public class ComputationController implements Initializable {
     @FXML private TextField timeLagMaxText;
     @FXML private TextField significanceLevelText;
 
-    @FXML private Button setAAddButton;
-    @FXML private Button setARemoveButton;
-    @FXML private Button setAAddRandomButton;
-    @FXML private Button setBAddButton;
-    @FXML private Button setBRemoveButton;
-    @FXML private Button setBAddRandomButton;
+    @FXML private Button setAAllButton;
+    @FXML private Button setANoneButton;
+    @FXML private Button setARandomButton;
+    @FXML private Button setBAllButton;
+    @FXML private Button setBNoneButton;
+    @FXML private Button setBRandomButton;
 
     @FXML private Button runButton;
 
@@ -77,8 +78,6 @@ public class ComputationController implements Initializable {
     @FXML private TableColumn<WindowMetadata,Double> significanceColumn;
 //    @FXML private TableColumn<WindowMetadata,Time> timeColumn;
 
-    private CheckListView setASeries;
-    private CheckListView setBSeries;
     ProgressLayer progressLayer;
 
     // -------------------------------------------------------------------------
@@ -112,18 +111,11 @@ public class ComputationController implements Initializable {
         this.sharedData = sharedData;
         dataModel = sharedData.experiment.dataModel;
 
-        // add check list views to the computation input controls
-        setASeries = new CheckListView<TimeSeries>(dataModel.timeSeriesA);
-        setBSeries = new CheckListView<TimeSeries>(dataModel.timeSeriesB);
-
-        setASeries.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        setBSeries.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        inputGridPane.add(setASeries, 0, 1);
-        inputGridPane.add(setBSeries, 1, 1);
-
         // init time series selection helpers
-        setASelector = new TimeSeriesSelector(dataModel.correlationSetA, setASeries, setAAddButton, setARemoveButton, setAAddRandomButton);
-        setBSelector = new TimeSeriesSelector(dataModel.correlationSetB, setBSeries, setBAddButton, setBRemoveButton, setBAddRandomButton);
+        setASelector = new TimeSeriesSelector(dataModel.timeSeriesA, dataModel.correlationSetA, setAAllButton, setANoneButton, setARandomButton);
+        setBSelector = new TimeSeriesSelector(dataModel.timeSeriesB, dataModel.correlationSetB, setBAllButton, setBNoneButton, setBRandomButton);
+        inputGridPane.add(setASelector.listView, 0, 1);
+        inputGridPane.add(setBSelector.listView, 1, 1);
 
         // enable computation run button only if both sets contain at least one element
         ListChangeListener<TimeSeries> checkNonEmpty = change ->
@@ -213,36 +205,55 @@ public class ComputationController implements Initializable {
         // restore time series selection
         setASelector.removeAll();
         setBSelector.removeAll();
-        setASelector.addAll(metadata.setA);     // restore the logical selection
-        setBSelector.addAll(metadata.setB);
-        setASelector.selectAll(metadata.setA);  // restore the check marks
+        setASelector.addGiven(metadata.setA);     // restore the logical selection
+        setBSelector.addGiven(metadata.setB);
+        setASelector.selectAll(metadata.setA);      // restore the check marks
         setBSelector.selectAll(metadata.setB);
         setASelector.flushAddBuffer();
         setBSelector.flushAddBuffer();
     }
 
+    /**
+     * Handles the logic for adding and removing time series from the computation parameters.
+     * Is put in a separate class because the entire thing is needed for both input files separately.
+     */
     private class TimeSeriesSelector{
 
-        final List<TimeSeries> targetSet;
+        final List<TimeSeries> baseSet, targetSet;
 
         final CheckListView<TimeSeries> listView;
-        final Button addSelected;
-        final Button removeSelected;
+        boolean listeningToChanges = true;
+
+        final Button addAll;
+        final Button removeAll;
         final Button addRandom;
 
         final RandomDataGenerator rdg = new RandomDataGenerator();
 
-        private TimeSeriesSelector(List<TimeSeries> targetSet, CheckListView<TimeSeries> listView, Button addSelected, Button removeSelected, Button addRandom) {
+        /**
+         * @param baseSet   list of time series to select from
+         * @param targetSet list of time series that represents the selection
+         * @param addAll    buttons to add all time series to selection
+         * @param removeAll buttons to remove all time series from selection
+         * @param addRandom buttons to add a number of random time series to selection
+         */
+        private TimeSeriesSelector(ObservableList<TimeSeries> baseSet, ObservableList<TimeSeries> targetSet, Button addAll, Button removeAll, Button addRandom) {
+
+            this.baseSet = baseSet;
             this.targetSet = targetSet;
-            this.listView = listView;
-            this.addSelected = addSelected;
+
+            this.addAll = addAll;
             this.addRandom = addRandom;
-            this.removeSelected = removeSelected;
-            addSelected.setOnAction(event -> addSelected());
-            removeSelected.setOnAction(event -> removeSelected());
+            this.removeAll = removeAll;
+            addAll.setOnAction(event -> addAll());
+            removeAll.setOnAction(event -> unselectAll());
             addRandom.setOnAction(event -> addRandom());
+
+            this.listView = new CheckListView<>(baseSet);
+            this.listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             listView.getCheckModel().getSelectedItems().addListener((ListChangeListener<TimeSeries>) c -> {
                 // trying to access the change (and only the change) directly gives only null and -1 values when selecting new time series
+                if(!listeningToChanges)return;
                 removeAll();
                 for(Integer selectedIdx : listView.getCheckModel().getSelectedIndices())
                     addLater(listView.getItems().get(selectedIdx));
@@ -251,29 +262,35 @@ public class ComputationController implements Initializable {
         }
 
         final List<TimeSeries> addBuffer = new ArrayList<>();
-        private void add(TimeSeries ts){ if(! targetSet.contains(ts)) targetSet.add(ts); }
-        private void addAll(List<TimeSeries> ts){ ts.forEach(this::addLater); }
+//        private void add(TimeSeries ts){ if(! targetSet.contains(ts)) targetSet.add(ts); }
+        private void addAll(){
+            targetSet.clear();
+            targetSet.addAll(baseSet);
+            listView.getCheckModel().selectAll();
+        }
+        private void addGiven(List<TimeSeries> ts){ ts.forEach(this::addLater); }
         private void addLater(TimeSeries ts){ if(! (addBuffer.contains(ts) || targetSet.contains(ts))) addBuffer.add(ts); }
         private void flushAddBuffer(){ targetSet.addAll(addBuffer); addBuffer.clear(); }
 
-        final List<TimeSeries> removeBuffer = new ArrayList<>();
+//        final List<TimeSeries> removeBuffer = new ArrayList<>();
         private void removeAll(){ targetSet.clear(); }
-        private void remove(TimeSeries ts){ targetSet.remove(ts); }
-        private void removeLater(TimeSeries ts){ removeBuffer.add(ts); }
-        private void flushRemoveBuffer(){ targetSet.removeAll(removeBuffer); }
+//        private void remove(TimeSeries ts){ targetSet.remove(ts); }
+//        private void removeLater(TimeSeries ts){ removeBuffer.add(ts); }
+//        private void flushRemoveBuffer(){
+//            targetSet.removeAll(removeBuffer);
+//        }
 
-        private void addSelected(){
-            List<TimeSeries> ts = listView.getItems();
-            for(Integer selectedIndex : listView.getSelectionModel().getSelectedIndices()){
-                listView.getCheckModel().select(selectedIndex);
-
-            }
-        }
-        private void removeSelected(){
-            List<TimeSeries> ts = listView.getItems();
-            for(Integer selectedIndex : listView.getSelectionModel().getSelectedIndices())
-                listView.getCheckModel().clearSelection(selectedIndex);
-        }
+//        private void addSelected(){
+//            List<TimeSeries> ts = listView.getItems();
+//            for(Integer selectedIndex : listView.getSelectionModel().getSelectedIndices()){
+//                listView.getCheckModel().select(selectedIndex);
+//            }
+//        }
+//        private void removeSelected(){
+//            List<TimeSeries> ts = listView.getItems();
+//            for(Integer selectedIndex : listView.getSelectionModel().getSelectedIndices())
+//                listView.getCheckModel().clearSelection(selectedIndex);
+//        }
         private void addRandom(){
 
             // ask how many items to add
@@ -301,7 +318,7 @@ public class ComputationController implements Initializable {
             for (int i = 0; i < numItems; i++)
                 if( ! listView.getCheckModel().isSelected(i)) uncheckedIndices[j++] = i;
 
-            List<TimeSeries> ts = listView.getItems();
+//            List<TimeSeries> ts = listView.getItems();
             // generate a random sample of the unchecked indices and check them
             for(Object idx : rdg.nextSample(Arrays.asList(uncheckedIndices),toAdd)){
 //                addLater(ts.get((Integer)idx));
@@ -311,8 +328,15 @@ public class ComputationController implements Initializable {
         }
 
         public void selectAll(List<TimeSeries> set) {
+            listeningToChanges = false;
             listView.getCheckModel().clearSelection();
             set.forEach(timeSeries -> listView.getCheckModel().select(timeSeries.getId()-1));
+            listeningToChanges = true;
+        }
+        public void unselectAll() {
+            listeningToChanges = false;
+            listView.getCheckModel().clearSelection();
+            listeningToChanges = true;
         }
     }
 

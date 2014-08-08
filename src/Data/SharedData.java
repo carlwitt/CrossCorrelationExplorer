@@ -1,6 +1,7 @@
 package Data;
 
 import Data.Correlation.CorrelationMatrix;
+import Visualization.Correlogram;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleObjectProperty;
@@ -39,7 +40,7 @@ public class SharedData extends Observable {
     public final void setcorrelationMatrix(CorrelationMatrix value) { correlationMatrix.set(value); }
     public final CorrelationMatrix getCorrelationMatrix() { return correlationMatrix.get(); }
     public final ObjectProperty<CorrelationMatrix> correlationMatrixProperty() { return correlationMatrix; }
-   
+
     /** The min/max time (in the x component) that is visible in both the time series and correlogram view. */
     private final ObjectProperty<Rectangle2D> visibleTimeRange = new SimpleObjectProperty<>();
     public Rectangle2D getVisibleTimeRange() { return visibleTimeRange.get(); }
@@ -54,6 +55,15 @@ public class SharedData extends Observable {
     public ObjectProperty highlightedCellProperty() { return highlightedCell; }
     public Point getHighlightedCell() { return highlightedCell.get(); }
     public void setHighlightedCell(Point value) { highlightedCell.set(value); }
+
+    /**
+     * Specifies how uncertainty is visualized in the correlogam.
+     * See {@link Visualization.Correlogram.UNCERTAINTY_VISUALIZATION}
+     */
+    private final ObjectProperty<Correlogram.UNCERTAINTY_VISUALIZATION> uncertaintyVisualization = new SimpleObjectProperty<>();
+    public ObjectProperty uncertaintyVisualizationProperty(){return uncertaintyVisualization;}
+    public Correlogram.UNCERTAINTY_VISUALIZATION getUncertaintyVisualization(){return uncertaintyVisualization.get();}
+    public void setUncertaintyVisualization(Correlogram.UNCERTAINTY_VISUALIZATION uncertaintyVisualization){this.uncertaintyVisualization.set(uncertaintyVisualization);}
 
     // -----------------------------------------------------------------------------------------------------------------
     // METHODS

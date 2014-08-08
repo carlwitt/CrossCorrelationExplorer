@@ -29,7 +29,7 @@
   <SplitPane dividerPositions="0.2560646900269542" focusTraversable="false" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0" VBox.vgrow="ALWAYS">
     <StackPane minHeight="0.0" prefHeight="132.0" prefWidth="1002.0" visible="true">
       <TabPane fx:id="inputTabPane" minHeight="0.0" prefHeight="165.0" prefWidth="200.0" rotateGraphic="false" style="-fx-background-color: white;" tabClosingPolicy="UNAVAILABLE" tabMaxHeight="26.0" tabMinHeight="0.0">
-        <Tab closable="false" text="Correlograms">
+        <Tab closable="false" text="Parameters">
           <fx:include fx:id="computation" source="ComputationTab.fxml" alignment="TOP_LEFT" />
         </Tab>
         <Tab closable="false" text="Cell Distribution">

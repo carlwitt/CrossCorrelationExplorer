@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Slider?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Text?>
 <?import javafx.scene.web.WebView?>
-<AnchorPane maxHeight="-1.0" maxWidth="-1.0" minHeight="-1.0" minWidth="-1.0" prefHeight="350.0" prefWidth="1200.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.CellDistributionViewController">
+<AnchorPane maxHeight="-1.0" maxWidth="-1.0" minHeight="-1.0" minWidth="-1.0" prefHeight="350.0" prefWidth="1200.0" style="-fx-background-color: gainsboro;" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.CellDistributionViewController">
   <!--<HBox minHeight="14.0" prefHeight="18.0" prefWidth="600.0" AnchorPane.bottomAnchor="5.0" AnchorPane.rightAnchor="5.0">
     <children>
       <Separator prefWidth="200.0" visible="false" HBox.hgrow="ALWAYS" />
@@ -17,5 +20,8 @@
       <Insets bottom="4.0" top="4.0" />
     </padding>
   </HBox>-->
-  <WebView fx:id="webView" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+  <WebView fx:id="webView" cache="true" cacheHint="QUALITY" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="16.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+  <Text fontSmoothingType="GRAY" rotate="270.0" smooth="true" strikethrough="false" strokeType="OUTSIDE" strokeWidth="0.0" text="Correlation Values" translateX="0.0" AnchorPane.bottomAnchor="-2.32" AnchorPane.leftAnchor="-48.0" AnchorPane.topAnchor="52.32" />
+  <Slider fx:id="numBinsSlider" blockIncrement="1.0" max="500.0" min="10.0" snapToTicks="true" value="40.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" />
+  <Label text="Number of Bins" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="145.0" />
 </AnchorPane>

@@ -148,7 +148,7 @@ public class FileModel {
                     // cache first column
                     firstColumn = new double[getTimeSeriesLength()];
                     for (int i = 0; i < firstColumn.length; i++) {
-                        firstColumn[i] = rowValues[i][0] + 1950;
+                        firstColumn[i] = rowValues[i][0];
                     }
                     
                     return null;
@@ -199,7 +199,7 @@ public class FileModel {
         // cache first column
         firstColumn = new double[getTimeSeriesLength()];
         for (int i = 0; i < firstColumn.length; i++) {
-            firstColumn[i] = rowValues[i][0] + 1950;
+            firstColumn[i] = rowValues[i][0];
         }
         isExecuted = true;
     }

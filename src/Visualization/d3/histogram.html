@@ -5,11 +5,14 @@
     font: 10px sans-serif;
     }
 
-    .bar rect { shape-rendering: crispEdges; stroke: black; }
+    .bar rect {
+        shape-rendering: crispEdges;
+        stroke: black;
+    }
     .sigMarker{ shape-rendering: crispEdges; }
     .bar text {
         fill: #fff;
-        stroke: black;
+        stroke: black ;
     }
 
     .axis path, .axis line {
@@ -17,7 +20,6 @@
         stroke: #000;
         shape-rendering: crispEdges;
     }
-
 
 </style>
 
@@ -94,19 +96,20 @@ function render(width, height){
 
     xAxisRangeMarker(-1.0, -criticalCorrelationValue, "negative significant", svg);
     xAxisRangeMarker( criticalCorrelationValue,  1.0, "positive significant", svg);
-    
+
+    // histogram bars
     var bar = svg.selectAll(".bar")
         .data(data)
       .enter().append("g")
         .attr("class", "bar")
         .attr("transform", function(d) { return "translate(" + xScale(d.x) + "," + yScale(d.y) + ")"; })
         .attr("fill", function(d){ var rgbVals = colorScale(d.x); return "rgb("+rgbVals[0]+","+rgbVals[1]+","+rgbVals[2]+")";});
-
     bar.append("rect")
-        .attr("x", 1)
-        .attr("width", 5)
+        .attr("x", 0)
+        .attr("width", width/data.length)
         .attr("height", function(d) { return height - yScale(d.y); });
 
+    // axes
     svg.append("g")
         .attr("class", "x axis")
         .attr("transform", "translate(0," + height + ")")

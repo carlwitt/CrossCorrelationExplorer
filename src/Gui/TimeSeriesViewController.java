@@ -101,7 +101,7 @@ public class TimeSeriesViewController {
         timeSeriesChart.xAxis.setTickLabelFormatter(new NumberStringConverter(new  DecimalFormat("####")));
 //        timeSeriesChart.yAxis.setTickLabelFormatter(new NumberStringConverter(new  DecimalFormat("0,000")));
 
-        timeSeriesChart.xAxis.setLabel("Year as Geotime (t + 1950)");
+        timeSeriesChart.xAxis.setLabel("Year");
         timeSeriesChart.yAxis.setLabel("Temperature ˚C");
 
         transparencySlider.valueProperty().addListener((observable, oldValue, newValue) -> {

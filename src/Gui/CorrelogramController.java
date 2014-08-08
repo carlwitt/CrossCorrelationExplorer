@@ -70,7 +70,7 @@ public class CorrelogramController {
         legend.toBack();
         
         correlogram.xAxis.setTickLabelFormatter(new NumberStringConverter(new DecimalFormat("####")));
-        correlogram.xAxis.setLabel("Year as Geotime (t + 1950)");
+        correlogram.xAxis.setLabel("Year");
         correlogram.yAxis.setLabel("Years Time Lag");
         correlogram.yAxis.setTickLabelFormatter(new NumberStringConverter(new DecimalFormat("#")));
         
@@ -104,10 +104,9 @@ public class CorrelogramController {
         });
 
         columnUncertaintyToggle.selectedProperty().addListener((observable, oldValue, newValue) -> {
-            // toggle down means "use column width visualization"
-            if(newValue) correlogram.setUncertaintyVisualization(Correlogram.UNCERTTAINTY_VISUALIZATION.COLUMN_WIDTH);
-            else         correlogram.setUncertaintyVisualization(Correlogram.UNCERTTAINTY_VISUALIZATION.COLOR);
-            if(newValue != oldValue) correlogram.drawContents();
+            // toggle down means "use column width uncertainty visualization"
+            if(newValue) sharedData.setUncertaintyVisualization(Correlogram.UNCERTAINTY_VISUALIZATION.COLUMN_WIDTH);
+            else         sharedData.setUncertaintyVisualization(Correlogram.UNCERTAINTY_VISUALIZATION.COLOR);
         });
 
     }

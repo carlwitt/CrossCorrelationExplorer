@@ -476,4 +476,5 @@ public class ComplexSequenceTest {
 //        
 //        fail("The test case is a prototype.");
 //    }
+
 }
