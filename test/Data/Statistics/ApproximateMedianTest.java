@@ -41,7 +41,7 @@ public class ApproximateMedianTest {
     @Test public void medianSpeed(){
 
         int inputSets = 500;
-        int setSize = 1000001;
+        int setSize = 100001;
         double[][] data = new double[inputSets][setSize];   // one row per input set
 
         int COMMONS = 0, COUNTING = 1, STD_SORT = 2;
@@ -67,7 +67,7 @@ public class ApproximateMedianTest {
         // check counting sort
         before = System.currentTimeMillis();
         for (int i = 0; i < data.length; i++)
-            results[i][COUNTING] = medianFinder.countingSort(data[i]);
+            results[i][COUNTING] = ApproximateMedian.getPercentiles(data[i], 50)[0];
         System.out.println("Counting: " + (System.currentTimeMillis()-before));
 
         // check standard sort (slow)

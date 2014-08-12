@@ -59,9 +59,9 @@ public class BaseWindowStatistics extends AbstractWindowStatistics {
             } else {
                 means[i] = CrossCorrelation.incrementalMean(timeSeries,
                         windowStartIndices[i],                  // from
-                        windowStartIndices[i]+windowSize-1,     // to
-                        means[i-1],                             // previous mean
-                        windowStartIndices[i-1]);               // previous window start index
+                        windowStartIndices[i] + windowSize - 1,     // to
+                        means[i - 1],                             // previous mean
+                        windowStartIndices[i - 1]);               // previous window start index
             }
 
             // 2. normalize window values by subtracting the mean (this is necessary to compute the

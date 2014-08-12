@@ -20,7 +20,7 @@ import static org.junit.Assert.*;
  * @author Carl Witt
  */
 public class ExperimentTest {
-    
+
     CorrelationMatrix c1, c2;
     DataModel dataModel = new DataModel();
 
@@ -46,7 +46,7 @@ public class ExperimentTest {
         experiment = new Experiment(dataModel);
 
 
-        c1 = CrossCorrelation.naiveCrossCorrelation(new WindowMetadata.Builder(-1,1,3,1).tsA(a).tsB(b).pValue(0.05).build());
+        c1 = CrossCorrelation.naiveCrossCorrelation(new WindowMetadata.Builder(-1, 1, 3, 1, 1).tsA(a).tsB(b).pValue(0.05).build());
 //        List<CorrelationMatrix.CorrelationColumn> matrix1 = Lists.newArrayList(
 //                c1.new CorrelationColumnBuilder( 0,  0).mean(new double[]{1.,4.,7.}).standardDeviation( new double[]{11.,44.,77.}).build(),
 //                c1.new CorrelationColumnBuilder( 3,  0).mean(new double[]{2.,5.,8.}).standardDeviation( new double[]{22.,55.,88.}).build(),
@@ -56,10 +56,13 @@ public class ExperimentTest {
 //        c1.append(matrix1.get(1));
 //        c1.append(matrix1.get(2));
 
-        c2 = CrossCorrelation.naiveCrossCorrelation(new WindowMetadata.Builder(-1, 1, 8, 1).tsA(a).tsB(b).pValue(0.05).build());
+        c2 = CrossCorrelation.naiveCrossCorrelation(new WindowMetadata.Builder(-1, 1, 8, 1, 1).tsA(a).tsB(b).pValue(0.05).build());
 //        c2.append(c2.new CorrelationColumnBuilder(0, 0).mean(new double[]{1., 0., 0.}).standardDeviation(new double[]{111., 444., 777.}).build());
 //        c2.append(c2.new CorrelationColumnBuilder(3, 0).mean(new double[]{0., 1., 0.}).standardDeviation(new double[]{222., 555., 888.}).build());
 //        c2.append(c2.new CorrelationColumnBuilder(6, 0).mean(new double[]{0., 0., 1.}).standardDeviation(new double[]{333., 666., 999.}).build());
+
+        experiment.addResult(c1);
+        experiment.addResult(c2);
     }
 
     /**
@@ -90,8 +93,8 @@ public class ExperimentTest {
     @Test public void testMetadataInequality() {
         System.out.println("metadata inequality");
 
-        WindowMetadata m1 = new WindowMetadata(a, b, 4, -2, 2, 1);
-        WindowMetadata m2 = new WindowMetadata(a, b, 4, -2, 2, 1);
+        WindowMetadata m1 = new WindowMetadata(a, b, 4, -2, 2, 1, 1);
+        WindowMetadata m2 = new WindowMetadata(a, b, 4, -2, 2, 1, 1);
         
         // the way to deal with NaN values is different, so a cache result can not be used
         assertNotSame(m1, m2);
@@ -106,7 +109,7 @@ public class ExperimentTest {
         
 //        experiment.correlograms.clear();
         
-        WindowMetadata metadata = new WindowMetadata(a, b, 4, -2, 2, 1);
+        WindowMetadata metadata = new WindowMetadata(a, b, 4, -2, 2, 1, 1);
         // TODO change workflow to addResult and getResult
 //        CorrelationMatrix result = experiment.getResult(metadata);
         
@@ -114,7 +117,7 @@ public class ExperimentTest {
 //        assertEquals(experiment.getResult(metadata), result);
 
         // results with different NaN strategies can not be exchanged
-        WindowMetadata metadata2 = new WindowMetadata(a, b, 4, -2, 2, 1);
+        WindowMetadata metadata2 = new WindowMetadata(a, b, 4, -2, 2, 1, 1);
         assertFalse(experiment.hasResult(metadata2));
     }
 
@@ -122,14 +125,12 @@ public class ExperimentTest {
     public void testContains_metadata() {
         System.out.println("contains metadata");
         
-        boolean expResult = false;
-        boolean result = experiment.hasResult(new WindowMetadata(a, b, 3, -2, 2, 1));
-        assertEquals(expResult, result);
+        boolean result = experiment.hasResult(new WindowMetadata.Builder(-1, 1, 8, 1, 1).tsA(a).tsB(b).pValue(0.01).build());
+        assertEquals(false, result);
         
         // depends on whether the zero is interpreted as a single window, but that makes look-ups more complicated
-        expResult = true;
-        result = experiment.hasResult(new WindowMetadata(a, b, 0, -2, 2, 1));
-        assertEquals(expResult, result);
+        result = experiment.hasResult(new WindowMetadata.Builder(-1, 1, 8, 1, 1).tsA(a).tsB(b).pValue(0.05).build());
+        assertEquals(true, result);
     }
 
 }

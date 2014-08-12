@@ -16,7 +16,7 @@ public class LagWindowCacheTest {
     /** Tests basic ring buffer behavior. */
     @Test public void testRingBuffering(){
 
-        final WindowMetadata someMetadata = new WindowMetadata(Arrays.asList(new TimeSeries(1, 0)), Arrays.asList(new TimeSeries(1, 0), new TimeSeries(1, 1)), 1, -1, 1, 1);
+        final WindowMetadata someMetadata = new WindowMetadata(Arrays.asList(new TimeSeries(1, 0)), Arrays.asList(new TimeSeries(1, 0), new TimeSeries(1, 1)), 1, -1, 1, 1, 1);
         final int cacheSize = 3;
         LagWindowCache cache = new LagWindowCache(someMetadata, cacheSize);
 
@@ -71,10 +71,10 @@ public class LagWindowCacheTest {
         int numTimeSeries = 100;
         int timeSeriesLength = 10000;
 
-        List<TimeSeries> set = TimeSeriesTest.randomTimeSerieses(numTimeSeries, timeSeriesLength);
+        List<TimeSeries> set = TimeSeriesTest.randomTimeSeries(numTimeSeries, timeSeriesLength);
 
         int windowSize = 3, baseWindowOffset = 1;
-        WindowMetadata metadata = new WindowMetadata(set, set, windowSize, -1, 2, baseWindowOffset);
+        WindowMetadata metadata = new WindowMetadata(set, set, windowSize, -1, 2, 1, baseWindowOffset);
 
         LagWindowCache cache = new LagWindowCache(metadata, 3);
 

@@ -204,10 +204,10 @@ public class Correlogram extends CanvasChart {
         // clipping on the time axis
         int columnIdxFrom = 0,
             columnIdxTo = columns.size()-1;
-        if(getAxesRanges() != null){
-            columnIdxFrom = (int) Math.max(0., Math.ceil(getAxesRanges().getMinX())/blockWidth-matrix.metadata.baseWindowOffset);
-            columnIdxTo   = (int) Math.min(columns.size()-1, Math.ceil(getAxesRanges().getMaxX())/blockWidth+matrix.metadata.baseWindowOffset);
-        }
+//        if(getAxesRanges() != null){
+//            columnIdxFrom = (int) Math.max(0., Math.ceil(getAxesRanges().getMinX())/blockWidth-matrix.metadata.baseWindowOffset);
+//            columnIdxTo   = (int) Math.min(columns.size()-1, Math.ceil(getAxesRanges().getMaxX())/blockWidth+matrix.metadata.baseWindowOffset);
+//        }
 
         // clipping on the resolution
         Point2D blockDimensionsScreen = dataToScreen.deltaTransform(blockWidth, -blockHeight); // negative height because the transformation takes data coordinates and gives screen coordinates
@@ -282,7 +282,7 @@ public class Correlogram extends CanvasChart {
         double uncertainty;     // relative uncertainty (compared to the maximum uncertainty present in the matrix) in the current cell (only used with UNCERTAINTY_VISUALIZATION.COLUMN_WIDTH)
         double slimDown = 0;    // results from the relative uncertainty. A high uncertainty will make the cell much slimmer, no uncertainty will leave it at its full width.
         double min = 0; //matrix.getMin(DIM2);
-        double max = 1; //matrix.getMax(DIM2);
+        double max = matrix.getMax(DIM2);
 
         for (int i = columnIdxFrom; i <= columnIdxTo; i += windowStep) {
 

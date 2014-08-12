@@ -9,6 +9,7 @@ import Visualization.Correlogram;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.web.WebView;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
@@ -17,12 +18,14 @@ import java.awt.*;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+//TODO check for divergent values between computed matrix and on the fly computation.
 public class CellDistributionViewController implements Initializable {
 
     SharedData sharedData;
     private final DescriptiveStatistics descriptiveStatistics = new DescriptiveStatistics();
 
     @FXML private Slider numBinsSlider;
+    @FXML private Label numberOfBinsLabel;
     @FXML private WebView webView;
 
     private static String visualizationPath = Correlogram.class.getResource("d3/histogram.html").toExternalForm();
@@ -31,13 +34,17 @@ public class CellDistributionViewController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+
         webView.getEngine().load(visualizationPath);
 
+        numberOfBinsLabel.setText("Number of Bins: " + numBins);
         numBinsSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
             if(newValue == null) return;
             numBins = newValue.intValue();
+            numberOfBinsLabel.setText("Number of Bins: " + numBins);
             visualizeCellDistribution(sharedData.getHighlightedCell());
         });
+
     }
 
     public void setSharedData(SharedData sharedData) {

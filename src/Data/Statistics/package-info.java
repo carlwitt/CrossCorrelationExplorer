@@ -1,4 +1,4 @@
 /**
- * Contains utility functionality for computing descriptive statistics..
+ * Contains utility functionality for computing descriptive statistics.
  */
 package Data.Statistics;

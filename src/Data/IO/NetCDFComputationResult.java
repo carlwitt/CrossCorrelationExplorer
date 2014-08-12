@@ -22,7 +22,7 @@ import java.util.Iterator;
  *
  *  See {@link NetCDFTimeSeriesGroup} for more detailed information on the NetCDF data format.
  */
-public class NetCDFComputationResult {
+public class NetCDFComputationResult extends NetCDFWriter{
 
     private final String computationResultName;
 
@@ -168,7 +168,7 @@ public class NetCDFComputationResult {
                 (int) metadataAttributes[TAU_MIN].getNumericValue(),
                 (int) metadataAttributes[TAU_MAX].getNumericValue(),
                 (int) metadataAttributes[WINDOW_SIZE].getNumericValue(),
-                (int) metadataAttributes[BASEWINDOW_OFFSET].getNumericValue())
+                1, (int) metadataAttributes[BASEWINDOW_OFFSET].getNumericValue())
                 .tsA(setASeries)
                 .tsB(setBSeries)
                 .build();

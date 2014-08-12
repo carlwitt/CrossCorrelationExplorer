@@ -157,7 +157,7 @@ public class ComputationController implements Initializable {
         windowSizeText.setText(""+windowSize); // to display what was parsed
 
         WindowMetadata metadata = new WindowMetadata(dataModel.correlationSetA, dataModel.correlationSetB,
-                windowSize, tauMin, tauMax, baseWindowOffset);
+                windowSize, tauMin, tauMax, 1, baseWindowOffset);
         CorrelationMatrix.setSignificanceLevel(metadata, significanceLevel);
 
         // get result from cache or execute an asynchronous compute service

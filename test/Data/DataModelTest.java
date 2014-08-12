@@ -6,11 +6,11 @@
 
 package Data;
 
-import javafx.collections.*;
 import javafx.embed.swing.JFXPanel;
-import org.junit.*;
-
-import java.util.Arrays;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
 
 /**
  *
@@ -41,7 +41,7 @@ public class DataModelTest {
     public void tearDown() {
     }
 
-    @Test @Ignore
+ /*   @Test @Ignore
     // can one retrieve the key set once and observe changes via changes to the reference? No.
     public void testObserveMapViaKeySet(){
         
@@ -75,6 +75,6 @@ public class DataModelTest {
         
         System.out.println(String.format("Final keyset: %s", Arrays.toString(keys.toArray())));
         
-    }
+    }*/
     
 }

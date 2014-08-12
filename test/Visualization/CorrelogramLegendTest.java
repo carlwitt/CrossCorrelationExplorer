@@ -43,10 +43,10 @@ public class CorrelogramLegendTest {
         sharedData.experiment.dataModel.correlationSetB.add(sharedData.experiment.dataModel.get(0,3));
 
         int windowSize = 2;
-        WindowMetadata metadata = new WindowMetadata(sharedData.experiment.dataModel.correlationSetA, sharedData.experiment.dataModel.correlationSetB, windowSize, -2, 2, 1);
+        WindowMetadata metadata = new WindowMetadata(sharedData.experiment.dataModel.correlationSetA, sharedData.experiment.dataModel.correlationSetB, windowSize, -2, 2, 1, 1);
         CorrelationMatrix.setSignificanceLevel(metadata, 0.05);
-        CorrelationMatrix correlationMatrix = new CorrelationMatrix(metadata);
-        correlationMatrix.compute();
+        CorrelationMatrix CorrelationMatrix = new CorrelationMatrix(metadata);
+        CorrelationMatrix.compute();
 //        System.out.println(String.format("correlationMatrix: %s", correlationMatrix));
 
         // compute the value range sample
@@ -56,7 +56,7 @@ public class CorrelogramLegendTest {
         instance.sourceStatistic[CorrelogramLegend.VERTICAL] = CorrelationMatrix.MEDIAN;
         instance.sourceStatistic[CorrelogramLegend.HORIZONTAL] = CorrelationMatrix.ABSOLUTE_SIGNIFICANT;
 
-        double[][][] result = instance.valueRangeSample(correlationMatrix, meanResolution, stdDevResolution);
+        double[][][] result = instance.valueRangeSample(CorrelationMatrix, meanResolution, stdDevResolution);
         for (int row = 0; row < result.length; row++) {
             for (int col = 0; col < result[0].length; col++) {
 //                assertArrayEquals(expectedResult[row][col], result[row][col], 1e-15);
@@ -81,9 +81,9 @@ public class CorrelogramLegendTest {
         sharedData.experiment.dataModel.correlationSetB.add(sharedData.experiment.dataModel.get(0,3));
 
         int windowSize = 2;
-        WindowMetadata metadata = new WindowMetadata(sharedData.experiment.dataModel.correlationSetA, sharedData.experiment.dataModel.correlationSetB, windowSize, -2, 2, 1);
-        CorrelationMatrix correlationMatrix = new CorrelationMatrix(metadata);
-        correlationMatrix.compute();
+        WindowMetadata metadata = new WindowMetadata(sharedData.experiment.dataModel.correlationSetA, sharedData.experiment.dataModel.correlationSetB, windowSize, -2, 2, 1, 1);
+        CorrelationMatrix CorrelationMatrix = new CorrelationMatrix(metadata);
+        CorrelationMatrix.compute();
 
 //        System.out.println(String.format("correlationMatrix: %s", correlationMatrix));
 
@@ -94,7 +94,7 @@ public class CorrelogramLegendTest {
         instance.sourceStatistic[CorrelogramLegend.VERTICAL] = CorrelationMatrix.STD_DEV;
         instance.sourceStatistic[CorrelogramLegend.HORIZONTAL] = CorrelationMatrix.MEAN;
 
-        double[][][] result = instance.valueRangeSample(correlationMatrix, meanResolution, stdDevResolution);
+        double[][][] result = instance.valueRangeSample(CorrelationMatrix, meanResolution, stdDevResolution);
         double[][][] expectedResult = new double[1][3][2];
         expectedResult[0][0][CorrelogramLegend.HORIZONTAL] = -1;
         expectedResult[0][0][CorrelogramLegend.VERTICAL] = 0;
@@ -123,11 +123,11 @@ public class CorrelogramLegendTest {
         sharedData.experiment.dataModel.correlationSetB.add(sharedData.experiment.dataModel.get(0,3));
 
         int windowSize = 2;
-        WindowMetadata metadata = new WindowMetadata(sharedData.experiment.dataModel.correlationSetA, sharedData.experiment.dataModel.correlationSetB, windowSize, -2, 2, 1);
-        CorrelationMatrix correlationMatrix = new CorrelationMatrix(metadata);
-        correlationMatrix.compute();
+        WindowMetadata metadata = new WindowMetadata(sharedData.experiment.dataModel.correlationSetA, sharedData.experiment.dataModel.correlationSetB, windowSize, -2, 2, 1, 1);
+        CorrelationMatrix CorrelationMatrix = new CorrelationMatrix(metadata);
+        CorrelationMatrix.compute();
 
-        System.out.println(String.format("correlationMatrix: %s", correlationMatrix));
+        System.out.println(String.format("correlationMatrix: %s", CorrelationMatrix));
 
         // compute the value range sample
         int meanResolution = 3;
@@ -136,7 +136,7 @@ public class CorrelogramLegendTest {
         instance.sourceStatistic[CorrelogramLegend.VERTICAL] = null;
         instance.sourceStatistic[CorrelogramLegend.HORIZONTAL] = CorrelationMatrix.ABSOLUTE_SIGNIFICANT;
 
-        double[][][] result = instance.valueRangeSample(correlationMatrix, meanResolution, stdDevResolution);
+        double[][][] result = instance.valueRangeSample(CorrelationMatrix, meanResolution, stdDevResolution);
         double[][][] expectedResult = new double[1][1][2];
         expectedResult[0][0][CorrelogramLegend.HORIZONTAL] = 0;
         expectedResult[0][0][CorrelogramLegend.VERTICAL] = 0;

@@ -34,7 +34,7 @@ import java.util.List;
 public class WindowMetadata {
 
     public final int windowSize;
-    public final int tauMin, tauMax;
+    public final int tauMin, tauMax, tauStep;
 
     /** Place a base window each baseWindowOffset values of the time series.
      *  A value of 1 results in windows at 0, 1, 2, ...
@@ -58,9 +58,10 @@ public class WindowMetadata {
 
     public final HashMap<String, Object> customParameters = new HashMap<>();
 
-    public WindowMetadata(@NotNull TimeSeries seriesA, @NotNull TimeSeries seriesB, int windowSize, int tauMin, int tauMax, int baseWindowOffset){
+    public WindowMetadata(@NotNull TimeSeries seriesA, @NotNull TimeSeries seriesB, int windowSize, int tauMin, int tauMax, int tauStep, int baseWindowOffset){
         this.tauMin = tauMin;
         this.tauMax = tauMax;
+        this.tauStep= tauStep;
         setA = new ArrayList<>(1);
         setA.add(seriesA);
         setB = new ArrayList<>(1);
@@ -73,11 +74,12 @@ public class WindowMetadata {
         lagRangeOverlap = getLagRangeOverlap();
     }
 
-    public WindowMetadata(@NotNull List<TimeSeries> setA, @NotNull List<TimeSeries> setB, int windowSize, int tauMin, int tauMax, int baseWindowOffset) {
+    public WindowMetadata(@NotNull List<TimeSeries> setA, @NotNull List<TimeSeries> setB, int windowSize, int tauMin, int tauMax, int tauStep, int baseWindowOffset) {
         this.setA = new ArrayList<>(setA);
         this.setB = new ArrayList<>(setB);
         this.tauMin = tauMin;
         this.tauMax = tauMax;
+        this.tauStep= tauStep;
 //        this.naAction = naAction;
         this.windowSize = windowSize;
         this.baseWindowOffset = baseWindowOffset;
@@ -91,6 +93,7 @@ public class WindowMetadata {
         this.setB = new ArrayList<>(builder.setB);
         this.tauMin = builder.tauMin;
         this.tauMax = builder.tauMax;
+        this.tauStep= builder.tauStep;
 //        this.naAction = builder.naAction;
         this.windowSize = builder.windowSize;
         this.baseWindowOffset = builder.baseWindowOffset;
@@ -99,12 +102,26 @@ public class WindowMetadata {
         lagRangeOverlap = getLagRangeOverlap();
     }
 
+    public int getNumberOfDifferentTimeLags(){
+        return (int) Math.round(Math.ceil( 1.f * (tauMax-tauMin+1) / tauStep));
+    }
+    public int[] getDifferentTimeLags(){
+        int[] lags = new int[getNumberOfDifferentTimeLags()];
+        for (int i = 0; i < lags.length; i++) {
+            lags[i] = tauMin + i*tauStep;
+        }
+        return lags;
+    }
+
+
     /** Computes {@link #numBaseWindows}. */
     private int getNumberOfBaseWindows() {
         int timeSeriesLength = setA.get(0).getSize();
-        int largestValidWindowStartIndex = timeSeriesLength - windowSize; // N-windowSize+1 would be one-based
-
-        return largestValidWindowStartIndex / baseWindowOffset + 1;    // +1: the first window is located at index zero
+        assert baseWindowOffset > 0 : "Illegal base window offset. Must be larger than zero.";
+        return (int) Math.ceil(1. * timeSeriesLength / baseWindowOffset);
+//        used in the asymmetric computation
+//        int largestValidWindowStartIndex = timeSeriesLength - windowSize; // N-windowSize+1 would be one-based
+//        return largestValidWindowStartIndex / baseWindowOffset + 1;    // +1: the first window is located at index zero
     }
 
     int getLagRangeOverlap() {
@@ -119,15 +136,18 @@ public class WindowMetadata {
 
         public final int tauMin;
         public final int tauMax;
+        public final int tauStep;
         public final int windowSize;
         public final int baseWindowOffset;
         public double pValue = 0.05;
         final List<TimeSeries> setA = new ArrayList<>();
         final List<TimeSeries> setB = new ArrayList<>();
         CrossCorrelation.NA_ACTION naAction = CrossCorrelation.NA_ACTION.LEAVE_UNCHANGED;
-        public Builder(int tauMin, int tauMax, int windowSize, int baseWindowOffset) {
+
+        public Builder(int tauMin, int tauMax, int windowSize, int tauStep, int baseWindowOffset) {
             this.tauMin = tauMin;
             this.tauMax = tauMax;
+            this.tauStep= tauStep;
             this.windowSize = windowSize;
             this.baseWindowOffset = baseWindowOffset;
         }
@@ -145,8 +165,8 @@ public class WindowMetadata {
     // -----------------------------------------------------------------------------------------------------------------
 
     public String toString() {
-        return String.format("Metadata{windowSize: %d, baseWindowOffset: %d, tauMin: %d, tauMax: %s setA: %s setB: %s}",
-                windowSize, baseWindowOffset, tauMin, tauMax,
+        return String.format("Metadata{windowSize: %d, baseWindowOffset: %d, tauMin: %d, tauMax: %s tauStep: %s setA: %s setB: %s}",
+                windowSize, baseWindowOffset, tauMin, tauMax, tauStep,
                 Joiner.on(",").join(setA),
                 Joiner.on(",").join(setB));
     }

@@ -55,7 +55,7 @@ public class TimeSeriesTest {
     }
 
     @Test public void testEquals(){
-        List<TimeSeries> randomSeries = randomTimeSerieses(1000, 10000);
+        List<TimeSeries> randomSeries = randomTimeSeries(1000, 10000);
         for (int i = 0; i < randomSeries.size(); i++) {
             for (int j = 0; j < randomSeries.size(); j++) {
                 boolean isEqual = i==j;
@@ -64,7 +64,7 @@ public class TimeSeriesTest {
         }
     }
 
-    public static List<TimeSeries> randomTimeSerieses(int numTimeSeries, int timeSeriesLength) {
+    public static List<TimeSeries> randomTimeSeries(int numTimeSeries, int timeSeriesLength) {
         List<TimeSeries> set = new ArrayList<>(numTimeSeries);
 
         Random rdg = new Random(1l);
@@ -72,7 +72,7 @@ public class TimeSeriesTest {
         for (int i = 0; i < numTimeSeries; i++) {
             double[] data = new double[timeSeriesLength];
             for (int j = 0; j < timeSeriesLength; j++) data[j] = rdg.nextDouble();
-            set.add(new TimeSeries(1, data));
+            set.add(new TimeSeries(i+1, data));
         }
         return set;
     }

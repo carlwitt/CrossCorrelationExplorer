@@ -5,26 +5,23 @@ import org.apache.commons.math3.distribution.TDistribution;
 /**
  * Provides methods to test a given pearson product-moment correlation for significance.
  * Internally precomputes the critical correlation value (threshold) by first computing the critical
- * t-Value for a given number of degrees of freedom and a significance level and then solving for the correlation value.
+ * t-Value for a given number of degrees of freedom and a significance level and then solving for the correlation value (see {@link #criticalCorrelationValue}.
  *
  * Created by Carl Witt on 02.06.14.
  */
 public class CorrelationSignificance {
 
-    /** The sample size used to parameterize the t-distribution. This is usually the size of a time series window. */
+    /** The sample size (or, equivalently, degrees of freedom) used to parameterize the t-distribution. This is usually the size of a time series window. */
     private final int sampleSize;
-    /** The desired level of significance (equals the probability to get a result as strong as the observed by chance). Is usually 0.05 (5%) or 0.01 (1%). */
-    private final double significanceLevel;
     /** The minimum correlation value that leads to the rejection of the null hypothesis that there is no correlation. */
     final double criticalCorrelationValue;
 
     /**
      * @param sampleSize see {@link #sampleSize}
-     * @param significanceLevel see {@link #significanceLevel}
+     * @param significanceLevel the desired p-value
      */
     public CorrelationSignificance(int sampleSize, double significanceLevel) {
         this.sampleSize = sampleSize;
-        this.significanceLevel = significanceLevel;
         /* The minimum t value that leads to the rejection of the null hypothesis (that there is no correlation). */
         double criticalTValue = criticalTValue(significanceLevel);
 
@@ -39,7 +36,7 @@ public class CorrelationSignificance {
      * @return whether the observed cross correlation is significant according to degrees of freedom and significance level.
      */
     public boolean significanceTest(double pearsonCorrelation){
-        return pearsonCorrelation >= criticalCorrelationValue;
+        return Math.abs(pearsonCorrelation) >= criticalCorrelationValue;
     }
 
     /**
@@ -62,6 +59,8 @@ public class CorrelationSignificance {
 
         // given some alpha (risk I, or error probability), find the critical t value
         double desiredArea = 1-significanceLevel;
+
+        if(significanceLevel >= 1) throw new IllegalArgumentException("Significance level must be smaller than 1.");
 
         TDistribution tDistribution = new TDistribution(sampleSize-2);
 

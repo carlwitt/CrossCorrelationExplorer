@@ -45,7 +45,7 @@ function update(newData){
 }
     
 // Generate a Bates distribution of 10 random variables.
-var values = d3.range(100000).map(d3.random.normal(0,0.5));
+var values = d3.range(0).map(d3.random.normal(0,0.5));
 // Generate a histogram using twenty uniformly-spaced bins.
     data = d3.layout.histogram()
         .bins([-1,-.8,-.6,-.4,-.2,0,.2,.4,.6,.8,1])
