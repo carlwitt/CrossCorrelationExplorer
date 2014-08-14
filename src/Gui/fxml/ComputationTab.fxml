@@ -4,8 +4,8 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
 <?import java.net.URL?>
-<HBox fx:id="computationInputPane" maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="-1.0" prefHeight="-1.0" prefWidth="1019.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.ComputationController">
-  <SplitPane dividerPositions="0.5004916420845624" focusTraversable="true" prefHeight="-1.0" prefWidth="-1.0" HBox.hgrow="ALWAYS">
+<HBox fx:id="computationInputPane" maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="-1.0" prefHeight="-1.0" prefWidth="-1.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.ComputationController">
+  <SplitPane dividerPositions="0.4981024667931689" focusTraversable="true" prefHeight="-1.0" prefWidth="1056.0" HBox.hgrow="ALWAYS">
     <items>
       <GridPane fx:id="inputGridPane" gridLinesVisible="false">
         <GridPane GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.rowIndex="1" GridPane.valignment="CENTER">
@@ -14,6 +14,7 @@
             <ColumnConstraints hgrow="SOMETIMES" maxWidth="73.0" minWidth="10.0" prefWidth="73.0" />
           </columnConstraints>
           <rowConstraints>
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
             <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
             <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
             <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
@@ -40,12 +41,18 @@
             </tooltip>
           </Label>
           <TextField fx:id="timeLagMaxText" alignment="TOP_RIGHT" prefWidth="-1.0" text="100" visible="true" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-          <Label contentDisplay="RIGHT" text="p value" wrapText="true" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="4">
+          <Label contentDisplay="RIGHT" text="p value" wrapText="true" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="5">
             <tooltip>
               <Tooltip text="The level of significance when testing on significant correlation values (usually 0.05 = 5% or 0.01 = 1%)." />
             </tooltip>
           </Label>
-          <TextField id="significanceLevel" fx:id="significanceLevelText" alignment="TOP_RIGHT" prefWidth="-1.0" text="0.05" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+          <TextField id="significanceLevel" fx:id="significanceLevelText" alignment="TOP_RIGHT" prefWidth="-1.0" text="0.05" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+          <Label contentDisplay="RIGHT" text="Time lag step" visible="true" wrapText="true" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="4">
+            <tooltip>
+              <Tooltip text="Defines the upper limit of the time lag range to compute in each window." />
+            </tooltip>
+          </Label>
+          <TextField id="timeLagMaxText" fx:id="timeLagStepText" alignment="TOP_RIGHT" prefWidth="-1.0" text="1" visible="true" GridPane.columnIndex="1" GridPane.rowIndex="4" />
         </GridPane>
         <Label fx:id="file1Label" contentDisplay="RIGHT" style="&#10;" text="Input File 1" textFill="#00cc21" wrapText="true" GridPane.columnIndex="0" GridPane.halignment="CENTER" GridPane.rowIndex="0">
           <tooltip>
@@ -76,6 +83,11 @@
             <Button id="setBAddRandomButton" fx:id="setBRandomButton" alignment="CENTER_LEFT" font="$x2" mnemonicParsing="false" prefWidth="-1.0" style="" text="random" />
           </children>
         </FlowPane>
+        <Label alignment="CENTER" contentDisplay="CENTER" text="Parameters" textFill="BLACK" wrapText="true" GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.rowIndex="0">
+          <tooltip>
+            <Tooltip text="Defines the size of the windows in which the time series are shifted and cross correlated." />
+          </tooltip>
+        </Label>
         <columnConstraints>
           <ColumnConstraints hgrow="ALWAYS" minWidth="150.0" />
           <ColumnConstraints hgrow="ALWAYS" minWidth="150.0" />
@@ -86,21 +98,16 @@
           <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" prefHeight="92.0" vgrow="SOMETIMES" />
           <RowConstraints fillHeight="true" maxHeight="-1.0" minHeight="-1.0" prefHeight="-1.0" vgrow="NEVER" />
         </rowConstraints>
-        <Label alignment="CENTER" contentDisplay="CENTER" text="Parameters" textFill="BLACK" wrapText="true" GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.rowIndex="0">
-          <tooltip>
-            <Tooltip text="Defines the size of the windows in which the time series are shifted and cross correlated." />
-          </tooltip>
-        </Label>
       </GridPane>
-      <VBox id="VBox" alignment="CENTER" spacing="5.0">
+      <VBox id="VBox" alignment="CENTER" prefWidth="527.0" spacing="5.0">
         <children>
-          <TableView id="correlogramTable" fx:id="correlogramCacheTable" disable="false" editable="false" minWidth="0.0" prefHeight="200.0" prefWidth="386.9998779296875" style="-fx-focus-color: transparent;" tableMenuButtonVisible="false" VBox.vgrow="ALWAYS">
+          <TableView id="correlogramTable" fx:id="correlogramCacheTable" disable="false" editable="false" minWidth="0.0" prefHeight="200.0" prefWidth="578.0" style="-fx-focus-color: transparent;" tableMenuButtonVisible="false" VBox.vgrow="ALWAYS">
             <columns>
               <TableColumn editable="false" maxWidth="5000.0" minWidth="10.0" prefWidth="111.0" style="-fx-font-size: 11; -fx-background-color: #00cc21;" text="size of input set 1" fx:id="input1SeriesColumn" />
               <TableColumn editable="false" maxWidth="5000.0" minWidth="10.0" prefWidth="109.0" style="-fx-font-size: 11; -fx-background-color: #0066ff;" text="size of input set 2" fx:id="input2SeriesColumn" />
               <TableColumn editable="false" maxWidth="5000.0" minWidth="10.0" prefWidth="94.0" style="-fx-font-size: 11px;" text="window size" fx:id="windowSizeColumn" />
               <TableColumn editable="false" maxWidth="5000.0" minWidth="10.0" prefWidth="60.0" style="-fx-font-size: 10px;" text="overlap" fx:id="overlapColumn" />
-              <TableColumn editable="false" maxWidth="5000.0" minWidth="10.0" prefWidth="76.0" style="-fx-font-size: 11px;" text="lag range" fx:id="lagRangeColumn" />
+              <TableColumn editable="false" maxWidth="5000.0" minWidth="10.0" prefWidth="100.0" style="-fx-font-size: 11px;" text="lag range" fx:id="lagRangeColumn" />
               <TableColumn editable="false" maxWidth="5000.0" minWidth="10.0" prefWidth="52.0" style="-fx-font-size: 11;" text="p" fx:id="significanceColumn" />
               <TableColumn maxWidth="5000.0" minWidth="10.0" prefWidth="75.0" style="-fx-font-size: 10;" text="time (h:m:s)" visible="false" fx:id="timeColumn" />
             </columns>

@@ -132,7 +132,7 @@ public class CorrelationMatrix {
             if(RuntimeConfiguration.VERBOSE) System.out.println(String.format("thread %s is responsible for base window range [%s,%s[", i, from, to));
 
             // create a thread handling the given bounds. pass the progress reporter callback only to the first.
-            threads.add(new PartialMatrixComputer(from, to, i == 0 ? reportProgress : null));
+            threads.add(new PartialMatrixComputer(from, to, i == numThreads-1 ? reportProgress : null));
 
         }
 

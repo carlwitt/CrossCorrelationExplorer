@@ -2,50 +2,35 @@ package Visualization;
 
 import Data.Correlation.CorrelationMatrix;
 import Data.SharedData;
-import Data.TimeSeries;
 import Data.Windowing.WindowMetadata;
-import javafx.event.EventHandler;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Point2D;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.StrokeType;
-import javafx.scene.transform.Affine;
-import javafx.scene.transform.NonInvertibleTransformException;
-import javafx.scene.transform.Translate;
+import javafx.scene.transform.*;
 
 import java.awt.*;
-import java.util.List;
 
 import static Data.Correlation.CorrelationMatrix.*;
 
 /**
  * Used to draw the correlogram. Takes an aggregated correlation matrix and renders its cells as a colored blocks.
+ * There are three coordinate systems in use.
+ * Cell coordinates refer to the indices a certain correlation matrix entry has - see {@link #cellToData(Data.Windowing.WindowMetadata)}.
+ * Data coordinates refer to time (horizontal) and time lag (vertical). The logic to handle these is inherited from {@link Visualization.CanvasChart}.
+ * Screen coordinates refer to the standard pixel coordinates on the screen.
  *
  * @author Carl Witt
  */
 public class Correlogram extends CanvasChart {
 
-    private SharedData sharedData;
-
-    /** encodes 2D values in a single color */
-    private final MultiDimensionalPaintScale paintScale;
-
-    // width and height of a cell in the correlogram.
-    // using the actual windowSize is not feasible, since windows overlap.
-    // a new window starts in each baseWindowOffset steps, each window is assigned that width (but at most the window size, in case of negative overlap)
-    private double blockWidth;
-    private double blockHeight;
-
-    private final Rectangle activeWindowRect = new javafx.scene.shape.Rectangle(10, 10);
-    private final double activeWindowStrokeWidth = 2;
-
-    /** the y offset for drawing correlogram blocks.
-     *  this can be used to center blocks around their time lag (e.g. time lag 0 => -0.5 ... 0.5) */
-    private final double blockYOffset = 0;
-
+    // -----------------------------------------------------------------------------------------------------------------
+    // CONSTANTS
+    // -----------------------------------------------------------------------------------------------------------------
 
     /** Defines how the data in the correlation matrix is visualized. */
     public static enum RENDER_MODE { // color each cell by
@@ -55,16 +40,48 @@ public class Correlogram extends CanvasChart {
         POSITIVE_SIGNIFICANT,   // percentage of significantly positive correlated window pairs
         ABSOLUTE_SIGNIFICANT,    // percentage of significantly correlated window pairs
     }
-    private final static RENDER_MODE defaultRenderMode = RENDER_MODE.MEAN_STD_DEV;
-    RENDER_MODE renderMode = defaultRenderMode;
-
     /** How to encode the second number (usually uncertainty) associated with each correlogram cell. */
     public static enum UNCERTAINTY_VISUALIZATION {
         COLUMN_WIDTH,   // manipulate column width
         COLOR           // manipulate base color (e.g. changing saturation)
     }
+
+    /** default uncertainty visualization. */
     public final static UNCERTAINTY_VISUALIZATION DEFAULT_UNCERTAINTY_VISUALIZATION = UNCERTAINTY_VISUALIZATION.COLOR;
+
+    /** default render mode. */
+    private final static RENDER_MODE defaultRenderMode = RENDER_MODE.MEAN_STD_DEV;
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // ATTRIBUTES
+    // -----------------------------------------------------------------------------------------------------------------
+
+    private SharedData sharedData;
+
+    /** which method to use to visualize uncertainty. */
     private UNCERTAINTY_VISUALIZATION uncertaintyVisualization = DEFAULT_UNCERTAINTY_VISUALIZATION;
+    /** which data dimensions to visualize. */
+    RENDER_MODE renderMode = defaultRenderMode;
+
+    /** encodes 2D values in a single color */
+    private final MultiDimensionalPaintScale paintScale;
+    /** The matrix for which the paint scale was computed. */
+    private CorrelationMatrix paintScaleMatrix;
+    /** The render mode for which the paint scale was computed. */
+    private RENDER_MODE paintScaleRenderMode;
+
+    /** width and height (in data coordinates) of a cell in the correlogram. */
+    private double blockWidth, blockHeight;
+    /** offset between two subsequent blocks. if there are no gaps, blockOffset equals blockWidth. */
+    private double blockOffset;
+
+    Affine cellToScreen;
+    final Affine identity = new Affine(new Translate());
+
+    private final Rectangle activeWindowRect = new javafx.scene.shape.Rectangle(10, 10);
+    private final double activeWindowStrokeWidth = 2;
+
+    Color backgroundColor = new Color(0.78, 0.78, 0.78, 1);
 
     // -----------------------------------------------------------------------------------------------------------------
     // METHODS
@@ -75,65 +92,7 @@ public class Correlogram extends CanvasChart {
         xAxis.setMinTickUnit(1);
         yAxis.setMinTickUnit(1);
 
-        /*
-      This handler listens to mouse moves on the correlogram and informs the shared data object about
-      the correlation matrix cell index (window index index and lag index) under the mouse cursor.
-     */
-        EventHandler<MouseEvent> reportHighlightedCell = new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent t) {
-
-                // get matrix
-                CorrelationMatrix matrix = sharedData.getCorrelationMatrix();
-                if (matrix == null) return;
-
-                // transform from mouse position into data coordinates
-                Point2D dataCoordinates;
-                try {
-                    dataCoordinates = dataToScreen().inverseTransform(t.getX(), t.getY());
-                } catch (NonInvertibleTransformException ex) {
-                    dataCoordinates = new Point2D(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
-                    System.err.println("Couldn't invert data to screen transform on mouse over (correlogram).");
-                }
-
-                // determine the space for each column in the correlogram and the offset of the first column on the X axis
-                double blockWidth = matrix.metadata.baseWindowOffset;
-                double windowOffset = matrix.getStartXValueInTimeSeries() + 0.5 * matrix.metadata.windowSize - blockWidth / 2;
-
-                // use equi-distance property (of columns) to calculate the window index by division
-                int activeTimeWindowIdx = (int) Math.floor((dataCoordinates.getX() - windowOffset) / blockWidth);
-
-                Point activeCell;
-                CorrelationMatrix.CorrelationColumn activeTimeWindow = null;
-                // check whether the mouse points to any column
-                if (activeTimeWindowIdx >= 0 && activeTimeWindowIdx < matrix.getResultItems().size()) {
-
-                     activeTimeWindow = matrix.getColumn(activeTimeWindowIdx);
-
-                    int posOnYAxis = (int) Math.floor(dataCoordinates.getY() - blockYOffset);
-
-                    // check whether the cell is outside the column
-                    if (posOnYAxis < activeTimeWindow.tauMin || posOnYAxis > activeTimeWindow.tauMin + activeTimeWindow.getSize()) {
-                        posOnYAxis = Integer.MAX_VALUE;
-//                    System.out.println("top/bottom out.");
-                    }
-
-                    int timeLagIndex = posOnYAxis - activeTimeWindow.tauMin;
-                    activeCell = new Point(activeTimeWindowIdx, timeLagIndex);
-
-                } else {
-//                System.out.println("left/right out.");
-                    activeCell = new Point(Integer.MAX_VALUE, Integer.MAX_VALUE);
-                }
-
-                // report only if changes have occured
-                if (!sharedData.getHighlightedCell().equals(activeCell)) {
-                    sharedData.setHighlightedCell(activeCell);
-                    highlightActiveWindow();
-                }
-            }
-        };
-        chartCanvas.setOnMouseMoved(reportHighlightedCell);
+        chartCanvas.setOnMouseMoved(this::reportHighlightedCell);
 
         // initialize the active window highlight rectangle
         activeWindowRect.setFill(Color.rgb(0, 0, 0, 0));    // transparent fill
@@ -147,11 +106,11 @@ public class Correlogram extends CanvasChart {
 
     public void setSharedData(SharedData sharedData) {
         this.sharedData = sharedData;
-        
+
         // listen to changes in the correlation result matrix
         sharedData.correlationMatrixProperty().addListener((ov, t, m) -> {
+            cellToScreen = cellToScreen(m.metadata);
             resetView();
-            markPaintScaleDirty();
             drawContents();
         });
 
@@ -164,8 +123,61 @@ public class Correlogram extends CanvasChart {
 
     }
 
-    boolean configured = false;
-    public void markPaintScaleDirty(){configured = false;}
+    /**
+     * The coordinate system applied to the matrix cells is (zero based column index, zero based row index).
+     * This transformation computes the data coordinates of a single cell. So for instance, the first cell in a column (with index zero, because it is the first in the array)
+     * is mapped to the minimum time lag, the last cell in a column is mapped to the maximum time lag.
+     * The horizontal mapping centers each column in the time window it represents. Usually, columns overlap,
+     * so their width should be reduced (although overplotting would solve the problem, if drawn in correct order).
+     * If they don't overlap, there are gaps between the columns of the matrix.
+     * @param metadata contains the information where to plot the blocks (minimum x value in time series, window size, etc.)
+     * @return a transformation that converts matrix cell coordinates of the form (column idx, row idx) to data coordinates.
+     */
+    protected Affine cellToData(WindowMetadata metadata){
+
+        computeBlockDimensions(metadata);
+        // there can be gaps in horizontal direction (blockOffset > blockWidth), but not in vertical direction ("blockOffsetY" always equals blockHeight)
+        Transform scale = new Scale(blockOffset, blockHeight);
+
+        // if the blocks do not overlap in horizontal direction, blockWidth equals windowSize and the translate is only metadata.getMinXValue()
+        double tx = metadata.getMinXValue() + 0.5 * metadata.windowSize - 0.5 * blockWidth;
+        double ty = 1 + metadata.tauMin;
+        return new Affine(new Translate(tx, ty).createConcatenation(scale));
+
+    }
+
+    protected Affine cellToScreen(WindowMetadata metadata){ return new Affine(dataToScreen().createConcatenation(cellToData(metadata))); }
+
+    /*
+     This handler listens to mouse moves on the correlogram and informs the shared data object about
+     the correlation matrix cell index (window index index and lag index) under the mouse cursor.
+    */
+    private void reportHighlightedCell(MouseEvent t) {
+
+        // get matrix
+        CorrelationMatrix matrix = sharedData.getCorrelationMatrix();
+        if (matrix == null) return;
+
+        // transform from mouse position into cell coordinates
+        Point2D cellCoordinates;
+        try { cellCoordinates = cellToScreen.inverseTransform(t.getX(), t.getY()); }
+        catch (NonInvertibleTransformException e) { e.printStackTrace(); return; }
+
+        int columnIdx = (int) Math.floor(cellCoordinates.getX());
+        int lagIdx    = (int) Math.ceil(cellCoordinates.getY());
+
+        Point activeCell = new Point(columnIdx, lagIdx);
+        if(columnIdx < 0 || columnIdx >= matrix.getSize() || lagIdx < 0 || lagIdx > matrix.metadata.getNumberOfDifferentTimeLags())
+            activeCell = new Point(Integer.MAX_VALUE, Integer.MAX_VALUE);
+
+        // report only if changes have occured
+        if (!sharedData.getHighlightedCell().equals(activeCell)) {
+            sharedData.setHighlightedCell(activeCell);
+            highlightActiveWindow();
+        }
+    }
+
+
 
     /**
      * Renders the correlogram.
@@ -177,39 +189,42 @@ public class Correlogram extends CanvasChart {
 
         GraphicsContext gc = chartCanvas.getGraphicsContext2D();
 
-        // reset transform to identity, clear previous contents
-        gc.setTransform(new Affine(new Translate()));
-//        gc.clearRect(0, 0, chartCanvas.getWidth(), chartCanvas.getHeight());
-        gc.setFill(new Color(0.78,0.78,0.78, 1));
+        gc.setTransform(identity);
+        gc.setFill(backgroundColor);
         gc.fillRect(0, 0, chartCanvas.getWidth(), chartCanvas.getHeight());
-        
-        Affine dataToScreen = dataToScreen();
 
         if (sharedData.getCorrelationMatrix()== null || sharedData.getCorrelationMatrix().metadata.setA.size() == 0) return;
 
         // retrieve data to render
         CorrelationMatrix matrix = sharedData.getCorrelationMatrix();
-        TimeSeries ts = matrix.metadata.setA.get(0);
-        double[] xValues = ts.getDataItems().re;
-        List columns = matrix.getResultItems();
 
         // depending on the render mode, configure the paintscale (expensive for high-resolution color scales)
-        if(!configured){
+        if(matrix != paintScaleMatrix || !renderMode.equals(paintScaleRenderMode)){
             configurePaintscale(matrix, paintScale);
-            configured = true;
+            paintScaleMatrix = matrix;
+            paintScaleRenderMode = renderMode;
         }
 
-        computeBlockDimensions();
+        cellToScreen = cellToScreen(matrix.metadata);
 
-        // clipping on the time axis
-        int columnIdxFrom = 0,
-            columnIdxTo = columns.size()-1;
-//        if(getAxesRanges() != null){
-//            columnIdxFrom = (int) Math.max(0., Math.ceil(getAxesRanges().getMinX())/blockWidth-matrix.metadata.baseWindowOffset);
-//            columnIdxTo   = (int) Math.min(columns.size()-1, Math.ceil(getAxesRanges().getMaxX())/blockWidth+matrix.metadata.baseWindowOffset);
-//        }
+        // clipping to visible area of the matrix
+        int maxColIdx = matrix.getSize() - 1;
+        int maxLagIdx = matrix.metadata.getNumberOfDifferentTimeLags() - 1;
+        Point minColMinLag = new Point(0, 0), maxColMaxLag = new Point(maxColIdx, maxLagIdx);
+        Rectangle2D axesRanges = getAxesRanges();
+        if(axesRanges != null){
+            try {
+                Affine cellToData = cellToData(matrix.metadata);
+                Point2D minColMinLagDouble = cellToData.inverseTransform(axesRanges.getMinX(), axesRanges.getMinY());
+                Point2D maxColMaxLagDouble = cellToData.inverseTransform(axesRanges.getMaxX(), axesRanges.getMaxY());
+                minColMinLag = new Point(Math.max(0, (int) Math.floor(minColMinLagDouble.getX())), Math.max(0, (int) Math.ceil(minColMinLagDouble.getY())));
+                maxColMaxLag = new Point(Math.min(maxColIdx, (int) Math.floor(maxColMaxLagDouble.getX())), Math.min(maxLagIdx, (int) Math.ceil(maxColMaxLagDouble.getY())));
+            } catch (NonInvertibleTransformException e) { e.printStackTrace(); }
+        }
 
         // clipping on the resolution
+        Affine dataToScreen = dataToScreen();
+        computeBlockDimensions(matrix.metadata);
         Point2D blockDimensionsScreen = dataToScreen.deltaTransform(blockWidth, -blockHeight); // negative height because the transformation takes data coordinates and gives screen coordinates
         int windowStep = Math.max(1, (int) Math.floor(1. / blockDimensionsScreen.getX()));
         int lagStep = Math.max(1, (int) Math.floor(2./blockDimensionsScreen.getY()));
@@ -218,22 +233,21 @@ public class Correlogram extends CanvasChart {
 
         switch(renderMode){
             case MEAN_STD_DEV:
-                drawContentsMultivariate(gc, dataToScreen, matrix, xValues, columns, columnIdxFrom, columnIdxTo, windowStep, lagStep, MEAN, STD_DEV);
+                drawContentsMultivariate(gc, matrix, minColMinLag, maxColMaxLag, windowStep, lagStep, MEAN, STD_DEV);
                 break;
             case MEDIAN_IQR:
-                drawContentsMultivariate(gc, dataToScreen, matrix, xValues, columns, columnIdxFrom, columnIdxTo, windowStep, lagStep, MEDIAN, IQR);
+                drawContentsMultivariate(gc, matrix, minColMinLag, maxColMaxLag, windowStep, lagStep, MEDIAN, IQR);
                 break;
             case NEGATIVE_SIGNIFICANT:
-                drawContentsUnivariate(gc, dataToScreen, matrix, xValues, columns, columnIdxFrom, columnIdxTo, windowStep, lagStep, NEGATIVE_SIGNIFICANT);
+                drawContentsUnivariate(gc, matrix, minColMinLag, maxColMaxLag, windowStep, lagStep, NEGATIVE_SIGNIFICANT);
                 break;
             case POSITIVE_SIGNIFICANT:
-                drawContentsUnivariate(gc, dataToScreen, matrix, xValues, columns, columnIdxFrom, columnIdxTo, windowStep, lagStep, POSITIVE_SIGNIFICANT);
+                drawContentsUnivariate(gc, matrix, minColMinLag, maxColMaxLag, windowStep, lagStep, POSITIVE_SIGNIFICANT);
                 break;
             case ABSOLUTE_SIGNIFICANT:
-                drawContentsUnivariate(gc, dataToScreen, matrix, xValues, columns, columnIdxFrom, columnIdxTo, windowStep, lagStep, ABSOLUTE_SIGNIFICANT);
+                drawContentsUnivariate(gc, matrix, minColMinLag, maxColMaxLag, windowStep, lagStep, ABSOLUTE_SIGNIFICANT);
                 break;
         }
-
 
         xAxis.drawContents();
         yAxis.drawContents();
@@ -241,79 +255,60 @@ public class Correlogram extends CanvasChart {
 
     }
 
-    // TODO measure performance gain (?) of explicated methods (univariate, multivariate)...
-    void drawContentsUnivariate(GraphicsContext gc, Affine dataToScreen, CorrelationMatrix matrix, double[] xValues, List columns, int columnIdxFrom, int columnIdxTo, int windowStep, int lagStep, int DIM) {// for each column of the matrix (or, equivalently, for each time window)
-        for (int i = columnIdxFrom; i <= columnIdxTo; i += windowStep) {
+    void drawContentsUnivariate(GraphicsContext gc, CorrelationMatrix matrix, Point minColMinLag, Point maxColMaxLag, int windowStep, int lagStep, int DIM) {// for each column of the matrix (or, equivalently, for each time window)
 
-            CorrelationMatrix.CorrelationColumn column = (CorrelationMatrix.CorrelationColumn) columns.get(i);
+        Point2D blockSizeSC = cellToScreen.deltaTransform(1,-1);
+        double widthSC = blockSizeSC.getX()  +2, // +1: to avoid gaps between the blocks
+               heightSC = blockSizeSC.getY() +2;
 
-            double minX, minY;
+        double[] srcPts = new double[2], dstPts = new double[2];
 
-            // center around window center
-            minX = xValues[column.windowStartIndex] + 0.5* matrix.metadata.windowSize - blockWidth/2;
+        for (int i = minColMinLag.x; i <= maxColMaxLag.x; i += windowStep) {
 
-            Point2D ulc, brc; // upper left corner, bottom right corner of the cell, the same for the last drawn cell
-            int lagIdxFrom = 0,
-                lagIdxTo = column.data[DIM].length-1;
+            CorrelationMatrix.CorrelationColumn column = matrix.getResultItems().get(i);
 
-            // clipping on the lag axis
-            if(getAxesRanges() != null){
-                lagIdxFrom = (int) Math.max(0., Math.floor(getAxesRanges().getMinY() - column.tauMin)-1);
-                lagIdxTo   = (int) Math.min(column.data[DIM].length-1, Math.ceil(getAxesRanges().getMaxY() - column.tauMin)+1);
-            }
+            for (int lag = minColMinLag.y; lag <= maxColMaxLag.y; lag += lagStep) {
 
-            for (int lag = lagIdxFrom; lag <= lagIdxTo; lag += lagStep) {
-
-                minY = column.tauMin + lag + 1 + blockYOffset; //CorrelationMatrix.splitLag(idx, columnLength)*height + yOffset + 1;
-                ulc = dataToScreen.transform(minX, minY);
-                brc = dataToScreen.transform(minX + blockWidth, minY + blockHeight);
+                // upper left corner, bottom right corner of the cell, the same for the last drawn cell
+                srcPts[0] = i; srcPts[1] = lag;
+                cellToScreen.transform2DPoints(srcPts, 0, dstPts, 0, 1);
 
                 // draw cell
                 gc.setFill(paintScale.getPaint(column.data[DIM][lag]));
-                gc.fillRect(ulc.getX(), ulc.getY(), brc.getX() - ulc.getX() +1, ulc.getY() - brc.getY()+1);
+                gc.fillRect(dstPts[0], dstPts[1], widthSC, heightSC);
 
             }
         }
     }
 
-    void drawContentsMultivariate(GraphicsContext gc, Affine dataToScreen, CorrelationMatrix matrix, double[] xValues, List columns, int columnIdxFrom, int columnIdxTo, int windowStep, int lagStep, int DIM1, int DIM2) {// for each column of the matrix (or, equivalently, for each time window)
+    void drawContentsMultivariate(GraphicsContext gc, CorrelationMatrix matrix, Point minColMinLag, Point maxColMaxLag, int windowStep, int lagStep, int DIM1, int DIM2) {
 
-        // preparations for
         double uncertainty;     // relative uncertainty (compared to the maximum uncertainty present in the matrix) in the current cell (only used with UNCERTAINTY_VISUALIZATION.COLUMN_WIDTH)
         double slimDown = 0;    // results from the relative uncertainty. A high uncertainty will make the cell much slimmer, no uncertainty will leave it at its full width.
-        double min = 0; //matrix.getMin(DIM2);
-        double max = matrix.getMax(DIM2);
+        double minUncertainty = 0;         // matrix.getMin(DIM2) would actually underestimate the uncertainty! (if the minimum uncertainty is high, a full width column would actually represent an uncertain value)
+        double maxUncertainty = matrix.getMax(DIM2);   // this overestimates the uncertainty but makes the differences much better visible (since an sd of 1 almost never occurs)
 
-        for (int i = columnIdxFrom; i <= columnIdxTo; i += windowStep) {
 
-            CorrelationMatrix.CorrelationColumn column = (CorrelationMatrix.CorrelationColumn) columns.get(i);
+        Point2D blockSizeSC = cellToScreen.deltaTransform(1,-1);
+        double widthSC = blockSizeSC.getX()   +2, // +1: to avoid gaps between the blocks
+                heightSC = blockSizeSC.getY() +2;
 
-            double minX, minY;
+        double[] srcPts = new double[2], dstPts = new double[2];
 
-            // center around window center
-            minX = xValues[column.windowStartIndex] + 0.5* matrix.metadata.windowSize - blockWidth/2;
+        for (int i = minColMinLag.x; i <= maxColMaxLag.x; i += windowStep) {
 
-            Point2D ulc, brc; // upper left corner, bottom right corner of the cell, the same for the last drawn cell
-            int lagIdxFrom = 0,
-                lagIdxTo = column.data[DIM1].length-1;
+            CorrelationMatrix.CorrelationColumn column = matrix.getResultItems().get(i);
 
-            // TODO: clipping on the lag axis: gives a small speedup but the formula is erroneous
-//            if(getAxesRanges() != null){
-//                lagIdxFrom = (int) Math.max(0., Math.floor(getAxesRanges().getMinY() - column.tauMin)-1);
-//                lagIdxTo   = (int) Math.min(column.data[DIM1].length-1, Math.ceil(getAxesRanges().getMaxY() - column.tauMin)+1);
-//            }
-
-            for (int lag = lagIdxFrom; lag <= lagIdxTo; lag += lagStep) {
+            for (int lag = minColMinLag.y; lag <= maxColMaxLag.y; lag += lagStep) {
 
                 if(uncertaintyVisualization == UNCERTAINTY_VISUALIZATION.COLUMN_WIDTH){
-                    uncertainty = (column.data[DIM2][lag] - min) / (max - min);
-                    slimDown = blockWidth * uncertainty;
+                    uncertainty = (column.data[DIM2][lag] - minUncertainty) / (maxUncertainty - minUncertainty);
+                    slimDown = widthSC * uncertainty;
                     if(Double.isNaN(slimDown)) slimDown = 0;
                 }
 
-                minY = column.tauMin + lag + 1 + blockYOffset; //CorrelationMatrix.splitLag(idx, columnLength)*height + yOffset + 1;
-                ulc = dataToScreen.transform(minX, minY);
-                brc = dataToScreen.transform(minX + blockWidth - slimDown, minY + blockHeight);
+                srcPts[0] = i; srcPts[1] = lag;
+                cellToScreen.transform2DPoints(srcPts, 0, dstPts, 0, 1);
 
                 // draw cell
                 switch(uncertaintyVisualization){
@@ -322,7 +317,7 @@ public class Correlogram extends CanvasChart {
                     default: assert(false) : "Illegal uncertainty visualization method " + uncertaintyVisualization;
                 }
 
-                gc.fillRect(ulc.getX(), ulc.getY(), brc.getX() - ulc.getX() + 1, ulc.getY() - brc.getY() + 1);
+                gc.fillRect(dstPts[0], dstPts[1], widthSC-slimDown, heightSC);
 
             }
 
@@ -378,9 +373,9 @@ public class Correlogram extends CanvasChart {
         paintScale.compute();
     }
 
-    private void computeBlockDimensions() {
-        WindowMetadata metadata = sharedData.getCorrelationMatrix().metadata;
+    private void computeBlockDimensions(WindowMetadata metadata) {
         blockWidth = Math.min(metadata.windowSize, metadata.baseWindowOffset);
+        blockOffset = metadata.baseWindowOffset;
         blockHeight = 1;
     }
 
@@ -398,16 +393,11 @@ public class Correlogram extends CanvasChart {
         CorrelationMatrix matrix = sharedData.getCorrelationMatrix();
         if(drawWindow && matrix != null){
 
-            computeBlockDimensions();
-            // retrieve block anchor
-            double[] xValues = matrix.metadata.setA.get(0).getDataItems().re;
-            double minX = xValues[matrix.getResultItems().get(activeWindow.x).windowStartIndex] + 0.5* matrix.metadata.windowSize - blockWidth/2;
-            double minY = matrix.getResultItems().get(activeWindow.x).tauMin + activeWindow.y + 1 + blockYOffset;
+            computeBlockDimensions(matrix.metadata);
 
             // transform data to screen coordinates
-            Affine dataToScreen = dataToScreen();
-            Point2D anchorScreen = dataToScreen.transform(minX, minY);
-            Point2D dimensionsScreen = dataToScreen.deltaTransform(blockWidth, -blockHeight);
+            Point2D anchorScreen = cellToScreen.transform(activeWindow.getX(), activeWindow.getY());
+            Point2D dimensionsScreen = cellToScreen.deltaTransform(1, -1);
 
             // check that the rectangle doesn't extend the panes
             BoundingBox boundsScreen = new BoundingBox(anchorScreen.getX()-activeWindowStrokeWidth, anchorScreen.getY()-activeWindowStrokeWidth, dimensionsScreen.getX()+2*activeWindowStrokeWidth, dimensionsScreen.getY()+2*activeWindowStrokeWidth);
@@ -424,26 +414,22 @@ public class Correlogram extends CanvasChart {
     }
 
     /** Resets the axes such that they fit the matrix bounds. */
-    public void resetView() {
-        CorrelationMatrix m = sharedData.getCorrelationMatrix();
+    @Override public void resetView() {
 
+        CorrelationMatrix m = sharedData.getCorrelationMatrix();
         if(m == null) return;
-        xAxis.setLowerBound(m.getStartXValueInTimeSeries());
-        xAxis.setUpperBound(m.getEndXValueInTimeSeries()+1);
-        if(m.maxLag() == 0){
-            yAxis.setLowerBound(blockYOffset);
-            yAxis.setUpperBound(-blockYOffset);
-        } else {
-            yAxis.setLowerBound(m.minLag()+blockYOffset);
-            yAxis.setUpperBound(m.maxLag()-blockYOffset);
-        }
+
+        Affine cellToData = cellToData(m.metadata);
+        Point2D minXminY = cellToData.transform(0,-1);
+        Point2D maxXmaxY = cellToData.transform(m.getSize(),m.metadata.getNumberOfDifferentTimeLags()-1);
+
+        axesRanges.set(new Rectangle2D(minXminY.getX(), minXminY.getY(), maxXmaxY.getX() - minXminY.getX(), maxXmaxY.getY() - minXminY.getY()));
     }
 
     /** @param renderMode see {@link Visualization.Correlogram.RENDER_MODE} */
-    public void setRenderMode(RENDER_MODE renderMode) { this.renderMode = renderMode; markPaintScaleDirty(); }
+    public void setRenderMode(RENDER_MODE renderMode) { this.renderMode = renderMode; }
+
     /** @param uncertaintyVisualization see {@link Visualization.Correlogram.UNCERTAINTY_VISUALIZATION} */
     public void setUncertaintyVisualization(UNCERTAINTY_VISUALIZATION uncertaintyVisualization) { this.uncertaintyVisualization = uncertaintyVisualization; }
-
-
 
 }

@@ -2,11 +2,8 @@ package Gui;
 
 import Data.Correlation.CorrelationMatrix;
 import Data.Correlation.CorrelationSignificance;
-import Data.Correlation.CrossCorrelation;
 import Data.SharedData;
-import Data.TimeSeries;
 import Visualization.Correlogram;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
@@ -65,31 +62,31 @@ public class CellDistributionViewController implements Initializable {
 
     protected void visualizeCellDistribution(Point activeCell) {
 
-        CorrelationMatrix correlationMatrix = sharedData.getCorrelationMatrix();
-        if(activeCell.x >= correlationMatrix.getSize()) return;
-
-        CorrelationMatrix.CorrelationColumn activeTimeWindow = correlationMatrix.getColumn(activeCell.x);
-
-        if(activeCell.getY() >= 0){
-            int timeLag = activeCell.y + activeTimeWindow.tauMin;
-            ObservableList<TimeSeries> setA = sharedData.experiment.dataModel.correlationSetA;
-            ObservableList<TimeSeries> setB = sharedData.experiment.dataModel.correlationSetB;
-            int windowLength = activeTimeWindow.getSize();
-            int nans = 0;
-            descriptiveStatistics.clear();
-            for (TimeSeries tsA : setA){
-                for( TimeSeries tsB : setB){
-
-                    double correlation = CrossCorrelation.correlationCoefficient(
-                            tsA, tsB,
-                            activeTimeWindow.windowStartIndex, activeTimeWindow.windowStartIndex + windowLength - 1,
-                            timeLag);
-                    if(! Double.isNaN(correlation)) descriptiveStatistics.addValue(correlation);
-                    else nans++;
-                }
-            }
-
-            webView.getEngine().executeScript(String.format("update(%s);", calcHistogramJSON(descriptiveStatistics, numBins)));
+//        CorrelationMatrix correlationMatrix = sharedData.getCorrelationMatrix();
+//        if(activeCell.x >= correlationMatrix.getSize()) return;
+//
+//        CorrelationMatrix.CorrelationColumn activeTimeWindow = correlationMatrix.getColumn(activeCell.x);
+//
+//        if(activeCell.getY() >= 0){
+//            int timeLag = activeCell.y + activeTimeWindow.tauMin;
+//            ObservableList<TimeSeries> setA = sharedData.experiment.dataModel.correlationSetA;
+//            ObservableList<TimeSeries> setB = sharedData.experiment.dataModel.correlationSetB;
+//            int windowLength = activeTimeWindow.getSize();
+//            int nans = 0;
+//            descriptiveStatistics.clear();
+//            for (TimeSeries tsA : setA){
+//                for( TimeSeries tsB : setB){
+//
+//                    double correlation = CrossCorrelation.correlationCoefficient(
+//                            tsA, tsB,
+//                            activeTimeWindow.windowStartIndex, activeTimeWindow.windowStartIndex + windowLength - 1,
+//                            timeLag);
+//                    if(! Double.isNaN(correlation)) descriptiveStatistics.addValue(correlation);
+//                    else nans++;
+//                }
+//            }
+//
+//            webView.getEngine().executeScript(String.format("update(%s);", calcHistogramJSON(descriptiveStatistics, numBins)));
 
 //            System.out.println(String.format("median %s iqr %s windowStartIndex %s timeLag %s nans %s",
 //                    descriptiveStatistics.getPercentile(50),
@@ -97,7 +94,7 @@ public class CellDistributionViewController implements Initializable {
 //                    activeTimeWindow.windowStartIndex,
 //                    timeLag,
 //                    nans));
-        }
+//        }
     }
 
     public String calcHistogramJSON(DescriptiveStatistics stats, int numBins) {

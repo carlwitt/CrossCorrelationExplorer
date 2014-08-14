@@ -18,7 +18,7 @@ public class RuntimeConfiguration {
 
         Locale.setDefault(DEFAULT_LOCALE);
 
-        Platform.setImplicitExit(true);
+        Platform.setImplicitExit(true); // after closing the last window, the program exits.
 
     }
 }

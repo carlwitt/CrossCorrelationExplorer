@@ -128,7 +128,7 @@ public class MultiDimensionalPaintScale
 //                Arrays.toString(lowerBounds), Arrays.toString(upperBounds),
 //                huePercent, hueIndex,
 //                saturationPercent, satIndex));
-
+        assert satIndex < colors.length && hueIndex < colors[satIndex].length : String.format("Invalid saturation or hue index: sat %s/%s hue %s/%s",satIndex,colors.length,hueIndex,colors[satIndex].length);
         return colors[satIndex][hueIndex];
     }
 

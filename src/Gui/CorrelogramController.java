@@ -13,6 +13,7 @@ import javafx.scene.control.TabPane;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.WritableImage;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.converter.NumberStringConverter;
@@ -64,14 +65,15 @@ public class CorrelogramController {
 //        correlogram = new Correlogram(new MultiDimensionalPaintScale(1200, 400));
 //        legend = new CorrelogramLegend(new MultiDimensionalPaintScale(meanColorResolution, standardDeviationColorResolution));
 
-        correlogramPane.getChildren().add(correlogram);
-        correlogram.toBack();
-        legendPane.getChildren().add(legend);
-        legend.toBack();
-        
+        correlogramView.getChildren().add(1, correlogram);
+        VBox.setVgrow(correlogram, Priority.ALWAYS);
+        correlogramView.getChildren().add(2, legend);
+        VBox.setVgrow(legend, Priority.NEVER);
+        legend.setMinHeight(160);
+
         correlogram.xAxis.setTickLabelFormatter(new NumberStringConverter(new DecimalFormat("####")));
         correlogram.xAxis.setLabel("Year");
-        correlogram.yAxis.setLabel("Years Time Lag");
+        correlogram.yAxis.setLabel("Time lag index (!)");
         correlogram.yAxis.setTickLabelFormatter(new NumberStringConverter(new DecimalFormat("#")));
         
         legend.xAxis.setLabel("μ");//Mean

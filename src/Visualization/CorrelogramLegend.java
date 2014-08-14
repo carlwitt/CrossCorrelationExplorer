@@ -80,8 +80,9 @@ public class CorrelogramLegend extends CanvasChart {
         xAxis.setTickPositionType(NumberAxis.TICK_GENERATION_METHOD.MANUAL);
         yAxis.setTickPositionType(NumberAxis.TICK_GENERATION_METHOD.MANUAL);
 
-        this.allowScroll = false;
+        this.allowPan = false;
         this.allowZoom = false;
+        this.allowSelection = false;
     }
 
     public void setSharedData(final SharedData sharedData){

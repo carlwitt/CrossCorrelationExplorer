@@ -58,6 +58,7 @@ public class ComputationController implements Initializable {
     @FXML private TextField baseWindowOffsetText;
     @FXML private TextField timeLagMinText;
     @FXML private TextField timeLagMaxText;
+    @FXML private TextField timeLagStepText;
     @FXML private TextField significanceLevelText;
 
     @FXML private Button setAAllButton;
@@ -134,6 +135,7 @@ public class ComputationController implements Initializable {
         int overlap = (int) Double.parseDouble(baseWindowOffsetText.getText());
         int tauMin = (int) Double.parseDouble(timeLagMinText.getText());
         int tauMax = (int) Double.parseDouble(timeLagMaxText.getText());
+        int tauStep = (int) Double.parseDouble(timeLagStepText.getText());
         double significanceLevel = Double.parseDouble(significanceLevelText.getText());
 
         // the window size must be at least two (otherwise, the pearson correlation coefficient is undefined)
@@ -157,7 +159,7 @@ public class ComputationController implements Initializable {
         windowSizeText.setText(""+windowSize); // to display what was parsed
 
         WindowMetadata metadata = new WindowMetadata(dataModel.correlationSetA, dataModel.correlationSetB,
-                windowSize, tauMin, tauMax, 1, baseWindowOffset);
+                windowSize, tauMin, tauMax, tauStep, baseWindowOffset);
         CorrelationMatrix.setSignificanceLevel(metadata, significanceLevel);
 
         // get result from cache or execute an asynchronous compute service

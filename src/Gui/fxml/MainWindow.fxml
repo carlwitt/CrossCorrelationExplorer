@@ -4,8 +4,7 @@
 
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.Text?>
-<VBox minHeight="600.0" minWidth="800.0" prefHeight="768.0" prefWidth="1024.0" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.MainWindowController">
+<VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="600.0" minWidth="800.0" prefHeight="768.0" prefWidth="1024.0" spacing="0.0" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.MainWindowController">
   <MenuBar maxHeight="20.0">
     <menus>
       <Menu mnemonicParsing="false" text="File">
@@ -26,7 +25,7 @@
       </Menu>
     </menus>
   </MenuBar>
-  <SplitPane dividerPositions="0.2560646900269542" focusTraversable="false" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0" VBox.vgrow="ALWAYS">
+  <SplitPane dividerPositions="0.33962264150943394" focusTraversable="false" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0" VBox.vgrow="ALWAYS">
     <StackPane minHeight="0.0" prefHeight="132.0" prefWidth="1002.0" visible="true">
       <TabPane fx:id="inputTabPane" minHeight="0.0" prefHeight="165.0" prefWidth="200.0" rotateGraphic="false" style="-fx-background-color: white;" tabClosingPolicy="UNAVAILABLE" tabMaxHeight="26.0" tabMinHeight="0.0">
         <Tab closable="false" text="Parameters">
@@ -47,30 +46,6 @@
         <Button fx:id="progressCancelButton" mnemonicParsing="false" prefHeight="25.0" prefWidth="99.0" text="Cancel" translateY="40.0" StackPane.alignment="CENTER" />
       </StackPane>
     </StackPane>
-    <!--Correlogram View-->
-    <AnchorPane prefHeight="-1.0" prefWidth="200.0" style="-fx-background-color: gainsboro;">
-      <Text fontSmoothingType="GRAY" rotate="270.0" smooth="true" strikethrough="false" strokeType="OUTSIDE" strokeWidth="0.0" text="Correlation View" translateX="0.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="-45.0" AnchorPane.topAnchor="50.0" />
-      <fx:include fx:id="correlationView" source="Correlogram.fxml" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
-      <!--<ToggleButton id="linkWithTimeSeriesViewToggle" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" selected="true" text="" translateX="0.0" translateY="-20.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0">-->
-      <!--<graphic>-->
-      <!--<ImageView fitHeight="14.0" fitWidth="14.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" smooth="false">-->
-      <!--<Image url="@img/glyphicons_050_link.png" />-->
-      <!--</ImageView>-->
-      <!--</graphic>-->
-      <!--<tooltip>-->
-      <!--<Tooltip text="Link horizontal zoom and pan with time series view" />-->
-      <!--</tooltip>-->
-      <!--</ToggleButton>-->
-      <!--<Button cancelButton="false" contentDisplay="GRAPHIC_ONLY" defaultButton="false" graphicTextGap="0.0" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" onAction="#resetView" prefHeight="20.0" prefWidth="20.0" style=";" text="" translateX="0.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0">-->
-      <!--<graphic>-->
-      <!--<ImageView fitHeight="14.0" fitWidth="14.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" smooth="false">-->
-      <!--<Image url="@img/glyphicons_214_resize_small.png" />-->
-      <!--</ImageView>-->
-      <!--</graphic>-->
-      <!--<tooltip>-->
-      <!--<Tooltip text="Reset correlogram view" />-->
-      <!--</tooltip>-->
-      <!--</Button>-->
-    </AnchorPane>
+    <fx:include fx:id="correlationView" source="Correlogram.fxml" prefHeight="549.0" prefWidth="1002.0" />
   </SplitPane>
 </VBox>

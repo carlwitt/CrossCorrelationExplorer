@@ -30,9 +30,10 @@ public class DataModel {
     public ObservableList<TimeSeries> timeSeriesB = FXCollections.observableArrayList();
 
 
-    /** These cache the minimum and maximum Y value of the current dataset. Are invalidated (set to null) when time series are added or removed. */
-    private Double minY = null;
-    private Double maxY = null;
+    /** These cache the minimum and maximum Y value of the current dataset. Are invalidated (set to null) when time series are added or removed.
+     * The array index refers to the file ID. */
+    private Double[] minY = new Double[2];
+    private Double[] maxY = new Double[2];
 
     public DataModel(Collection<Collection<TimeSeries>> tsByFile){
 
@@ -118,29 +119,29 @@ public class DataModel {
 
     public double getMinY(int fileID) {
         // compute if not cached
-        if(minY == null){
-            minY = Double.POSITIVE_INFINITY;
+        if(minY[fileID] == null){
+            minY[fileID] = Double.POSITIVE_INFINITY;
             for (TimeSeries ts : timeSeriesByFile.get(fileID).values()) {
 //            for (TimeSeries ts : allTimeSeries.column(fileID).values()) {
-                minY = Math.min(minY, ts.getDataItems().getMin(ComplexSequence.Part.IMAGINARY));
+                minY[fileID] = Math.min(minY[fileID], ts.getDataItems().getMin(ComplexSequence.Part.IMAGINARY));
             }
 
         }
-        return minY;
+        return minY[fileID];
     }
 
     public double getMaxY(int fileID) {
         // compute if not cached
-        if(maxY == null){
-            maxY = Double.NEGATIVE_INFINITY;
+        if(maxY[fileID] == null){
+            maxY[fileID] = Double.NEGATIVE_INFINITY;
             for (TimeSeries ts : timeSeriesByFile.get(fileID).values()) {
 //            for (TimeSeries ts : allTimeSeries.column(fileID).values()) {
-                maxY = Math.max(maxY, ts.getDataItems().getMax(ComplexSequence.Part.IMAGINARY));
+                maxY[fileID] = Math.max(maxY[fileID], ts.getDataItems().getMax(ComplexSequence.Part.IMAGINARY));
             }
 
         }
 
-        return maxY;
+        return maxY[fileID];
     }
 
     /** @return the number of data points in the specified interval (e.g. time period) */

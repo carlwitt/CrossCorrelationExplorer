@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Text?>
 <?import javafx.scene.web.WebView?>
-<AnchorPane maxHeight="-1.0" maxWidth="-1.0" minHeight="-1.0" minWidth="-1.0" prefHeight="350.0" prefWidth="1200.0" style="-fx-background-color: gainsboro;" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.CellDistributionViewController">
+<AnchorPane maxHeight="-1.0" maxWidth="-1.0" minHeight="100.0" minWidth="300.0" prefHeight="350.0" prefWidth="1200.0" style="-fx-background-color: gainsboro;" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.CellDistributionViewController">
   <!--<HBox minHeight="14.0" prefHeight="18.0" prefWidth="600.0" AnchorPane.bottomAnchor="5.0" AnchorPane.rightAnchor="5.0">
     <children>
       <Separator prefWidth="200.0" visible="false" HBox.hgrow="ALWAYS" />

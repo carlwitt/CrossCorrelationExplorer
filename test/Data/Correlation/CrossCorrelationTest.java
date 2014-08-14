@@ -44,8 +44,8 @@ public class CrossCorrelationTest {
         int numTimeSeries = 20;
         int length = 60;
 
-        List<TimeSeries> tsA = TimeSeriesTest.randomTimeSeries(numTimeSeries, length);
-        List<TimeSeries> tsB = TimeSeriesTest.randomTimeSeries(numTimeSeries, length);
+        List<TimeSeries> tsA = TimeSeriesTest.randomTimeSeries(numTimeSeries, length, 1l);
+        List<TimeSeries> tsB = TimeSeriesTest.randomTimeSeries(numTimeSeries, length, 1l);
 
         int windowSize = 4, baseWindowOffset = 2, tauMin = -1, tauMax = 3, tauStep = 2;
         WindowMetadata metadata1 = new WindowMetadata(tsA, tsB, windowSize, tauMin, tauMax, tauStep, baseWindowOffset);

@@ -102,6 +102,12 @@ public class WindowMetadata {
         lagRangeOverlap = getLagRangeOverlap();
     }
 
+    /**
+     * Helpful to compute the size of a column of the matrix.
+     * Example: tau min = -10, tau max = 10, tau step = 1, result = 21 (-10, -9, ..., -1, 0, 1, 2, ..., 10)
+     * Example: tau min = -10, tau max = 10, tau step = 4, result =  6 (-10, -6, -2, 2, 6, 10)
+     * @return the number of integer time lags that are covered by the given tau min, tau max and tau step.
+     */
     public int getNumberOfDifferentTimeLags(){
         return (int) Math.round(Math.ceil( 1.f * (tauMax-tauMin+1) / tauStep));
     }
@@ -126,6 +132,11 @@ public class WindowMetadata {
 
     int getLagRangeOverlap() {
         return tauMax - tauMin - baseWindowOffset + 1;
+    }
+
+    public double getMinXValue() {
+        assert(setA.size() > 0) : "Metadata problem " + this;
+        return setA.get(0).getDataItems().re[0];
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -181,6 +192,7 @@ public class WindowMetadata {
         if (baseWindowOffset != that.baseWindowOffset) return false;
         if (tauMax != that.tauMax) return false;
         if (tauMin != that.tauMin) return false;
+        if (tauStep != that.tauStep) return false;
         if (windowSize != that.windowSize) return false;
         if (naAction != that.naAction) return false;
         if (!setA.equals(that.setA)) return false;
@@ -211,5 +223,5 @@ public class WindowMetadata {
     public Integer getWindowSize(){ return windowSize; }
     public Integer getOverlap(){ return windowSize-baseWindowOffset; }
     public Double getSignificanceLevel(){ return CorrelationMatrix.getSignificanceLevel(this); }
-    public String getLagRange(){ return String.format("[%s, %s]",tauMin,tauMax); }
+    public String getLagRange(){ return String.format("[%s, %s] step %s",tauMin,tauMax,tauStep); }
 }

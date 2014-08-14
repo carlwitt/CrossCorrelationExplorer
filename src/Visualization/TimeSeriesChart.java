@@ -1,14 +1,11 @@
 package Visualization;
 
-import Data.ComplexSequence;
-import Data.Correlation.CorrelationMatrix;
 import Data.DataModel;
 import Data.SharedData;
 import Data.TimeSeries;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.ObservableList;
-import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
@@ -16,7 +13,6 @@ import javafx.scene.transform.Affine;
 import javafx.scene.transform.Translate;
 
 import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Used to draw the time series. Supports basic aggregation by drawing only each N-th data point.
@@ -45,7 +41,7 @@ public class TimeSeriesChart extends CanvasChart {
         gc.clearRect(0, 0, chartCanvas.getWidth(), chartCanvas.getHeight());
         gc.setLineWidth(1);
         gc.setMiterLimit(0);
-
+/*
         // compute affine transform that maps data coordinates to screen coordinates
         Affine dataToScreen = dataToScreen();
 
@@ -130,8 +126,12 @@ public class TimeSeriesChart extends CanvasChart {
                         prevPoint = dataToScreen.transform(new Point2D(data.re[prevPointIdx], data.im[prevPointIdx]));
                     }
 
-                    double x = data.re[nextPointIdx-xShift];
-                    double y = data.im[nextPointIdx];
+                    double x=0,y=0;
+                    try {
+                         x = data.re[nextPointIdx-xShift];
+                         y = data.im[nextPointIdx];
+                    } catch(Exception e){}
+
                     curPoint = dataToScreen.transform(new Point2D(x, y));
 
                     // connect current data point to previous data point with a line
@@ -145,7 +145,7 @@ public class TimeSeriesChart extends CanvasChart {
 
         xAxis.drawContents();
         yAxis.drawContents();
-
+*/
     }
 
     // cluster experiment. first version: cluster each time step with fixed k and draw the resulting clusters as k time series.
@@ -382,16 +382,19 @@ public class TimeSeriesChart extends CanvasChart {
 //    }
     
     public void resetView() {
-        // TODO: add a padding of max(5px, 2.5% of the pixel width/height of the canvas)
         DataModel dataModel = sharedData.experiment.dataModel;
-        double xRange = dataModel.getMaxX(0) - dataModel.getMinX(0);
-        double yRange = dataModel.getMaxY(0) - dataModel.getMinY(0);
+        double maxX = Math.max(dataModel.getMaxX(0), dataModel.getMaxX(1));
+        double minX = Math.min(dataModel.getMinX(0), dataModel.getMinX(1));
+        double xRange = maxX - minX;
+        double maxY = Math.max(dataModel.getMaxY(0), dataModel.getMaxY(1));
+        double minY = Math.min(dataModel.getMinY(0), dataModel.getMinY(1));
+        double yRange = maxY - minY;
         if(xRange < 0 || yRange < 0){
             xRange = 1;
             yRange = 1;
                     
         }
-        Rectangle2D newVisibleRange = new Rectangle2D(dataModel.getMinX(0), dataModel.getMinY(0), xRange, yRange);
+        Rectangle2D newVisibleRange = new Rectangle2D(minX, minY, xRange, yRange);
 
         axesRanges.set(newVisibleRange);
         drawContents();

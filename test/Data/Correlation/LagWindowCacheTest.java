@@ -71,7 +71,7 @@ public class LagWindowCacheTest {
         int numTimeSeries = 100;
         int timeSeriesLength = 10000;
 
-        List<TimeSeries> set = TimeSeriesTest.randomTimeSeries(numTimeSeries, timeSeriesLength);
+        List<TimeSeries> set = TimeSeriesTest.randomTimeSeries(numTimeSeries, timeSeriesLength, 1l);
 
         int windowSize = 3, baseWindowOffset = 1;
         WindowMetadata metadata = new WindowMetadata(set, set, windowSize, -1, 2, 1, baseWindowOffset);
