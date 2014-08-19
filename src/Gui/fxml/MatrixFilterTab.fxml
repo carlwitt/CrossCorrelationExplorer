@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<BorderPane id="BorderPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" prefHeight="-1.0" prefWidth="-1.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.MatrixFilterController">
+  <left>
+    <GridPane fx:id="sliderGrid" gridLinesVisible="false" hgap="5.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="-1.0" prefWidth="600.0" vgap="2.0" BorderPane.alignment="CENTER">
+      <children>
+        <Label text="Mean of Correlation Values" GridPane.columnIndex="1" GridPane.halignment="LEFT" GridPane.rowIndex="0" />
+        <Label text="Standard Deviation" GridPane.columnIndex="1" GridPane.halignment="LEFT" GridPane.rowIndex="2" />
+        <Label text="Median" GridPane.columnIndex="1" GridPane.halignment="LEFT" GridPane.rowIndex="4" />
+        <Label text="Interquartile Range" GridPane.columnIndex="1" GridPane.halignment="LEFT" GridPane.rowIndex="6" />
+        <Label text="Percentage Significantly Negative Correlated Window Pairs" GridPane.columnIndex="1" GridPane.halignment="LEFT" GridPane.rowIndex="10" />
+        <Label text="Percentage Significantly Positive Correlated Window Pairs" GridPane.columnIndex="1" GridPane.halignment="LEFT" GridPane.rowIndex="8" />
+        <Label text="Percentage Significantly Correlated Window Pairs" GridPane.columnIndex="1" GridPane.halignment="LEFT" GridPane.rowIndex="12" />
+      </children>
+      <columnConstraints>
+        <ColumnConstraints fillWidth="true" hgrow="NEVER" maxWidth="199.0" minWidth="60.0" prefWidth="60.0" />
+        <ColumnConstraints hgrow="ALWAYS" maxWidth="-1.0" minWidth="10.0" prefWidth="418.0" />
+        <ColumnConstraints hgrow="NEVER" maxWidth="200.0" minWidth="60.0" prefWidth="60.0" />
+      </columnConstraints>
+      <rowConstraints>
+        <RowConstraints maxHeight="14.0" minHeight="10.0" prefHeight="14.0" vgrow="SOMETIMES" />
+        <RowConstraints maxHeight="-Infinity" minHeight="10.0" prefHeight="-1.0" vgrow="SOMETIMES" />
+        <RowConstraints maxHeight="14.0" minHeight="10.0" prefHeight="14.0" vgrow="SOMETIMES" />
+        <RowConstraints maxHeight="14.0" minHeight="10.0" prefHeight="-1.0" vgrow="SOMETIMES" />
+        <RowConstraints maxHeight="14.0" minHeight="10.0" prefHeight="14.0" vgrow="SOMETIMES" />
+        <RowConstraints maxHeight="14.0" minHeight="10.0" prefHeight="-1.0" vgrow="SOMETIMES" />
+        <RowConstraints maxHeight="14.0" minHeight="10.0" prefHeight="14.0" vgrow="SOMETIMES" />
+        <RowConstraints maxHeight="14.0" minHeight="10.0" prefHeight="-1.0" vgrow="SOMETIMES" />
+        <RowConstraints maxHeight="14.0" minHeight="10.0" prefHeight="14.0" vgrow="SOMETIMES" />
+        <RowConstraints maxHeight="14.0" minHeight="10.0" prefHeight="-1.0" vgrow="SOMETIMES" />
+        <RowConstraints maxHeight="15.0" minHeight="10.0" prefHeight="15.0" vgrow="SOMETIMES" />
+        <RowConstraints maxHeight="15.0" minHeight="10.0" prefHeight="-1.0" vgrow="SOMETIMES" />
+        <RowConstraints maxHeight="15.0" minHeight="10.0" prefHeight="15.0" vgrow="SOMETIMES" />
+        <RowConstraints maxHeight="15.0" minHeight="10.0" prefHeight="-1.0" vgrow="SOMETIMES" />
+      </rowConstraints>
+      <BorderPane.margin>
+        <Insets />
+      </BorderPane.margin>
+    </GridPane>
+  </left>
+  <right>
+    <HBox prefHeight="-1.0" prefWidth="-1.0">
+      <children>
+        <VBox id="VBox" alignment="CENTER" spacing="5.0" HBox.hgrow="ALWAYS">
+          <children>
+            <Button fx:id="resetButton" focusTraversable="false" mnemonicParsing="false" onAction="#resetSliders" text="Reset Sliders" />
+            <Separator orientation="VERTICAL" prefHeight="10.0" visible="false" VBox.vgrow="ALWAYS" />
+            <Button fx:id="updateButton" contentDisplay="RIGHT" focusTraversable="false" mnemonicParsing="false" onAction="#publishChanges" text="Update" />
+            <CheckBox fx:id="autoUpdateCheckBox" allowIndeterminate="false" focusTraversable="false" indeterminate="false" mnemonicParsing="false" selected="true" text="auto update">
+              <tooltip>
+                <Tooltip text="When enabled, each slider directly updates the correlogram view." />
+              </tooltip>
+            </CheckBox>
+          </children>
+        </VBox>
+      </children>
+      <padding>
+        <Insets bottom="2.0" top="5.0" />
+      </padding>
+    </HBox>
+  </right>
+</BorderPane>

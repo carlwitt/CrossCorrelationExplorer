@@ -158,6 +158,7 @@ public class CorrelationMatrix {
     protected double[][] L2NormsA, L2NormsB;
 
     /**
+     * TODO: Is precomputation for large time lag steps slower than no precomputation?
      * Computes the means and standard deviations for each window necessary for the cc matrix computation.
      * This induces a slight overhead since in the main computation, since the values in each window need to be normalized to
      * compute the L2 norm.
@@ -268,26 +269,26 @@ public class CorrelationMatrix {
 
                     descriptiveStatistics.clear();
 
+
+                    if (lag < 0) {       // process negative time lags (shift time series A to the right ~ find influences of B on A)
+                        windowAStartIdx = baseWindowStartIdx + lag;
+                        windowBStartIdx = baseWindowStartIdx;
+                    } else {             // process positive time lags (shift time series B to the right ~ find influences of A on B)
+                        windowAStartIdx = baseWindowStartIdx;
+                        windowBStartIdx = baseWindowStartIdx - lag;
+                    }
+
                     List<TimeSeries> setA = metadata.setA;
                     for (int tsAIdx = 0; tsAIdx < setA.size(); tsAIdx++) {
                         TimeSeries tsA = setA.get(tsAIdx);
+
+                        CrossCorrelation.getWindow(windowAData, tsA, windowAStartIdx, placeholder);
 
                         List<TimeSeries> setB = metadata.setB;
                         for (int tsBIdx = 0; tsBIdx < setB.size(); tsBIdx++) {
                             TimeSeries tsB = setB.get(tsBIdx);
 
-
-                            if (lag < 0) {       // process negative time lags (shift time series A to the right ~ find influences of B on A)
-                                windowAStartIdx = baseWindowStartIdx + lag;
-                                windowBStartIdx = baseWindowStartIdx;
-                                CrossCorrelation.getWindow(windowAData, tsA, windowAStartIdx, placeholder);
-                                CrossCorrelation.getWindow(windowBData, tsB, windowBStartIdx, placeholder);
-                            } else {             // process positive time lags (shift time series B to the right ~ find influences of A on B)
-                                windowAStartIdx = baseWindowStartIdx;
-                                windowBStartIdx = baseWindowStartIdx - lag;
-                                CrossCorrelation.getWindow(windowAData, tsA, windowAStartIdx, placeholder);
-                                CrossCorrelation.getWindow(windowBData, tsB, windowBStartIdx, placeholder);
-                            }
+                            CrossCorrelation.getWindow(windowBData, tsB, windowBStartIdx, placeholder);
 
                             if(windowAStartIdx < 0){
                                 windowAMean = Double.NaN;
@@ -333,6 +334,46 @@ public class CorrelationMatrix {
             return partialMatrix;
         }
 
+    }
+
+    /**
+     * Computes all correlation values for a given window index and lag index.
+     * @param baseWindowIdx the x coordinate of the cell, in cell coordinates (see {@link Visualization.Correlogram}).
+     * @param lagIndex the y coordinate of the cell, in cell coordinates.
+     * @return all correlation values (including NaNs, if present) between the windows of the time series in the two input sets.
+     */
+    public double[] computeSingleCell(int baseWindowIdx, int lagIndex){
+
+        int lag = metadata.tauMin + lagIndex * metadata.tauStep;
+
+        double[] windowAData = new double[metadata.windowSize],
+                 windowBData = new double[metadata.windowSize];
+
+        double[] result = new double[metadata.setA.size() * metadata.setB.size()];
+
+        int baseWindowStartIdx = metadata.baseWindowOffset * baseWindowIdx;
+
+        int windowAStartIdx, windowBStartIdx;
+        if (lag < 0) {       // process negative time lags (shift time series A to the right ~ find influences of B on A)
+            windowAStartIdx = baseWindowStartIdx + lag;
+            windowBStartIdx = baseWindowStartIdx;
+        } else {             // process positive time lags (shift time series B to the right ~ find influences of A on B)
+            windowAStartIdx = baseWindowStartIdx;
+            windowBStartIdx = baseWindowStartIdx - lag;
+        }
+
+        int rCounter = 0;
+        for (TimeSeries tsA : metadata.setA) {
+            CrossCorrelation.getWindow(windowAData, tsA, windowAStartIdx, placeholder);
+
+            for (TimeSeries tsB : metadata.setB) {
+                CrossCorrelation.getWindow(windowBData, tsB, windowBStartIdx, placeholder);
+                result[rCounter++] = CrossCorrelation.correlationCoefficient(windowAData, windowBData);
+            }
+
+        }
+
+        return result;
     }
 
     /** Reusable concurrent execution logic for computing the matrix. */

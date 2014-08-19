@@ -217,11 +217,12 @@ public class WindowMetadata {
         return result;
     }
 
-    /** These methods are used to display metadata objects in the results table. */
+    /** These methods are used to display metadata objects in the results table (via the cell value factory). */
     public Integer getInputSet1Size(){return setA.size(); }
     public Integer getInputSet2Size(){return setB.size(); }
     public Integer getWindowSize(){ return windowSize; }
     public Integer getOverlap(){ return windowSize-baseWindowOffset; }
     public Double getSignificanceLevel(){ return CorrelationMatrix.getSignificanceLevel(this); }
-    public String getLagRange(){ return String.format("[%s, %s] step %s",tauMin,tauMax,tauStep); }
+    public String getLagRange(){ return String.format("[%s, %s]",tauMin,tauMax); }
+    public Integer getLagStep(){ return tauStep; }
 }

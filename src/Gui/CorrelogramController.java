@@ -73,7 +73,7 @@ public class CorrelogramController {
 
         correlogram.xAxis.setTickLabelFormatter(new NumberStringConverter(new DecimalFormat("####")));
         correlogram.xAxis.setLabel("Year");
-        correlogram.yAxis.setLabel("Time lag index (!)");
+        correlogram.yAxis.setLabel("Time lag (years)");
         correlogram.yAxis.setTickLabelFormatter(new NumberStringConverter(new DecimalFormat("#")));
         
         legend.xAxis.setLabel("μ");//Mean

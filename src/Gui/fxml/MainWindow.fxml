@@ -34,8 +34,11 @@
         <Tab closable="false" text="Cell Distribution">
           <fx:include fx:id="cellDistributionView" source="CellDistributionView.fxml" prefHeight="147.0" prefWidth="988.0" />
         </Tab>
-        <Tab closable="false" text="Time Series">
+        <Tab closable="true" text="Time Series">
           <fx:include fx:id="timeSeriesView" source="TimeSeriesView.fxml" />
+        </Tab>
+        <Tab text="Matrix Filter">
+            <fx:include fx:id="matrixFilter" source="MatrixFilterTab.fxml" />
         </Tab>
       </TabPane>
       <StackPane fx:id="progressPane" disable="false" minHeight="0.0" opacity="1.0" prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: rgba(0,0,0,0.5);" visible="false">

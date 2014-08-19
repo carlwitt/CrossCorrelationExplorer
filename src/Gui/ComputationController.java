@@ -76,6 +76,7 @@ public class ComputationController implements Initializable {
     @FXML private TableColumn<WindowMetadata,Integer> windowSizeColumn;
     @FXML private TableColumn<WindowMetadata,Integer> overlapColumn;
     @FXML private TableColumn<WindowMetadata,String> lagRangeColumn;
+    @FXML private TableColumn<WindowMetadata,Integer> lagStepColumn;
     @FXML private TableColumn<WindowMetadata,Double> significanceColumn;
 //    @FXML private TableColumn<WindowMetadata,Time> timeColumn;
 
@@ -103,6 +104,7 @@ public class ComputationController implements Initializable {
         windowSizeColumn.setCellValueFactory(new PropertyValueFactory<>("windowSize"));
         overlapColumn.setCellValueFactory(new PropertyValueFactory<>("overlap"));
         lagRangeColumn.setCellValueFactory(new PropertyValueFactory<>("lagRange"));
+        lagStepColumn.setCellValueFactory(new PropertyValueFactory<>("lagStep"));
         significanceColumn.setCellValueFactory(new PropertyValueFactory<>("significanceLevel"));
 
     }

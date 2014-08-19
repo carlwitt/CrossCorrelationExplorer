@@ -5,7 +5,7 @@
 <?import javafx.scene.text.Font?>
 <?import java.net.URL?>
 <HBox fx:id="computationInputPane" maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="-1.0" prefHeight="-1.0" prefWidth="-1.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.ComputationController">
-  <SplitPane dividerPositions="0.4981024667931689" focusTraversable="true" prefHeight="-1.0" prefWidth="1056.0" HBox.hgrow="ALWAYS">
+  <SplitPane dividerPositions="0.4977738201246661" focusTraversable="true" prefHeight="-1.0" prefWidth="1125.0" HBox.hgrow="ALWAYS">
     <items>
       <GridPane fx:id="inputGridPane" gridLinesVisible="false">
         <GridPane GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.rowIndex="1" GridPane.valignment="CENTER">
@@ -99,15 +99,16 @@
           <RowConstraints fillHeight="true" maxHeight="-1.0" minHeight="-1.0" prefHeight="-1.0" vgrow="NEVER" />
         </rowConstraints>
       </GridPane>
-      <VBox id="VBox" alignment="CENTER" prefWidth="527.0" spacing="5.0">
+      <VBox id="VBox" alignment="CENTER" prefWidth="568.0" spacing="5.0">
         <children>
-          <TableView id="correlogramTable" fx:id="correlogramCacheTable" disable="false" editable="false" minWidth="0.0" prefHeight="200.0" prefWidth="578.0" style="-fx-focus-color: transparent;" tableMenuButtonVisible="false" VBox.vgrow="ALWAYS">
+          <TableView id="correlogramTable" fx:id="correlogramCacheTable" disable="false" editable="false" minWidth="0.0" prefHeight="200.0" prefWidth="549.0" style="-fx-focus-color: transparent;" tableMenuButtonVisible="false" VBox.vgrow="ALWAYS">
             <columns>
               <TableColumn editable="false" maxWidth="5000.0" minWidth="10.0" prefWidth="111.0" style="-fx-font-size: 11; -fx-background-color: #00cc21;" text="size of input set 1" fx:id="input1SeriesColumn" />
               <TableColumn editable="false" maxWidth="5000.0" minWidth="10.0" prefWidth="109.0" style="-fx-font-size: 11; -fx-background-color: #0066ff;" text="size of input set 2" fx:id="input2SeriesColumn" />
               <TableColumn editable="false" maxWidth="5000.0" minWidth="10.0" prefWidth="94.0" style="-fx-font-size: 11px;" text="window size" fx:id="windowSizeColumn" />
               <TableColumn editable="false" maxWidth="5000.0" minWidth="10.0" prefWidth="60.0" style="-fx-font-size: 10px;" text="overlap" fx:id="overlapColumn" />
-              <TableColumn editable="false" maxWidth="5000.0" minWidth="10.0" prefWidth="100.0" style="-fx-font-size: 11px;" text="lag range" fx:id="lagRangeColumn" />
+              <TableColumn editable="false" maxWidth="5000.0" minWidth="10.0" prefWidth="79.0" style="-fx-font-size: 11px;" text="lag range" fx:id="lagRangeColumn" />
+              <TableColumn maxWidth="5000.0" minWidth="10.0" prefWidth="64.0" style="-fx-font-size: 11px&#10;" text="lag step" fx:id="lagStepColumn" />
               <TableColumn editable="false" maxWidth="5000.0" minWidth="10.0" prefWidth="52.0" style="-fx-font-size: 11;" text="p" fx:id="significanceColumn" />
               <TableColumn maxWidth="5000.0" minWidth="10.0" prefWidth="75.0" style="-fx-font-size: 10;" text="time (h:m:s)" visible="false" fx:id="timeColumn" />
             </columns>

@@ -9,6 +9,7 @@ import com.google.common.collect.Lists;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import ucar.ma2.InvalidRangeException;
+import ucar.nc2.Attribute;
 import ucar.nc2.NetcdfFile;
 import ucar.nc2.NetcdfFileWriter;
 
@@ -22,6 +23,9 @@ import java.util.*;
  * e.g. assigning a correlogram to a different time series data set than it was computed from. Another important reason is that cell distributions
  * can be recomputed on the fly only if the original time series data is available (otherwise, all intermediate correlograms for an
  * aggregated correlogram would have to be stored, which easily requires Gigabytes of disk space).
+ *
+ * NetCDF Java documentation
+ *      http://www.unidata.ucar.edu/software/thredds/current/netcdf-java
  *
  * The overall layout of a data file consists of the original time series (including their artificial IDs), grouped according to the two input files they came from
  * and a number of correlograms and their associated metadata (the parameters that were used used to compute them).
@@ -100,6 +104,17 @@ public class Experiment {
     /** Marks whether there have been changes to the experimental data that should be saved before leaving. */
     boolean uncommitedChanges = false;
 
+    /** To detect conflicts in the file structure, arising from the evolution of the file format.
+     * Version history
+     *      Version 1
+     *          norbert marwans symmetric cross correlation matrix algorithm
+     *          introduced time lag step size
+     *          switched to time lag indices in referencing matrix cells
+     *          introduced version numbers
+     */
+    public static final int VERSION_NUMBER = 1;
+    protected Attribute fileFormatVersion = new Attribute("File_Format_Version", VERSION_NUMBER);
+
     public Experiment(){dataModel = new DataModel(); }
     /**
      * Creates a new experiment by filling the data model with time series from the input files.
@@ -142,9 +157,15 @@ public class Experiment {
 
         this.dataModel = new DataModel();
 
+
         NetcdfFile dataFile = null;
         try {
             dataFile = NetcdfFile.open(netCDFPath, null);
+
+            // check the file format version
+            Attribute formatVersion = dataFile.findGlobalAttribute(fileFormatVersion.getShortName());
+            if(formatVersion == null || (int) formatVersion.getNumericValue() != VERSION_NUMBER)
+                throw new IllegalArgumentException("Format is not supported.");
 
             // Get the latitude and longitude Variables.
             NetCDFTimeSeriesGroup[] tsGroups = new NetCDFTimeSeriesGroup[2];
@@ -156,8 +177,6 @@ public class Experiment {
                 CorrelationMatrix nextResult = resultsInFile.next();
                 addResult(nextResult);
             }
-        } catch (Exception e){
-            e.printStackTrace();
         } finally {
             if (dataFile != null)
                 try { dataFile.close(); }
@@ -185,6 +204,9 @@ public class Experiment {
             int i = 0;
             for (CorrelationMatrix matrix: correlograms.values())
                 netCDFComputationResults.add(new NetCDFComputationResult(dataFile, i++, matrix));
+
+            // add version information
+            dataFile.addGroupAttribute(null, fileFormatVersion);
 
             // start writing data
             dataFile.create();

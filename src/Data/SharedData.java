@@ -57,6 +57,17 @@ public class SharedData extends Observable {
     public void setHighlightedCell(Point value) { highlightedCell.set(value); }
 
     /**
+     * Specifies filter ranges on the cells of the correlogram.
+     * The first dimension refers to the statistic index (see e.g. {@link Data.Correlation.CorrelationMatrix#MEAN}).
+     * If the second level array is null, no filter shall be applied.
+     * The second dimension refers to the bound: 0: lower bound, 1: upper bound.
+     */
+    private final ObjectProperty<double[][]> matrixFilterRanges = new SimpleObjectProperty<>(new double[CorrelationMatrix.NUM_STATS][]);
+    public ObjectProperty matrixFilterRangesProperty(){ return matrixFilterRanges; }
+    public double[][] getMatrixFilterRanges(){ return matrixFilterRanges.get(); }
+    public void setMatrixFilterRanges(double[][] matrixFilterRanges){ this.matrixFilterRanges.set(matrixFilterRanges); }
+
+    /**
      * Specifies how uncertainty is visualized in the correlogam.
      * See {@link Visualization.Correlogram.UNCERTAINTY_VISUALIZATION}
      */

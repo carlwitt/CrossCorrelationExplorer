@@ -7,7 +7,6 @@ package Data.IO;
  */
 public class NetCDFWriter {
 
-    /** To detect conflicts in the file structure, arising from the evolution of the file format. */
-    public static final String VERSION_NUMBER = "0.8";
+
 
 }

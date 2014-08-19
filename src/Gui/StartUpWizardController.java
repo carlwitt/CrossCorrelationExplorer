@@ -124,7 +124,16 @@ public class StartUpWizardController extends WindowController implements Initial
             mainWindowController.showWindow();
             this.hideWindow();
             addRecentExperimentFile(inputFile.getAbsolutePath());
-        } catch(Exception e){Dialogs.create().title("Sorry for this technical error message...").showException(e); e.printStackTrace();}
+        }
+        catch(IllegalArgumentException e){
+            Dialogs.create().message("The data has been written with a previous version of the program. Sorry, can't read file.").showError();
+            return;
+        }
+        catch(Exception e){
+            Dialogs.create().masthead("Sorry for this technical error message...").showException(e);
+            e.printStackTrace();
+        }
+
     }
 
     public void createExperiment(){

@@ -60,41 +60,33 @@ public class CellDistributionViewController implements Initializable {
 
     double criticalCorrelationValue = 0.8;
 
+    /**
+     * Retrieves the distribution within the given cell and updates the histogram plot.
+     * @param activeCell
+     */
     protected void visualizeCellDistribution(Point activeCell) {
 
-//        CorrelationMatrix correlationMatrix = sharedData.getCorrelationMatrix();
-//        if(activeCell.x >= correlationMatrix.getSize()) return;
-//
-//        CorrelationMatrix.CorrelationColumn activeTimeWindow = correlationMatrix.getColumn(activeCell.x);
-//
-//        if(activeCell.getY() >= 0){
-//            int timeLag = activeCell.y + activeTimeWindow.tauMin;
-//            ObservableList<TimeSeries> setA = sharedData.experiment.dataModel.correlationSetA;
-//            ObservableList<TimeSeries> setB = sharedData.experiment.dataModel.correlationSetB;
-//            int windowLength = activeTimeWindow.getSize();
-//            int nans = 0;
-//            descriptiveStatistics.clear();
-//            for (TimeSeries tsA : setA){
-//                for( TimeSeries tsB : setB){
-//
-//                    double correlation = CrossCorrelation.correlationCoefficient(
-//                            tsA, tsB,
-//                            activeTimeWindow.windowStartIndex, activeTimeWindow.windowStartIndex + windowLength - 1,
-//                            timeLag);
-//                    if(! Double.isNaN(correlation)) descriptiveStatistics.addValue(correlation);
-//                    else nans++;
-//                }
-//            }
-//
-//            webView.getEngine().executeScript(String.format("update(%s);", calcHistogramJSON(descriptiveStatistics, numBins)));
+        CorrelationMatrix correlationMatrix = sharedData.getCorrelationMatrix();
+        if(activeCell.x >= correlationMatrix.getSize()) return;
 
+        int columnIndex = activeCell.x;
+        int lagIndex = activeCell.y;
+
+        if(lagIndex >= 0 && lagIndex < Integer.MAX_VALUE){
+            descriptiveStatistics.clear();
+            double[] correlationValues = correlationMatrix.computeSingleCell(columnIndex, lagIndex);
+            for(double r : correlationValues)
+                if( ! Double.isNaN(r)) descriptiveStatistics.addValue(r);
+
+            webView.getEngine().executeScript(String.format("update(%s);", calcHistogramJSON(descriptiveStatistics, numBins)));
+//
 //            System.out.println(String.format("median %s iqr %s windowStartIndex %s timeLag %s nans %s",
 //                    descriptiveStatistics.getPercentile(50),
 //                    descriptiveStatistics.getPercentile(75)-descriptiveStatistics.getPercentile(25),
 //                    activeTimeWindow.windowStartIndex,
 //                    timeLag,
 //                    nans));
-//        }
+        }
     }
 
     public String calcHistogramJSON(DescriptiveStatistics stats, int numBins) {

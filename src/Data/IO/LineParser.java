@@ -49,14 +49,14 @@ public class LineParser {
 
     // splits a string (a line) into a sequence of double values
     public double[] splitToDouble(String line) {
-        Iterable<String> pieces = stringSplitter.trimResults().split(line); // omitEmptyStrings() would leave gaps in the time series where there should be NaN
+        Iterable<String> pieces = stringSplitter.trimResults().omitEmptyStrings().split(line); // omitEmptyStrings() would leave gaps in the time series where there should be NaN
         ArrayList<Double> result = new ArrayList<>();
         for (String trimmedNumber : pieces) {
             try {
                 double parsed = Double.parseDouble(trimmedNumber);
                 result.add(parsed);
             } catch (NumberFormatException e) {
-                System.out.println(String.format("Couldn't execute double from '%s'\nin line %s", trimmedNumber, line));
+                System.out.println(String.format("Couldn't extract double from '%s'\nin line %s", trimmedNumber, line));
             }
         }
         // convert array list to primitive array (.toArray works only for Double)

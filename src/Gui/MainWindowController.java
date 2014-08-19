@@ -47,6 +47,7 @@ public class MainWindowController extends WindowController implements Initializa
     @FXML private ComputationController computationController;
     @FXML private CorrelogramController correlationViewController;
     @FXML private CellDistributionViewController cellDistributionViewController;
+    @FXML private MatrixFilterController matrixFilterController;
 
     public Main globalMain; // to restart the program
 
@@ -67,6 +68,7 @@ public class MainWindowController extends WindowController implements Initializa
         computationController.setSharedData(sharedData);
         cellDistributionViewController.setSharedData(sharedData);
         correlationViewController.setSharedData(sharedData);
+        matrixFilterController.setSharedData(sharedData);
 
         inputTabPane.getSelectionModel().selectedIndexProperty().addListener((observable, oldValue, newValue) -> {
             if((int) newValue == 1) timeSeriesViewController.drawContents();

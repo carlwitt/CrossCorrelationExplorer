@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * Writes time series data to a NetCDF output file.
  */
-public class NetCDFTimeSeriesGroup extends NetCDFWriter{
+public class NetCDFTimeSeriesGroup {
 
     /** The name for the time series set (either TimeSeriesSetA or TimeSeriesSetB). This will not be mapped to an actual group, because
      * those are not yet supported. Instead, the name is used to prefix all the names of the variables and dimensions that would belong to the group. */
