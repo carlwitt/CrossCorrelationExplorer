@@ -139,6 +139,12 @@ public class WindowMetadata {
         return setA.get(0).getDataItems().re[0];
     }
 
+    public double getTimeInterval() {
+        assert setA.size() > 0 : "At least one time series required in input set A.";
+        assert setA.get(0).getDataItems().size() > 1 : "Time Series must contain at least to data points.";
+        return setA.get(0).getDataItems().re[1] - setA.get(0).getDataItems().re[0];
+    }
+
     // -----------------------------------------------------------------------------------------------------------------
     // Builder constructor pattern
     // -----------------------------------------------------------------------------------------------------------------

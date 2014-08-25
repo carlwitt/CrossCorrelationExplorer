@@ -1,11 +1,14 @@
 package Visualization;
 
+import Data.ComplexSequence;
+import Data.Correlation.CorrelationMatrix;
 import Data.DataModel;
 import Data.SharedData;
 import Data.TimeSeries;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.ObservableList;
+import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
@@ -13,6 +16,7 @@ import javafx.scene.transform.Affine;
 import javafx.scene.transform.Translate;
 
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Used to draw the time series. Supports basic aggregation by drawing only each N-th data point.
@@ -41,7 +45,7 @@ public class TimeSeriesChart extends CanvasChart {
         gc.clearRect(0, 0, chartCanvas.getWidth(), chartCanvas.getHeight());
         gc.setLineWidth(1);
         gc.setMiterLimit(0);
-/*
+
         // compute affine transform that maps data coordinates to screen coordinates
         Affine dataToScreen = dataToScreen();
 
@@ -55,22 +59,22 @@ public class TimeSeriesChart extends CanvasChart {
 
         CorrelationMatrix.CorrelationColumn highlightedColumn = sharedData.getHighlightedColumn();
         CorrelationMatrix matrix = sharedData.getCorrelationMatrix();
-        if(highlightedColumn != null && matrix != null && matrix.metadata.setA.size() > 0){
-
-            // find highlight window parameters
-            int windowSize = matrix.metadata.windowSize;
-            highlightWindowFrom = highlightedColumn.windowStartIndex;
-            highlightWindowTo = highlightWindowFrom + windowSize;
-            highlightTimeLag = highlightedColumn.tauMin + sharedData.getHighlightedCell().y; // render time series in set B in the highlighted window shifted by this lag
-            // draw the window
-            TimeSeries representativeTimeSeries = matrix.metadata.setA.get(0);
-            double[] xValues = representativeTimeSeries.getDataItems().re;
-            gc.setStroke(Color.YELLOW);
-            double widthOnScreen = xAxis.toScreen(xValues[highlightWindowTo]) - xAxis.toScreen(xValues[highlightWindowFrom]);
-            gc.strokeRect(
-                    xAxis.toScreen(xValues[highlightWindowFrom]), 0,
-                    widthOnScreen, getHeight());
-        }
+//        if(highlightedColumn != null && matrix != null && matrix.metadata.setA.size() > 0){
+//
+//            // find highlight window parameters
+//            int windowSize = matrix.metadata.windowSize;
+//            highlightWindowFrom = highlightedColumn.windowStartIndex;
+//            highlightWindowTo = highlightWindowFrom + windowSize;
+//            highlightTimeLag = highlightedColumn.tauMin + sharedData.getHighlightedCell().y; // render time series in set B in the highlighted window shifted by this lag
+//            // draw the window
+//            TimeSeries representativeTimeSeries = matrix.metadata.setA.get(0);
+//            double[] xValues = representativeTimeSeries.getDataItems().re;
+//            gc.setStroke(Color.YELLOW);
+//            double widthOnScreen = xAxis.toScreen(xValues[highlightWindowTo]) - xAxis.toScreen(xValues[highlightWindowFrom]);
+//            gc.strokeRect(
+//                    xAxis.toScreen(xValues[highlightWindowFrom]), 0,
+//                    widthOnScreen, getHeight());
+//        }
 
         // draw each set
         Color setBColor = Color.web("#4333ff").deriveColor(0, 1, 1, 0.5);
@@ -78,7 +82,7 @@ public class TimeSeriesChart extends CanvasChart {
 
             // whether to render the time series shifted by the selected lag in the highlight window
             // shift only those in correlation set B
-            boolean drawShift  = coloredSet.getKey().equals(setBColor) && highlightTimeLag < Integer.MAX_VALUE;
+            boolean drawShift  = false; //coloredSet.getKey().equals(setBColor) && highlightTimeLag < Integer.MAX_VALUE;
 
 //            gc.setStroke(coloredSet.getKey().deriveColor(0,1,1,0.1));
             gc.setStroke(coloredSet.getKey().deriveColor(0,1,1,transparency));
@@ -145,7 +149,6 @@ public class TimeSeriesChart extends CanvasChart {
 
         xAxis.drawContents();
         yAxis.drawContents();
-*/
     }
 
     // cluster experiment. first version: cluster each time step with fixed k and draw the resulting clusters as k time series.

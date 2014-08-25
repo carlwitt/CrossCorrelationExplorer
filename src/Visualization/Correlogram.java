@@ -396,8 +396,9 @@ public class Correlogram extends CanvasChart {
     }
 
     private void computeBlockDimensions(WindowMetadata metadata) {
-        blockWidth = Math.min(metadata.windowSize, metadata.baseWindowOffset);
-        blockOffset = metadata.baseWindowOffset;
+        double yearsPerStep = metadata.getTimeInterval();
+        blockWidth = Math.min(metadata.windowSize * yearsPerStep, metadata.baseWindowOffset * yearsPerStep);
+        blockOffset = metadata.baseWindowOffset * yearsPerStep;
         blockHeight = 1;
     }
 
