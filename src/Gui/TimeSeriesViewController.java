@@ -78,12 +78,12 @@ public class TimeSeriesViewController {
 
     public void initialize(){
 
-        timeSeriesPane.getChildren().add(timeSeriesChart);
+        timeSeriesPane.getChildren().add(0, timeSeriesChart);
         timeSeriesChart.toBack(); // the reset button etc. are to be displayed on top of the chart
         AnchorPane.setTopAnchor(timeSeriesChart, 0.);
         AnchorPane.setRightAnchor(timeSeriesChart, 0.);
         AnchorPane.setBottomAnchor(timeSeriesChart, 0.);
-        AnchorPane.setLeftAnchor(timeSeriesChart, 0.);
+        AnchorPane.setLeftAnchor(timeSeriesChart, 20.);
 
         // when changing the level of detail, show the results immediately
         detailSlider.valueProperty().addListener((ov, t, t1) -> {

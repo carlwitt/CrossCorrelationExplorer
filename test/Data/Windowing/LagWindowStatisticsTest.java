@@ -1,11 +1,14 @@
 package Data.Windowing;
 
 import Data.TimeSeries;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
+@Deprecated
+@Ignore
 public class LagWindowStatisticsTest {
 
     /** Tests the correct derivation of properties (such as shared windows, window overlap) from the input data. */

@@ -81,8 +81,12 @@ public class Correlogram extends CanvasChart {
     private final Rectangle activeWindowRect = new javafx.scene.shape.Rectangle(10, 10);
     private final double activeWindowStrokeWidth = 2;
 
-    Color backgroundColor = new Color(0.78, 0.78, 0.78, 1);
-    Color filtered = Color.gray(0.176);
+    Color backgroundColor = Color.GRAY;//Color.gray(0.176);//new Color(0.78, 0.78, 0.78, 1);
+    Color filtered = backgroundColor;
+
+    // how to draw the border of the correlogram
+    int borderwidthPx = 1;                  // line width in pixels
+    Color borderColor=Color.gray(0.176);    // line color
 
     // -----------------------------------------------------------------------------------------------------------------
     // METHODS
@@ -103,6 +107,14 @@ public class Correlogram extends CanvasChart {
         activeWindowRect.setStrokeWidth(activeWindowStrokeWidth);
         activeWindowRect.setMouseTransparent(true);
         canvasPane.getChildren().add(activeWindowRect);
+
+        // configure min width and height
+        setMinHeight(10); setMinWidth(10);
+        // the correlogram is kept large enough by the container constraints, but setting the preferred width to
+        // the computed size can cause the correlogram to get stuck on a width that's too large for the container
+        // (because there's no inherent way to compute the necessary space for a canvas).
+        setPrefWidth(10); setPrefHeight(10);
+
     }
 
     public void setSharedData(SharedData sharedData) {
@@ -213,15 +225,18 @@ public class Correlogram extends CanvasChart {
 
         cellToScreen = cellToScreen(matrix.metadata);
 
-        // ------------------------------------------------------------
-        // clipping the contents to render
-        // ------------------------------------------------------------
-        // horizontally and vertically
+        // compute boundaries of the correlogram
         int maxColIdx = matrix.getSize() - 1;
         int maxLagIdx = matrix.metadata.getNumberOfDifferentTimeLags() - 1;
         Point minColMinLag = new Point(0, 0),
               maxColMaxLag = new Point(maxColIdx, maxLagIdx);
+        Point2D boundaryULC = cellToScreen.transform(0, maxLagIdx+1);  // lower left corner of the boundary rectangle
+        Point2D widthHeight = cellToScreen.deltaTransform(maxColIdx+1, -maxLagIdx-2);
 
+        // ------------------------------------------------------------
+        // clipping the contents to render
+        // ------------------------------------------------------------
+        // horizontally and vertically
         Rectangle2D axesRanges = getAxesRanges();
         if(axesRanges != null){
             try {
@@ -234,7 +249,7 @@ public class Correlogram extends CanvasChart {
         }
 
         // clipping on the resolution
-        Point2D blockDimensionsScreen = cellToScreen.transform(1,0);
+        Point2D blockDimensionsScreen = cellToScreen.transform(1, 0);
         int windowStep = Math.max(1, (int) Math.floor(1. / blockDimensionsScreen.getX()));
         int lagStep    = Math.max(1, (int) Math.floor(1. / blockDimensionsScreen.getY()));
         blockHeight *= lagStep;
@@ -257,6 +272,11 @@ public class Correlogram extends CanvasChart {
                 drawContentsUnivariate(gc, matrix, minColMinLag, maxColMaxLag, windowStep, lagStep, ABSOLUTE_SIGNIFICANT);
                 break;
         }
+
+        // draw boundaries of the correlogram
+        gc.setStroke(borderColor);
+        gc.setLineWidth(borderwidthPx);
+        gc.strokeRect(boundaryULC.getX()-1, boundaryULC.getY()-1, widthHeight.getX()+2, widthHeight.getY()+2);
 
         xAxis.drawContents();
         yAxis.drawContents();

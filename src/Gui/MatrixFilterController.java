@@ -34,14 +34,14 @@ public class MatrixFilterController implements Initializable{
     @FXML private GridPane sliderGrid;
 
     RangeSlider[] sliders = new RangeSlider[CorrelationMatrix.NUM_STATS];
-    Label[] lowValueLabels = new Label[CorrelationMatrix.NUM_STATS];
+    Label[] lowValueLabels = new Label[CorrelationMatrix.NUM_STATS];    // the labels reflect the current slider positions.
     Label[] highValueLabels = new Label[CorrelationMatrix.NUM_STATS];
 
     @Override public void initialize(URL location, ResourceBundle resources) {
 
+        // create sliders and labels
         for (int i = 0; i < sliders.length; i++) {
 
-            // create sliders and labels
             final RangeSlider slider = new RangeSlider(0, 1, 0, 1);
             Label low = new Label(),
                   high = new Label();
@@ -93,7 +93,8 @@ public class MatrixFilterController implements Initializable{
                 double newMin = newMatrix.getMin(STAT);
                 double newMax = newMatrix.getMax(STAT);
 
-                // if the range is too small, the range slider control causes a stack overflow!
+                // TODO update ControlsFX and simplify code
+                // if the range is too small, the range slider control causes a stack overflow! (was reported and is fixed in the next version)
                 if(Math.abs(newMax - newMin) > 1e-10){
 
                     sliders[STAT].setMin(newMin);
@@ -110,6 +111,9 @@ public class MatrixFilterController implements Initializable{
                 }
 
             }
+
+            // when selecting a new correlogram, reset sliders to make sure that the entire correlogram is visible.
+            resetSliders(null);
 
         });
 

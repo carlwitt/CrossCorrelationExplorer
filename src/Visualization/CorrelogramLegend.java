@@ -83,6 +83,13 @@ public class CorrelogramLegend extends CanvasChart {
         this.allowPan = false;
         this.allowZoom = false;
         this.allowSelection = false;
+
+        // configure min width and height
+        setMinHeight(10); setMinWidth(10);
+        // the correlogram is kept large enough by the container constraints, but setting the preferred width to
+        // the computed size can cause the correlogram to get stuck on a width that's too large for the container
+        // (because there's no inherent way to compute the necessary space for a canvas).
+        setPrefWidth(10); setPrefHeight(10);
     }
 
     public void setSharedData(final SharedData sharedData){

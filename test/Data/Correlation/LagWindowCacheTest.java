@@ -4,6 +4,7 @@ import Data.TimeSeries;
 import Data.TimeSeriesTest;
 import Data.Windowing.WindowMetadata;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -11,6 +12,8 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 
+@Deprecated
+@Ignore
 public class LagWindowCacheTest {
 
     /** Tests basic ring buffer behavior. */

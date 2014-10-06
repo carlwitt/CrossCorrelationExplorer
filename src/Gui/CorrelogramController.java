@@ -67,6 +67,8 @@ public class CorrelogramController {
 
         correlogramView.getChildren().add(1, correlogram);
         VBox.setVgrow(correlogram, Priority.ALWAYS);
+        correlogram.setMinWidth(10);
+        correlogram.setPrefWidth(20);
         correlogramView.getChildren().add(2, legend);
         VBox.setVgrow(legend, Priority.NEVER);
         legend.setMinHeight(160);

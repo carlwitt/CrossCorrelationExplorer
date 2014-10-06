@@ -54,7 +54,7 @@
           </Label>
           <TextField id="timeLagMaxText" fx:id="timeLagStepText" alignment="TOP_RIGHT" prefWidth="-1.0" text="1" visible="true" GridPane.columnIndex="1" GridPane.rowIndex="4" />
         </GridPane>
-        <Label fx:id="file1Label" contentDisplay="RIGHT" style="&#10;" text="Input File 1" textFill="#00cc21" wrapText="true" GridPane.columnIndex="0" GridPane.halignment="CENTER" GridPane.rowIndex="0">
+        <Label fx:id="file1Label" contentDisplay="RIGHT" style="&#10;" text="Input File 1" textFill="#00cc21" textOverrun="LEADING_ELLIPSIS" wrapText="true" GridPane.columnIndex="0" GridPane.halignment="CENTER" GridPane.rowIndex="0">
           <tooltip>
             <Tooltip text="Defines the size of the windows in which the time series are shifted and cross correlated." />
           </tooltip>
@@ -64,7 +64,7 @@
             <Font size="11.0" fx:id="x2" />
           </font>
         </Button>
-        <Label fx:id="file2Label" contentDisplay="RIGHT" text="Input File 2" textFill="#0066ff" wrapText="true" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="0">
+        <Label fx:id="file2Label" contentDisplay="RIGHT" text="Input File 2" textFill="#0066ff" textOverrun="LEADING_ELLIPSIS" wrapText="true" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="0">
           <tooltip>
             <Tooltip text="Defines the size of the windows in which the time series are shifted and cross correlated." />
           </tooltip>
@@ -74,6 +74,11 @@
             <Button id="setAToggleSelectedButton" fx:id="setAAllButton" alignment="CENTER_LEFT" font="$x2" mnemonicParsing="false" prefWidth="-1.0" style="-fx-border-radius:0;" text="all" />
             <Button id="setAToggleSelectedButton" fx:id="setANoneButton" alignment="CENTER_LEFT" font="$x2" mnemonicParsing="false" prefWidth="-1.0" style="-fx-border-radius:0;" text="none" />
             <Button id="setAAddRandomButton" fx:id="setARandomButton" alignment="CENTER_LEFT" font="$x2" mnemonicParsing="false" prefWidth="-1.0" style="" text="random" />
+            <Button id="setAAddRandomButton" fx:id="setAInvertSelectedButton" alignment="CENTER_LEFT" font="$x2" mnemonicParsing="false" prefWidth="-1.0" style="" text="invert selected">
+              <tooltip>
+                <Tooltip text="Inverts the state of the selected time series. Checked series will be unchecked and vice versa." />
+              </tooltip>
+            </Button>
           </children>
         </FlowPane>
         <FlowPane alignment="TOP_CENTER" prefHeight="-1.0" prefWidth="-1.0" prefWrapLength="10.0" GridPane.columnIndex="1" GridPane.rowIndex="2">
@@ -81,6 +86,11 @@
             <Button id="setBToggleSelectedButton" fx:id="setBAllButton" alignment="CENTER_LEFT" font="$x2" mnemonicParsing="false" prefWidth="-1.0" style="-fx-border-radius:0;" text="all" />
             <Button id="setBToggleSelectedButton" fx:id="setBNoneButton" alignment="CENTER_LEFT" font="$x2" mnemonicParsing="false" prefWidth="-1.0" style="-fx-border-radius:0;" text="none" />
             <Button id="setBAddRandomButton" fx:id="setBRandomButton" alignment="CENTER_LEFT" font="$x2" mnemonicParsing="false" prefWidth="-1.0" style="" text="random" />
+            <Button id="setBAddRandomButton" fx:id="setBInvertSelectedButton" alignment="CENTER_LEFT" font="$x2" mnemonicParsing="false" prefWidth="-1.0" style="" text="invert selected">
+              <tooltip>
+                <Tooltip text="Inverts the state of the selected time series. Checked series will be unchecked and vice versa." />
+              </tooltip>
+            </Button>
           </children>
         </FlowPane>
         <Label alignment="CENTER" contentDisplay="CENTER" text="Parameters" textFill="BLACK" wrapText="true" GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.rowIndex="0">

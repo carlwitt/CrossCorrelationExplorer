@@ -1,11 +1,14 @@
 package Data.Windowing;
 
 import Data.TimeSeries;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
+@Deprecated
+@Ignore
 public class BaseWindowStatisticsTest {
 
     TimeSeries ts = new TimeSeries(1, new double[]{1,2,3,4,5,6,7,8,9});

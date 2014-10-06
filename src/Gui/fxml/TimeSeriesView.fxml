@@ -7,11 +7,23 @@
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
-<AnchorPane fx:id="timeSeriesPane" prefHeight="326.9999000000025" prefWidth="1022.0" style="-fx-background-color: gainsboro;" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.TimeSeriesViewController">
-  <!--The chart is added manually because classes with inheritance can't use XML injection (unless there's a special mechanism for that which I don't know) -->
-  <Slider fx:id="detailSlider" blockIncrement="1.0" majorTickUnit="1.0" max="300.0" min="1.0" minHeight="-1.0" minWidth="200.0" prefHeight="15.99999988079071" prefWidth="206.0" showTickLabels="false" showTickMarks="false" snapToTicks="true" value="100.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" />
-  <Label fx:id="levelOfDetailLabel" text="show every N-th point: 100" visible="true" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="215.0" />
-  <Button cancelButton="false" contentDisplay="GRAPHIC_ONLY" defaultButton="false" graphicTextGap="0.0" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" onAction="#resetView" prefHeight="20.0" prefWidth="20.0" style=";" text="" translateX="-20.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0">
+<?import javafx.scene.text.Text?>
+<AnchorPane fx:id="timeSeriesPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="50.0" prefHeight="326.9999000000025" prefWidth="1022.0" style="-fx-background-color: gainsboro;" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.TimeSeriesViewController">
+  <Text rotate="270.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Time Series View" AnchorPane.bottomAnchor="261.26" AnchorPane.leftAnchor="-43.0" AnchorPane.topAnchor="50.43" />
+  <HBox id="HBox" alignment="CENTER" maxHeight="20.0" maxWidth="400.0" spacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="25.0">
+    <children>
+      <Label fx:id="transparencyLabel" text="render transparency: 0.05" />
+      <Slider fx:id="transparencySlider" blockIncrement="0.01" majorTickUnit="0.25" max="1.0" min="0.01" value="0.05" />
+    </children>
+  </HBox>
+  <HBox id="HBox" alignment="CENTER" maxHeight="20.0" maxWidth="400.0" spacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="4.0">
+    <children>
+      <Label fx:id="levelOfDetailLabel" text="show every N-th point: 100" visible="true" />
+      <!--The chart is added manually because classes with inheritance can't use XML injection (unless there's a special mechanism for that which I don't know) -->
+      <Slider fx:id="detailSlider" blockIncrement="1.0" majorTickUnit="1.0" max="300.0" min="1.0" minHeight="-1.0" minWidth="200.0" prefHeight="15.99999988079071" prefWidth="206.0" showTickLabels="false" showTickMarks="false" snapToTicks="true" value="100.0" />
+    </children>
+  </HBox>
+  <Button cancelButton="false" contentDisplay="GRAPHIC_ONLY" defaultButton="false" graphicTextGap="0.0" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" onAction="#resetView" prefHeight="20.0" prefWidth="20.0" style=";" text="" translateX="-20.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="20.0">
     <graphic>
       <ImageView fitHeight="14.0" fitWidth="14.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" smooth="false">
         <Image url="@../img/glyphicons_214_resize_small.png" />
@@ -21,6 +33,4 @@
       <Tooltip text="Reset view" />
     </tooltip>
   </Button>
-  <Slider fx:id="transparencySlider" blockIncrement="0.01" majorTickUnit="0.25" max="1.0" min="0.01" value="0.05" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="165.0" />
-  <Label fx:id="transparencyLabel" text="render transparency: 0.05" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" />
 </AnchorPane>

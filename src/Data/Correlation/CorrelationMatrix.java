@@ -2,7 +2,6 @@ package Data.Correlation;
 
 import Data.TimeSeries;
 import Data.Windowing.WindowMetadata;
-import Global.RuntimeConfiguration;
 import com.google.common.base.Joiner;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
@@ -129,7 +128,7 @@ public class CorrelationMatrix {
             final int from = i*stepSize,
                       to   = i == numThreads - 1 ? metadata.numBaseWindows : (i+1)*stepSize;     // index is exclusive
 
-            if(RuntimeConfiguration.VERBOSE) System.out.println(String.format("thread %s is responsible for base window range [%s,%s[", i, from, to));
+//            if(RuntimeConfiguration.VERBOSE) System.out.println(String.format("thread %s is responsible for base window range [%s,%s[", i, from, to));
 
             // create a thread handling the given bounds. pass the progress reporter callback only to the first.
             threads.add(new PartialMatrixComputer(from, to, i == numThreads-1 ? reportProgress : null));

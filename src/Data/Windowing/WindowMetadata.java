@@ -172,7 +172,7 @@ public class WindowMetadata {
         public Builder tsA(Collection<TimeSeries> ts){ setA.addAll(ts); return this; }
         public Builder tsB(TimeSeries ts){ setB.add(ts); return this; }
         public Builder tsB(Collection<TimeSeries> ts){ setB.addAll(ts); return this; }
-        public Builder pValue(double v) { this.pValue = pValue; return this; }
+        public Builder pValue(double pValue) { this.pValue = pValue; return this; }
         //        public Builder naAction(CrossCorrelation.NA_ACTION naAction){ this.naAction = naAction; return this; }
         public WindowMetadata build(){return new WindowMetadata(this);}
     }
@@ -203,6 +203,8 @@ public class WindowMetadata {
         if (naAction != that.naAction) return false;
         if (!setA.equals(that.setA)) return false;
         if (!setB.equals(that.setB)) return false;
+        System.out.println(String.format("customParameters: %s", customParameters));
+        System.out.println(String.format("that.customParameters: %s", that.customParameters));
         if (!customParameters.equals(that.customParameters)) return false;
 
         return true;

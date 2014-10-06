@@ -57,10 +57,10 @@ public class CorrelationSignificance {
          * Precisions beyond 1e-15 for instance are likely to end up in an infinite loop since double arithmetic is quite inaccurate.
          */
 
+        assert significanceLevel < 1 : "Significance level must be smaller than 1.";
+
         // given some alpha (risk I, or error probability), find the critical t value
         double desiredArea = 1-significanceLevel;
-
-        if(significanceLevel >= 1) throw new IllegalArgumentException("Significance level must be smaller than 1.");
 
         TDistribution tDistribution = new TDistribution(sampleSize-2);
 

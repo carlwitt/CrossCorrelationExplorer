@@ -32,7 +32,18 @@ public class TimeSeriesChart extends CanvasChart {
     final int getDrawEachNthDataPoint(){ return drawEachNthDataPoint.get(); }
     public final IntegerProperty drawEachNthDataPointProperty(){ return drawEachNthDataPoint; }
 
-    public TimeSeriesChart(){ xAxis.setMinTickUnit(1); }
+    public TimeSeriesChart(){
+
+        xAxis.setMinTickUnit(1);
+
+        // configure min width and height
+        setMinHeight(10); setMinWidth(10);
+        // the correlogram is kept large enough by the container constraints, but setting the preferred width to
+        // the computed size can cause the correlogram to get stuck on a width that's too large for the container
+        // (because there's no inherent way to compute the necessary space for a canvas).
+        setPrefWidth(10); setPrefHeight(10);
+
+    }
 
     // TODO check necessity for transparency
     public double transparency = 0.05;

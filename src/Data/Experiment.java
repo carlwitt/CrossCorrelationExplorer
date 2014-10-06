@@ -95,7 +95,8 @@ public class Experiment {
     public final ObservableList<WindowMetadata> cacheKeySet = FXCollections.observableArrayList();
 
     /** Where the input files of the time series were originally located. */
-    private String tsAPath, tsBPath;
+    // TODO: would be nice if the file paths would be persisted and restored
+    public String tsAPath, tsBPath;
 
     /** The file path where the data is to be serialized to. */
     public String filename;

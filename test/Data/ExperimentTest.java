@@ -71,10 +71,14 @@ public class ExperimentTest {
      */
     @Test public void testPersist() throws IOException {
 
+        //TODO either the equality routines, or worse, the persist routines are flawed!
         // create experiment
         Experiment experiment = new Experiment(dataModel);
         experiment.addResult(c1);
         experiment.addResult(c2);
+
+        System.out.println(String.format("this.getResults:\n%s", experiment.getResults()));
+
         // saving is fast: in sub-second range, even when persisting all the time series data.
         experiment.save("data/testOut2.nc");
 
@@ -84,7 +88,7 @@ public class ExperimentTest {
 //            assertEquals(experiment.dataModel.getFileSeries(i), other.dataModel.getFileSeries(i));
 //        }
 
-        System.out.println(String.format("other.getResults: %s", other.getResults()));
+        System.out.println(String.format("other.getResults: \n%s", other.getResults()));
         assertTrue( other.getResults().containsAll(experiment.getResults()) );
         assertTrue( experiment.getResults().containsAll(other.getResults()) );
 

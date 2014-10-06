@@ -20,12 +20,12 @@ public class CorrelationSignificanceTest {
         double[] df13         = new double[]{ 1.771,   2.160,   3.012,    4.221 };
         double[] df120        = new double[]{ 1.658,   1.980,   2.617,    3.373 };
 
-//        CorrelationSignificance s1   = new CorrelationSignificance(1, 0.01);
-        CorrelationSignificance s13  = new CorrelationSignificance(13, 0.01);
-        CorrelationSignificance s120 = new CorrelationSignificance(120, 0.01);
+        CorrelationSignificance s1   = new CorrelationSignificance(1+2, 0.01);
+        CorrelationSignificance s13  = new CorrelationSignificance(13+2, 0.01);
+        CorrelationSignificance s120 = new CorrelationSignificance(120+2, 0.01);
 
-//        for (int i = 0; i < significance.length; i++)
-//            assertEquals(df1[i], s1.criticalTValue(significance[i]), 1e-3);
+        for (int i = 0; i < significance.length; i++)
+            assertEquals(df1[i], s1.criticalTValue(significance[i]), 1e-3);
 
         for (int i = 0; i < significance.length; i++)
             assertEquals(df13[i], s13.criticalTValue(significance[i]), 1e-3);

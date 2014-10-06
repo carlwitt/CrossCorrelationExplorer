@@ -1,14 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Text?>
-<HBox id="HBox" alignment="CENTER" layoutX="-20.0" layoutY="0.0" prefHeight="326.9999000000025" prefWidth="1119.0" spacing="0.0" style="-fx-background-color: gainsboro;" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.CorrelogramController">
+<AnchorPane layoutX="0.0" layoutY="0.0" prefHeight="-1.0" prefWidth="-1.0" style="-fx-background-color: gainsboro;" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.CorrelogramController">
   <children>
-    <VBox id="VBox" alignment="CENTER" maxWidth="20.0" minWidth="20.0" prefWidth="20.0" spacing="5.0" style="&#10;" HBox.hgrow="NEVER">
+    <VBox id="VBox" alignment="CENTER" maxWidth="20.0" minWidth="20.0" prefWidth="20.0" spacing="5.0" style="&#10;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
       <children>
-        <Text fontSmoothingType="GRAY" rotate="270.0" smooth="true" strikethrough="false" strokeType="OUTSIDE" strokeWidth="0.0" text="Correlation View" translateX="0.0" translateY="45.0" VBox.vgrow="NEVER" />
+        <Text fontSmoothingType="GRAY" rotate="270.0" smooth="true" strikethrough="false" strokeType="OUTSIDE" strokeWidth="0.0" text="Correlation View" translateX="0.0" translateY="45.0" VBox.vgrow="NEVER">
+          <VBox.margin>
+            <Insets top="2.0" />
+          </VBox.margin>
+        </Text>
         <Separator orientation="VERTICAL" prefHeight="200.0" visible="false" VBox.vgrow="ALWAYS" />
         <ToggleButton id="linkWithTimeSeriesViewToggle" fx:id="columnUncertaintyToggle" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" rotate="0.0" selected="false" text="" translateX="0.0" translateY="0.0">
           <graphic>
@@ -52,7 +57,7 @@
         </Button>
       </children>
     </VBox>
-    <VBox fx:id="correlogramView" maxWidth="1.7976931348623157E308" minWidth="200.0" HBox.hgrow="ALWAYS">
+    <VBox fx:id="correlogramView" maxWidth="1.7976931348623157E308" minWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
       <TabPane id="visualizationSwitcher" fx:id="visualizationSelector" maxHeight="27.0" minHeight="28.0" minWidth="300.0" prefHeight="27.0" prefWidth="1119.0" side="TOP" style="-fx-background-color: white;" styleClass="mainFxmlClass" tabClosingPolicy="UNAVAILABLE" tabMaxHeight="26.0" tabMinHeight="20.0" VBox.vgrow="NEVER">
         <Tab closable="false" text="" />
         <Tab closable="false" text="" />
@@ -62,4 +67,4 @@
       </TabPane>
     </VBox>
   </children>
-</HBox>
+</AnchorPane>

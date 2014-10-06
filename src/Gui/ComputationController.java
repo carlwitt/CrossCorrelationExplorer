@@ -18,9 +18,14 @@ import org.controlsfx.control.CheckListView;
 import org.controlsfx.dialog.Dialogs;
 
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
+ *
+ * The computation controller connects the input widgets in the computation parameters tab to the computation routines and passed the returned results to the rendering routines.
+ *
  * Method overview:
  *   compute()
  *      Passes the input parameters (correlation sets, window size, overlap, etc.) to the computation routines.
@@ -54,6 +59,9 @@ public class ComputationController implements Initializable {
     
     @FXML private GridPane inputGridPane;
 
+    @FXML private Label file1Label;
+    @FXML private Label file2Label;
+
     @FXML private TextField windowSizeText;
     @FXML private TextField baseWindowOffsetText;
     @FXML private TextField timeLagMinText;
@@ -64,9 +72,11 @@ public class ComputationController implements Initializable {
     @FXML private Button setAAllButton;
     @FXML private Button setANoneButton;
     @FXML private Button setARandomButton;
+    @FXML private Button setAInvertSelectedButton;
     @FXML private Button setBAllButton;
     @FXML private Button setBNoneButton;
     @FXML private Button setBRandomButton;
+    @FXML private Button setBInvertSelectedButton;
 
     @FXML private Button runButton;
 
@@ -114,9 +124,17 @@ public class ComputationController implements Initializable {
         this.sharedData = sharedData;
         dataModel = sharedData.experiment.dataModel;
 
+        // label the time series selection widgets with the file names they draw their data from
+        if(sharedData.experiment.tsAPath != null && sharedData.experiment.tsBPath != null){
+            Path path1 = Paths.get(sharedData.experiment.tsAPath);
+            Path path2 = Paths.get(sharedData.experiment.tsBPath);
+            file1Label.setText(path1.getFileName().toString());
+            file2Label.setText(path2.getFileName().toString());
+        }
+
         // init time series selection helpers
-        setASelector = new TimeSeriesSelector(dataModel.timeSeriesA, dataModel.correlationSetA, setAAllButton, setANoneButton, setARandomButton);
-        setBSelector = new TimeSeriesSelector(dataModel.timeSeriesB, dataModel.correlationSetB, setBAllButton, setBNoneButton, setBRandomButton);
+        setASelector = new TimeSeriesSelector(dataModel.timeSeriesA, dataModel.correlationSetA, setAAllButton, setANoneButton, setARandomButton, setAInvertSelectedButton);
+        setBSelector = new TimeSeriesSelector(dataModel.timeSeriesB, dataModel.correlationSetB, setBAllButton, setBNoneButton, setBRandomButton, setBInvertSelectedButton);
         inputGridPane.add(setASelector.listView, 0, 1);
         inputGridPane.add(setBSelector.listView, 1, 1);
 
@@ -126,6 +144,7 @@ public class ComputationController implements Initializable {
         dataModel.correlationSetA.addListener(checkNonEmpty);
         dataModel.correlationSetB.addListener(checkNonEmpty);
 
+        // connect the computed results table to the data model
         correlogramCacheTable.setItems(sharedData.experiment.cacheKeySet);
 
     }
@@ -231,6 +250,7 @@ public class ComputationController implements Initializable {
         final Button addAll;
         final Button removeAll;
         final Button addRandom;
+        final Button invertSelected;
 
         final RandomDataGenerator rdg = new RandomDataGenerator();
 
@@ -241,7 +261,7 @@ public class ComputationController implements Initializable {
          * @param removeAll buttons to remove all time series from selection
          * @param addRandom buttons to add a number of random time series to selection
          */
-        private TimeSeriesSelector(ObservableList<TimeSeries> baseSet, ObservableList<TimeSeries> targetSet, Button addAll, Button removeAll, Button addRandom) {
+        private TimeSeriesSelector(ObservableList<TimeSeries> baseSet, ObservableList<TimeSeries> targetSet, Button addAll, Button removeAll, Button addRandom, Button invertSelected) {
 
             this.baseSet = baseSet;
             this.targetSet = targetSet;
@@ -249,12 +269,18 @@ public class ComputationController implements Initializable {
             this.addAll = addAll;
             this.addRandom = addRandom;
             this.removeAll = removeAll;
+            this.invertSelected = invertSelected;
+
             addAll.setOnAction(event -> addAll());
             removeAll.setOnAction(event -> unselectAll());
             addRandom.setOnAction(event -> addRandom());
+            invertSelected.setOnAction(event -> invertSelected());
 
             this.listView = new CheckListView<>(baseSet);
             this.listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+//            this.listView.
+
             listView.getCheckModel().getSelectedItems().addListener((ListChangeListener<TimeSeries>) c -> {
                 // trying to access the change (and only the change) directly gives only null and -1 values when selecting new time series
                 if(!listeningToChanges)return;
@@ -299,7 +325,7 @@ public class ComputationController implements Initializable {
 
             // ask how many items to add
             Optional<String> response = Dialogs.create()
-                    .title("Number of Random Time Series")
+                    .title("Add the Following Number of Random Time Series to the Selection")
                     .showTextInput("200");
 
             if(! response.isPresent()) return;
@@ -329,6 +355,21 @@ public class ComputationController implements Initializable {
                 listView.getCheckModel().select((Integer) idx);
             }
 //            flushAddBuffer();
+        }
+
+        /** Goes through the selection and unchecks checked items and vice versa. */
+        private void invertSelected() {
+
+            MultipleSelectionModel<TimeSeries> checkModel = listView.getCheckModel();
+
+            for(int i : listView.getSelectionModel().getSelectedIndices()){
+                if(checkModel.isSelected(i)){
+                    checkModel.clearSelection(i);
+                } else {
+                    checkModel.select(i);
+                }
+            }
+
         }
 
         public void selectAll(List<TimeSeries> set) {
