@@ -88,7 +88,6 @@ public class ComputationController implements Initializable {
     @FXML private TableColumn<WindowMetadata,String> lagRangeColumn;
     @FXML private TableColumn<WindowMetadata,Integer> lagStepColumn;
     @FXML private TableColumn<WindowMetadata,Double> significanceColumn;
-//    @FXML private TableColumn<WindowMetadata,Time> timeColumn;
 
     ProgressLayer progressLayer;
 
@@ -133,8 +132,8 @@ public class ComputationController implements Initializable {
         }
 
         // init time series selection helpers
-        setASelector = new TimeSeriesSelector(dataModel.timeSeriesA, dataModel.correlationSetA, setAAllButton, setANoneButton, setARandomButton, setAInvertSelectedButton);
-        setBSelector = new TimeSeriesSelector(dataModel.timeSeriesB, dataModel.correlationSetB, setBAllButton, setBNoneButton, setBRandomButton, setBInvertSelectedButton);
+        setASelector = new TimeSeriesSelector(dataModel.ensemble1TimeSeries, dataModel.correlationSetA, setAAllButton, setANoneButton, setARandomButton, setAInvertSelectedButton);
+        setBSelector = new TimeSeriesSelector(dataModel.ensemble2TimeSeries, dataModel.correlationSetB, setBAllButton, setBNoneButton, setBRandomButton, setBInvertSelectedButton);
         inputGridPane.add(setASelector.listView, 0, 1);
         inputGridPane.add(setBSelector.listView, 1, 1);
 
@@ -223,6 +222,7 @@ public class ComputationController implements Initializable {
         baseWindowOffsetText.setText(""+metadata.getOverlap());
         timeLagMinText.setText(""+metadata.tauMin);
         timeLagMaxText.setText(""+metadata.tauMax);
+        timeLagStepText.setText(""+metadata.tauStep);
         significanceLevelText.setText(""+CorrelationMatrix.getSignificanceLevel(metadata));
 
         // restore time series selection

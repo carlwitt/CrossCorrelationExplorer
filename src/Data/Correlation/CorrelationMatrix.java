@@ -159,7 +159,7 @@ public class CorrelationMatrix {
     /**
      * TODO: Is precomputation for large time lag steps slower than no precomputation?
      * Computes the means and standard deviations for each window necessary for the cc matrix computation.
-     * This induces a slight overhead since in the main computation, since the values in each window need to be normalized to
+     * This induces a slight overhead in the main computation, since the values in each window need to be normalized to
      * compute the L2 norm.
      */
     protected void precomputeTerms() {
@@ -696,7 +696,7 @@ public class CorrelationMatrix {
 
     public String toRMatrix(int STATISTIC){
 
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         int rows = metadata.tauMax - metadata.tauMin + 1;
         for (int i = 0; i < rows; i++) {
             for (CorrelationColumn column : columns){

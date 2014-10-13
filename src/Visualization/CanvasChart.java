@@ -27,7 +27,8 @@ import javafx.scene.transform.Translate;
  * @author Carl Witt
  */
 abstract class CanvasChart extends AnchorPane {
-    
+
+
     /** This is used to draw the data. Much faster than adding all the data elements to the scene graph. */
     public final Canvas chartCanvas;
     

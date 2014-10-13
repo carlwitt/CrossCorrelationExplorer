@@ -121,7 +121,7 @@ public class Experiment {
      * Creates a new experiment by filling the data model with time series from the input files.
      * @param models The file models containing the time series.
      */
-    public Experiment(FileModel... models){
+    public Experiment(FileModel... models) throws FileModel.UnevenSpacingException {
 
         this.filename = DEFAULT_FILENAME;
         assert models.length > 1 : "Pass at least two file models to the Experiment constructor.";
@@ -133,7 +133,9 @@ public class Experiment {
 
         // read each file
         for (FileModel model : models) {
+
             model.execute();
+
             ArrayList<TimeSeries> coll = new ArrayList<>();
             tsByFile.add(coll);
             // and add the time series to the data model
@@ -198,8 +200,8 @@ public class Experiment {
             // declare time series sets
             NetCDFTimeSeriesGroup[] tsGroups = new NetCDFTimeSeriesGroup[2];
 
-            tsGroups[0] = new NetCDFTimeSeriesGroup(dataFile, "TimeSeriesSetA", tsAPath, Lists.newArrayList(dataModel.getFileSeries(0).values()));
-            tsGroups[1] = new NetCDFTimeSeriesGroup(dataFile, "TimeSeriesSetB", tsBPath, Lists.newArrayList(dataModel.getFileSeries(1).values()));
+            tsGroups[0] = new NetCDFTimeSeriesGroup(dataFile, "TimeSeriesSetA", tsAPath, Lists.newArrayList(dataModel.getEnsemble(0).values()));
+            tsGroups[1] = new NetCDFTimeSeriesGroup(dataFile, "TimeSeriesSetB", tsBPath, Lists.newArrayList(dataModel.getEnsemble(1).values()));
 
             List<NetCDFComputationResult> netCDFComputationResults = new ArrayList<>();
             int i = 0;

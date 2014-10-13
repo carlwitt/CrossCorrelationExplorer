@@ -2,10 +2,11 @@ package Gui;
 
 import Data.SharedData;
 import Data.TimeSeries;
+import Visualization.BinnedTimeSeriesChart;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.layout.AnchorPane;
@@ -26,28 +27,33 @@ public class TimeSeriesViewController {
     /** maps a color to each set of time series (for instance the time series in correlation set A, in correlation set B and temporary time series for preview). */
     private final HashMap<Color, ObservableList<TimeSeries>> seriesSets = new HashMap<>();
     
-    private final Visualization.TimeSeriesChart timeSeriesChart = new Visualization.TimeSeriesChart();
+    private final Visualization.TimeSeriesChart timeSeriesChart = new BinnedTimeSeriesChart();
     
     /** controls the level of detail with which time series are drawn.
      * this is important since rendering all series with all points takes very long and is not the main purpose of the software. */
-    @FXML protected Slider detailSlider;
+//    @FXML protected Slider detailSlider;
     @FXML protected Label levelOfDetailLabel;
     @FXML protected Slider transparencySlider;
     @FXML protected Label transparencyLabel;
-    
+    @FXML CheckBox ensemble1CheckBox;
+    @FXML CheckBox ensemble2CheckBox;
+
     @FXML protected AnchorPane timeSeriesPane;
-    
+
+    /** The color for ensemble 1 (green) and ensemble 2 (blue). */
+    public static final Color[] ensembleColors = new Color[]{Color.web("#00cc52"), Color.web("#4333ff")};
+
     public void setSharedData(final SharedData sharedData){
         this.sharedData = sharedData;
         
         seriesSets.put(new Color(0, 0, 0, 0.5), sharedData.previewTimeSeries);
-        seriesSets.put(Color.web("#00cc52").deriveColor(0, 1, 1, 0.5), sharedData.experiment.dataModel.correlationSetA);
-        seriesSets.put(Color.web("#4333ff").deriveColor(0, 1, 1, 0.5), sharedData.experiment.dataModel.correlationSetB);
+        seriesSets.put(ensembleColors[0], sharedData.experiment.dataModel.correlationSetA);
+        seriesSets.put(ensembleColors[1], sharedData.experiment.dataModel.correlationSetB);
         
-        timeSeriesChart.sharedData = sharedData;
+        timeSeriesChart.setSharedData(sharedData);
         timeSeriesChart.seriesSets = seriesSets;
         
-        timeSeriesChart.drawEachNthDataPointProperty().bind(detailSlider.valueProperty());
+//        timeSeriesChart.drawEachNthDataPointProperty().bind(detailSlider.valueProperty());
 
         sharedData.highlightedCellProperty().addListener((ov, t, t1) -> timeSeriesChart.drawContents());
         
@@ -55,29 +61,21 @@ public class TimeSeriesViewController {
         sharedData.visibleTimeRangeProperty().bindBidirectional(timeSeriesChart.axesRangesProperty());
         sharedData.visibleTimeRangeProperty().addListener((ov, t, t1) -> timeSeriesChart.drawContents());
         
-        // when loading additional time series, reset the view to show the whole time span
-//        sharedData.dataModel.timeSeries.addListener(new MapChangeListener<Integer, TimeSeries>() {
-//            @Override public void onChanged(MapChangeListener.Change<? extends Integer, ? extends TimeSeries> change) {
-//                resetView(null);
-//                drawContents();
-//            }
-//        });
-        
-        // when a new correlation matrix has been computed, reset the view 
+        // when a new correlation matrix has been computed, reset the view
         sharedData.correlationMatrixProperty().addListener((ov, t, t1) -> resetView());
-        
-//        ListChangeListener<TimeSeries> drawContentListener = change -> {
-//            if(timeSeriesChart.getAxesRanges() == null) timeSeriesChart.resetView();
-//            timeSeriesChart.drawContents();
-//        };
-//        sharedData.previewTimeSeries.addListener(drawContentListener);
-//        sharedData.dataModel.correlationSetA.addListener(drawContentListener);
-//        sharedData.dataModel.correlationSetB.addListener(drawContentListener);
-        
+
+        sharedData.experiment.dataModel.correlationSetAAggregator.binSizeProperty().addListener((observable, oldValue, newValue) -> {
+                levelOfDetailLabel.setText(
+                        newValue.intValue() == 1 ? "Showing full resolution.":
+                                     String.format("Averaging each %s data points into one.", newValue.intValue())
+                );
+        });
+
     }
 
     public void initialize(){
 
+        // add chart component to the scene graph
         timeSeriesPane.getChildren().add(0, timeSeriesChart);
         timeSeriesChart.toBack(); // the reset button etc. are to be displayed on top of the chart
         AnchorPane.setTopAnchor(timeSeriesChart, 0.);
@@ -85,13 +83,6 @@ public class TimeSeriesViewController {
         AnchorPane.setBottomAnchor(timeSeriesChart, 0.);
         AnchorPane.setLeftAnchor(timeSeriesChart, 20.);
 
-        // when changing the level of detail, show the results immediately
-        detailSlider.valueProperty().addListener((ov, t, t1) -> {
-            levelOfDetailLabel.setText("show every N-th point: "+Math.round((Double)t1));
-//                if( ! detailSlider.isPressed() || ! detailSlider.isValueChanging()){
-            timeSeriesChart.drawContents();
-//                }
-        });
         // auto adjust tick labels and detail slider
         timeSeriesChart.xAxis.lowerBoundProperty().addListener(axisRangeChanged);
         timeSeriesChart.xAxis.upperBoundProperty().addListener(axisRangeChanged);
@@ -99,11 +90,21 @@ public class TimeSeriesViewController {
         timeSeriesChart.yAxis.upperBoundProperty().addListener(axisRangeChanged);
 
         timeSeriesChart.xAxis.setTickLabelFormatter(new NumberStringConverter(new  DecimalFormat("####")));
-//        timeSeriesChart.yAxis.setTickLabelFormatter(new NumberStringConverter(new  DecimalFormat("0,000")));
 
         timeSeriesChart.xAxis.setLabel("Year");
         timeSeriesChart.yAxis.setLabel("Temperature ˚C");
 
+        // ensemble check boxes
+        timeSeriesChart.drawEnsemble1Property().bind(ensemble1CheckBox.selectedProperty());
+        timeSeriesChart.drawEnsemble2Property().bind(ensemble2CheckBox.selectedProperty());
+
+        // level of detail slider
+//        detailSlider.valueProperty().addListener((ov, t, t1) -> {
+//            levelOfDetailLabel.setText("show every N-th point: "+Math.round((Double)t1));
+//            timeSeriesChart.drawContents();
+//        });
+
+        // transparency slider
         transparencySlider.valueProperty().addListener((observable, oldValue, newValue) -> {
             float newTransparency = newValue.floatValue();
             transparencyLabel.setText(String.format("render transparency: %.2f", newTransparency));
@@ -125,25 +126,8 @@ public class TimeSeriesViewController {
     }
     
     /** Adapts tick units and labels. Adapts level of detail slider */
-    private final ChangeListener<Number> axisRangeChanged = new ChangeListener<Number>() {
-        @Override public void changed(ObservableValue<? extends Number> ov, Number t, Number t1) {
-            
-            // adjust axes level of detail
-            updateTickUnits();
-                    
-            // adjust detail slider: max reduction to 50px per data point, max detail 0.5px per data paint
-            double maxPixPerPoint = 30;
-            double availableTimeSteps = sharedData.experiment.dataModel.getNumDataPointsInRange(timeSeriesChart.xAxis.getLowerBound(), timeSeriesChart.xAxis.getUpperBound());
-            double availableWidth = timeSeriesChart.chartCanvas.getWidth();
-            double timeStepsToShow = availableWidth / maxPixPerPoint;
-            int maxSkipPoints = (int) Math.ceil(availableTimeSteps / timeStepsToShow);
+    private final ChangeListener<Number> axisRangeChanged = (ov, t, t1) -> updateTickUnits();
 
-//            detailSlider.setMin(1);
-//            detailSlider.setMin(Math.max(1, 0.5*pointsPerPix)); // highest resolution is 2 points per pix
-//            detailSlider.setMax(Math.max(1, maxSkipPoints));
-        }
-    };
-    
     public void resetView() {
         timeSeriesChart.resetView();
     }

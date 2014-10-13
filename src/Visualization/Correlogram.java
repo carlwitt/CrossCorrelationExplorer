@@ -88,6 +88,9 @@ public class Correlogram extends CanvasChart {
     int borderwidthPx = 1;                  // line width in pixels
     Color borderColor=Color.gray(0.176);    // line color
 
+    /** Determines whether mouse overs will highlight cells. Cells can be frozen (will turn hoverSensitive to false) and unfrozen by clicking an the active window rectangle. */
+    private boolean hoverSensitive = true;
+
     // -----------------------------------------------------------------------------------------------------------------
     // METHODS
     // -----------------------------------------------------------------------------------------------------------------
@@ -98,7 +101,7 @@ public class Correlogram extends CanvasChart {
         yAxis.setMinTickUnit(1);
 
         chartCanvas.setOnMouseMoved(this::reportHighlightedCell);
-
+        chartCanvas.setOnMouseClicked(this::freezeHighlightedCell);
         // initialize the active window highlight rectangle
         activeWindowRect.setFill(Color.rgb(0, 0, 0, 0));    // transparent fill
         activeWindowRect.setStroke(Color.web("#fff500")); // yellow border
@@ -143,7 +146,7 @@ public class Correlogram extends CanvasChart {
 
     /**
      * The coordinate system applied to the matrix cells is (zero based column index, zero based row index).
-     * This transformation computes the data coordinates of a single cell. So for instance, the first cell in a column (with index zero, because it is the first in the array)
+     * The cellToData transformation computes the data coordinates of a single cell. So for instance, the first cell in a column (with index zero, because it is the first in the array)
      * is mapped to the minimum time lag, the last cell in a column is mapped to the maximum time lag.
      * The horizontal mapping centers each column in the time window it represents. Usually, columns overlap,
      * so their width should be reduced (although overplotting would solve the problem, if drawn in correct order).
@@ -153,24 +156,48 @@ public class Correlogram extends CanvasChart {
      */
     protected Affine cellToData(WindowMetadata metadata){
 
-        computeBlockDimensions(metadata);
-        // there can be gaps in horizontal direction (blockOffset > blockWidth), but not in vertical direction ("blockOffsetY" always equals blockHeight)
-        Transform scale = new Scale(blockOffset, metadata.tauStep*blockHeight);
+        // all widths are measured in time units, window size and base window offset refer to the number of data points
+        double yearsPerStep = metadata.getTimeInterval();
 
-        // if the blocks do not overlap in horizontal direction, blockWidth equals windowSize and the translate is only metadata.getMinXValue()
-        double tx = metadata.getMinXValue() + 0.5 * metadata.windowSize - 0.5 * blockWidth;
+        double nonOverlappingBlockWidth = (metadata.windowSize - 1) * yearsPerStep; // k data points -> k-1 intervals
+        double overlappingBlockWidth = metadata.baseWindowOffset * yearsPerStep;
+        blockWidth = Math.min(nonOverlappingBlockWidth, overlappingBlockWidth); // blocks shouldn't overlap if they must not
+        blockHeight = 1;
+
+        double blockOffset = metadata.baseWindowOffset * yearsPerStep;
+
+        // there can be gaps in horizontal direction (blockOffset > blockWidth)
+        Transform scale = new Scale(blockOffset, 1);
+
+        double tx = metadata.getMinXValue();// + 0.5 * metadata.windowSize - 0.5 * blockWidth;
         double ty = metadata.tauStep + metadata.tauMin;
         return new Affine(new Translate(tx, ty).createConcatenation(scale));
 
     }
 
-    protected Affine cellToScreen(WindowMetadata metadata){ return new Affine(dataToScreen().createConcatenation(cellToData(metadata))); }
+    protected Affine cellToScreen(WindowMetadata metadata){
+        return new Affine(dataToScreen().createConcatenation(cellToData(metadata)));
+    }
+
+    private void freezeHighlightedCell(MouseEvent mouseEvent) {
+
+        if(mouseEvent.getClickCount()==2){
+            if(hoverSensitive){
+                hoverSensitive = false;
+            } else {
+                hoverSensitive = true;
+            }
+        }
+
+    }
 
     /*
      This handler listens to mouse moves on the correlogram and informs the shared data object about
      the correlation matrix cell index (window index index and lag index) under the mouse cursor.
     */
     private void reportHighlightedCell(MouseEvent t) {
+
+        if(! hoverSensitive) return;
 
         // get matrix
         CorrelationMatrix matrix = sharedData.getCorrelationMatrix();
@@ -185,13 +212,14 @@ public class Correlogram extends CanvasChart {
         int lagIdx    = (int) Math.ceil(cellCoordinates.getY());
 
         Point activeCell = new Point(columnIdx, lagIdx);
-        if(columnIdx < 0 || columnIdx >= matrix.getSize() || lagIdx < 0 || lagIdx > matrix.metadata.getNumberOfDifferentTimeLags())
+        if(columnIdx < 0 || columnIdx >= matrix.getSize() ||
+              lagIdx < 0 || lagIdx    >= matrix.metadata.getNumberOfDifferentTimeLags())
             activeCell = new Point(Integer.MAX_VALUE, Integer.MAX_VALUE);
 
         // report only if changes have occured
         if (!sharedData.getHighlightedCell().equals(activeCell)) {
             sharedData.setHighlightedCell(activeCell);
-            highlightActiveWindow();
+            highlightActiveCell();
         }
     }
 
@@ -230,8 +258,8 @@ public class Correlogram extends CanvasChart {
         int maxLagIdx = matrix.metadata.getNumberOfDifferentTimeLags() - 1;
         Point minColMinLag = new Point(0, 0),
               maxColMaxLag = new Point(maxColIdx, maxLagIdx);
-        Point2D boundaryULC = cellToScreen.transform(0, maxLagIdx+1);  // lower left corner of the boundary rectangle
-        Point2D widthHeight = cellToScreen.deltaTransform(maxColIdx+1, -maxLagIdx-2);
+        Point2D boundaryULC = cellToScreen.transform(0, maxLagIdx);  // upper left corner of the boundary rectangle
+        Point2D widthHeight = cellToScreen.deltaTransform(maxColIdx+1, -maxLagIdx-1);
 
         // ------------------------------------------------------------
         // clipping the contents to render
@@ -249,11 +277,9 @@ public class Correlogram extends CanvasChart {
         }
 
         // clipping on the resolution
-        Point2D blockDimensionsScreen = cellToScreen.transform(1, 0);
+        Point2D blockDimensionsScreen = cellToScreen.deltaTransform(1, -1);
         int windowStep = Math.max(1, (int) Math.floor(1. / blockDimensionsScreen.getX()));
         int lagStep    = Math.max(1, (int) Math.floor(1. / blockDimensionsScreen.getY()));
-        blockHeight *= lagStep;
-        blockWidth  *= windowStep;
 
         switch(renderMode){
             case MEAN_STD_DEV:
@@ -280,7 +306,7 @@ public class Correlogram extends CanvasChart {
 
         xAxis.drawContents();
         yAxis.drawContents();
-        highlightActiveWindow();
+        highlightActiveCell();
 
     }
 
@@ -299,6 +325,7 @@ public class Correlogram extends CanvasChart {
             for (int lag = minColMinLag.y; lag <= maxColMaxLag.y; lag += lagStep) {
 
                 // upper left corner, bottom right corner of the cell, the same for the last drawn cell
+                // even though the array contains only one point, object creation is avoided (might putting some pressure of the GC?)
                 srcPts[0] = i; srcPts[1] = lag;
                 cellToScreen.transform2DPoints(srcPts, 0, dstPts, 0, 1);
 
@@ -415,18 +442,11 @@ public class Correlogram extends CanvasChart {
         paintScale.compute();
     }
 
-    private void computeBlockDimensions(WindowMetadata metadata) {
-        double yearsPerStep = metadata.getTimeInterval();
-        blockWidth = Math.min(metadata.windowSize * yearsPerStep, metadata.baseWindowOffset * yearsPerStep);
-        blockOffset = metadata.baseWindowOffset * yearsPerStep;
-        blockHeight = 1;
-    }
-
     /**
-     * Highlights the active window, i.e. the (time,lag) coordinate in the correlogram that is hovered by the user.
+     * Highlights the active cell, i.e. the (time,lag) coordinate in the correlogram that is hovered by the user.
      * This is done by moving a rectangle in the scene graph over the according position.
      */
-    void highlightActiveWindow(){
+    void highlightActiveCell(){
 
         Point activeWindow = sharedData.getHighlightedCell();
         // check whether the active window is a valid coordinate
@@ -436,14 +456,12 @@ public class Correlogram extends CanvasChart {
         CorrelationMatrix matrix = sharedData.getCorrelationMatrix();
         if(drawWindow && matrix != null){
 
-            computeBlockDimensions(matrix.metadata);
-
             // transform data to screen coordinates
             Point2D anchorScreen = cellToScreen.transform(activeWindow.getX(), activeWindow.getY());
             Point2D dimensionsScreen = cellToScreen.deltaTransform(1, -1);
 
             // check that the rectangle doesn't extend the panes
-            BoundingBox boundsScreen = new BoundingBox(anchorScreen.getX()-activeWindowStrokeWidth, anchorScreen.getY()-activeWindowStrokeWidth, dimensionsScreen.getX()+2*activeWindowStrokeWidth, dimensionsScreen.getY()+2*activeWindowStrokeWidth);
+            BoundingBox boundsScreen = new BoundingBox(anchorScreen.getX(), anchorScreen.getY(), dimensionsScreen.getX(), dimensionsScreen.getY());
             if(canvasPane.getLayoutBounds().contains(boundsScreen)){
                 activeWindowRect.setLayoutX(anchorScreen.getX());
                 activeWindowRect.setLayoutY(anchorScreen.getY());

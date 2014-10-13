@@ -84,8 +84,8 @@ public class ExperimentTest {
 
         Experiment other = new Experiment("data/testOut2.nc");
 
-//        for (int i = 0; i < other.dataModel.getNumFiles(); i++) {
-//            assertEquals(experiment.dataModel.getFileSeries(i), other.dataModel.getFileSeries(i));
+//        for (int i = 0; i < other.dataModel.getNumEnsembles(); i++) {
+//            assertEquals(experiment.dataModel.getEnsemble(i), other.dataModel.getEnsemble(i));
 //        }
 
         System.out.println(String.format("other.getResults: \n%s", other.getResults()));

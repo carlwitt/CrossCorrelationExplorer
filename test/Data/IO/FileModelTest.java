@@ -312,6 +312,14 @@ public class FileModelTest {
         }
 
     }
-    
+
+    @Test(expected = FileModel.UnevenSpacingException.class)
+    public void testUnevenSpacingException() throws FileModel.UnevenSpacingException {
+
+        FileModel fileModel = new FileModel("data/small/inputDataVariableLength.txt", new LineParser(";"));
+        // this must throw uneven spacing exception
+        fileModel.execute();
+
+    }
     
 }

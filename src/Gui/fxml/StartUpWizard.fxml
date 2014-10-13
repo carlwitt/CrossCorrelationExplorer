@@ -8,117 +8,141 @@
 <?import javafx.scene.text.Font?>
 <BorderPane id="BorderPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="434.0" prefWidth="1021.0" rotate="0.0" snapToPixel="true" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.StartUpWizardController">
   <center>
-    <GridPane hgap="50.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="338.0" prefWidth="661.0" vgap="0.0">
-      <children>
-        <Button fx:id="createButton" contentDisplay="RIGHT" disable="true" mnemonicParsing="false" onAction="#createExperiment" prefHeight="-1.0" prefWidth="100.0" text="Create" GridPane.columnIndex="0" GridPane.halignment="CENTER" GridPane.rowIndex="2" />
-        <AnchorPane prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="0" GridPane.rowIndex="1">
-          <children>
-            <Button fx:id="tsFile1SelectButton" layoutX="4.0" layoutY="32.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="164.0" style="-fx-border-color: transparent;&#10;-fx-focus-color: transparent;&#10;-fx-border-radius: 4px 0 0 4px;" text="Choose File..." textAlignment="LEFT" textOverrun="LEADING_ELLIPSIS" />
-            <Button fx:id="tsFile2SelectButton" layoutX="4.0" layoutY="106.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="164.0" style="-fx-border-color:transparent;&#10;-fx-focus-color:transparent;&#10;-fx-border-radius: 4px 0 0 4px;" text="Choose File..." textAlignment="CENTER" textOverrun="LEADING_ELLIPSIS" />
-            <Label layoutX="4.0" layoutY="-1.0" prefHeight="33.0" prefWidth="256.0" text="Time Series File 1" />
-            <Label layoutX="4.0" layoutY="73.0" prefHeight="33.0" prefWidth="256.0" text="Time Series File 2" />
-            <MenuButton fx:id="tsFile1SeparatorMenuButton" layoutX="167.0" layoutY="32.0" mnemonicParsing="false" prefHeight="26.0" style="-fx-border-color: transparent;&#10;-fx-focus-color: transparent;&#10;-fx-border-radius: 0 4px 4px 0;" text="Separator">
-              <items>
-                <RadioMenuItem mnemonicParsing="false" selected="true" text="Fixed Width" fx:id="file1FixedWidthSeparatorRadio">
-                  <graphic>
-                    <TextField id="fixedWidthSeparatorText" fx:id="file1FixedWidthSeparatorText" prefWidth="40.0" promptText="" style="" text="16" />
-                  </graphic>
-                  <toggleGroup>
-                    <ToggleGroup fx:id="file1Separator" />
-                  </toggleGroup>
-                </RadioMenuItem>
-                <RadioMenuItem mnemonicParsing="false" text="Character" toggleGroup="$file1Separator" fx:id="file1CharacterSeparatorRadio">
-                  <graphic>
-                    <TextField id="characterSeparatorText" fx:id="file1CharacterSeparatorText" editable="true" prefWidth="40.0" promptText="" />
-                  </graphic>
-                </RadioMenuItem>
-                <RadioMenuItem mnemonicParsing="false" text="Tab" toggleGroup="$file1Separator" fx:id="file1TabSeparatorRadio" />
-              </items>
-            </MenuButton>
-            <MenuButton fx:id="tsFile2SeparatorMenuButton" layoutX="167.0" layoutY="106.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="-1.0" style="-fx-focus-color:transparent;&#10;-fx-border-color:transparent;&#10;-fx-border-radius: 0 4px 4px 0;" text="Separator">
-              <items>
-                <RadioMenuItem mnemonicParsing="false" selected="true" text="Fixed Width" fx:id="file2FixedWidthSeparatorRadio">
-                  <graphic>
-                    <TextField id="fixedWidthSeparatorText" fx:id="file2FixedWidthSeparatorText" prefWidth="40.0" promptText="" style="" text="16" />
-                  </graphic>
-                  <toggleGroup>
-                    <ToggleGroup fx:id="file2Separator" />
-                  </toggleGroup>
-                </RadioMenuItem>
-                <RadioMenuItem mnemonicParsing="false" text="Character" toggleGroup="$file2Separator" fx:id="file2CharacterSeparatorRadio">
-                  <graphic>
-                    <TextField id="characterSeparatorText" fx:id="file2CharacterSeparatorText" editable="true" prefWidth="40.0" promptText="" />
-                  </graphic>
-                </RadioMenuItem>
-                <RadioMenuItem mnemonicParsing="false" text="Tab" toggleGroup="$file2Separator" fx:id="file2TabSeparatorRadio" />
-              </items>
-            </MenuButton>
-          </children>
-        </AnchorPane>
-        <Label prefWidth="107.9998779296875" text="New Experiment" GridPane.columnIndex="0" GridPane.halignment="CENTER" GridPane.rowIndex="0" />
-        <Label text="Existing Experiments" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="0" />
-        <HBox id="HBox" alignment="CENTER" spacing="5.0" GridPane.columnIndex="1" GridPane.rowIndex="2">
-          <children>
-            <Button fx:id="loadButton" disable="true" mnemonicParsing="false" onAction="#loadExperiment" prefHeight="-1.0" prefWidth="100.0" style=";" text="Load" />
-          </children>
-        </HBox>
-        <VBox prefHeight="200.0" prefWidth="100.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
-          <children>
-            <Label prefHeight="33.0" prefWidth="256.0" text="Experiment File" />
-            <Button fx:id="experimentFileSelectButton" mnemonicParsing="false" prefHeight="26.0" prefWidth="300.0000999999975" style="-fx-border-color:transparent;&#10;-fx-focus-color:transparent;&#10;-fx-border-radius: 4px 0 0 4px;" text="Choose File..." textAlignment="CENTER" textOverrun="LEADING_ELLIPSIS">
-              <tooltip>
-                <Tooltip text="Choose an experiment file (usually generated by this application) in NetCDF format." />
-              </tooltip>
-            </Button>
-            <Label prefHeight="33.0" prefWidth="256.0" text="Recent Experiments" />
-            <ListView fx:id="recentExperiments" prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
-              <contextMenu>
-                <ContextMenu>
+      <GridPane hgap="50.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="338.0"
+                prefWidth="661.0" vgap="0.0">
+          <columnConstraints>
+              <ColumnConstraints hgrow="SOMETIMES" maxWidth="367.0" minWidth="10.0" prefWidth="279.0"/>
+              <ColumnConstraints hgrow="ALWAYS" maxWidth="1.7976931348623157E308" minWidth="10.0" prefWidth="271.0"/>
+          </columnConstraints>
+          <padding>
+              <Insets/>
+          </padding>
+          <rowConstraints>
+              <RowConstraints maxHeight="-1.0" minHeight="-1.0" prefHeight="-1.0" vgrow="NEVER"/>
+              <RowConstraints maxHeight="1.7976931348623157E308" minHeight="-Infinity" prefHeight="-1.0"
+                              vgrow="ALWAYS"/>
+              <RowConstraints maxHeight="278.0" minHeight="10.0" prefHeight="-1.0" vgrow="NEVER"/>
+          </rowConstraints>
+          <BorderPane.margin>
+              <Insets bottom="5.0" top="5.0"/>
+          </BorderPane.margin>
+          <Button fx:id="createButton" contentDisplay="RIGHT" disable="true" mnemonicParsing="false"
+                  onAction="#createExperiment" prefHeight="-1.0" prefWidth="100.0" text="Create"
+                  GridPane.columnIndex="0" GridPane.halignment="CENTER" GridPane.rowIndex="2"/>
+          <AnchorPane prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="0" GridPane.rowIndex="1">
+              <Button fx:id="tsFile1SelectButton" layoutX="4.0" layoutY="32.0" mnemonicParsing="false" prefHeight="26.0"
+                      prefWidth="164.0"
+                      style="-fx-border-color: transparent;&#10;-fx-focus-color: transparent;&#10;-fx-border-radius: 4px 0 0 4px;"
+                      text="Choose File..." textAlignment="LEFT" textOverrun="LEADING_ELLIPSIS"/>
+              <Button fx:id="tsFile2SelectButton" layoutX="4.0" layoutY="106.0" mnemonicParsing="false"
+                      prefHeight="26.0" prefWidth="164.0"
+                      style="-fx-border-color:transparent;&#10;-fx-focus-color:transparent;&#10;-fx-border-radius: 4px 0 0 4px;"
+                      text="Choose File..." textAlignment="CENTER" textOverrun="LEADING_ELLIPSIS"/>
+              <Label layoutX="4.0" layoutY="-1.0" prefHeight="33.0" prefWidth="256.0" text="Time Series File 1"/>
+              <Label layoutX="4.0" layoutY="73.0" prefHeight="33.0" prefWidth="256.0" text="Time Series File 2"/>
+              <MenuButton fx:id="tsFile1SeparatorMenuButton" layoutX="167.0" layoutY="32.0" mnemonicParsing="false"
+                          prefHeight="26.0"
+                          style="-fx-border-color: transparent;&#10;-fx-focus-color: transparent;&#10;-fx-border-radius: 0 4px 4px 0;"
+                          text="Separator">
                   <items>
-                    <MenuItem mnemonicParsing="false" onAction="#clearRecentExperimentFiles" text="Clear All" />
+                      <RadioMenuItem mnemonicParsing="false" selected="true" text="Fixed Width"
+                                     fx:id="file1FixedWidthSeparatorRadio">
+                          <graphic>
+                              <TextField id="fixedWidthSeparatorText" fx:id="file1FixedWidthSeparatorText"
+                                         prefWidth="40.0" promptText="" style="" text="16"/>
+                          </graphic>
+                          <toggleGroup>
+                              <ToggleGroup fx:id="file1Separator"/>
+                          </toggleGroup>
+                      </RadioMenuItem>
+                      <RadioMenuItem mnemonicParsing="false" text="Character" toggleGroup="$file1Separator"
+                                     fx:id="file1CharacterSeparatorRadio">
+                          <graphic>
+                              <TextField id="characterSeparatorText" fx:id="file1CharacterSeparatorText" editable="true"
+                                         prefWidth="40.0" promptText=""/>
+                          </graphic>
+                      </RadioMenuItem>
+                      <RadioMenuItem mnemonicParsing="false" text="Tab" toggleGroup="$file1Separator"
+                                     fx:id="file1TabSeparatorRadio"/>
                   </items>
-                </ContextMenu>
-              </contextMenu>
-            </ListView>
-          </children>
-        </VBox>
-      </children>
-      <columnConstraints>
-        <ColumnConstraints hgrow="SOMETIMES" maxWidth="367.0" minWidth="10.0" prefWidth="279.0" />
-        <ColumnConstraints hgrow="ALWAYS" maxWidth="1.7976931348623157E308" minWidth="10.0" prefWidth="271.0" />
-      </columnConstraints>
-      <padding>
-        <Insets />
-      </padding>
-      <rowConstraints>
-        <RowConstraints maxHeight="-1.0" minHeight="-1.0" prefHeight="-1.0" vgrow="NEVER" />
-        <RowConstraints maxHeight="1.7976931348623157E308" minHeight="-Infinity" prefHeight="-1.0" vgrow="ALWAYS" />
-        <RowConstraints maxHeight="278.0" minHeight="10.0" prefHeight="-1.0" vgrow="NEVER" />
-      </rowConstraints>
-      <BorderPane.margin>
-        <Insets bottom="5.0" top="5.0" />
-      </BorderPane.margin>
-    </GridPane>
+              </MenuButton>
+              <MenuButton fx:id="tsFile2SeparatorMenuButton" layoutX="167.0" layoutY="106.0" mnemonicParsing="false"
+                          prefHeight="26.0" prefWidth="-1.0"
+                          style="-fx-focus-color:transparent;&#10;-fx-border-color:transparent;&#10;-fx-border-radius: 0 4px 4px 0;"
+                          text="Separator">
+                  <items>
+                      <RadioMenuItem mnemonicParsing="false" selected="true" text="Fixed Width"
+                                     fx:id="file2FixedWidthSeparatorRadio">
+                          <graphic>
+                              <TextField id="fixedWidthSeparatorText" fx:id="file2FixedWidthSeparatorText"
+                                         prefWidth="40.0" promptText="" style="" text="16"/>
+                          </graphic>
+                          <toggleGroup>
+                              <ToggleGroup fx:id="file2Separator"/>
+                          </toggleGroup>
+                      </RadioMenuItem>
+                      <RadioMenuItem mnemonicParsing="false" text="Character" toggleGroup="$file2Separator"
+                                     fx:id="file2CharacterSeparatorRadio">
+                          <graphic>
+                              <TextField id="characterSeparatorText" fx:id="file2CharacterSeparatorText" editable="true"
+                                         prefWidth="40.0" promptText=""/>
+                          </graphic>
+                      </RadioMenuItem>
+                      <RadioMenuItem mnemonicParsing="false" text="Tab" toggleGroup="$file2Separator"
+                                     fx:id="file2TabSeparatorRadio"/>
+                  </items>
+              </MenuButton>
+          </AnchorPane>
+          <Label prefWidth="107.9998779296875" text="New Experiment" GridPane.columnIndex="0"
+                 GridPane.halignment="CENTER" GridPane.rowIndex="0"/>
+          <Label text="Existing Experiments" GridPane.columnIndex="1" GridPane.halignment="CENTER"
+                 GridPane.rowIndex="0"/>
+          <HBox id="HBox" alignment="CENTER" spacing="5.0" GridPane.columnIndex="1" GridPane.rowIndex="2">
+              <Button fx:id="loadButton" disable="true" mnemonicParsing="false" onAction="#loadExperiment"
+                      prefHeight="-1.0" prefWidth="100.0" style=";" text="Load"/>
+          </HBox>
+          <VBox prefHeight="200.0" prefWidth="100.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
+              <Label prefHeight="33.0" prefWidth="256.0" text="Experiment File"/>
+              <Button fx:id="experimentFileSelectButton" mnemonicParsing="false" prefHeight="26.0"
+                      prefWidth="300.0000999999975"
+                      style="-fx-border-color:transparent;&#10;-fx-focus-color:transparent;&#10;-fx-border-radius: 4px 0 0 4px;"
+                      text="Choose File..." textAlignment="CENTER" textOverrun="LEADING_ELLIPSIS">
+                  <tooltip>
+                      <Tooltip
+                              text="Choose an experiment file (usually generated by this application) in NetCDF format."/>
+                  </tooltip>
+              </Button>
+              <Label prefHeight="33.0" prefWidth="256.0" text="Recent Experiments"/>
+              <ListView fx:id="recentExperiments" prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
+                  <contextMenu>
+                      <ContextMenu>
+                          <items>
+                              <MenuItem mnemonicParsing="false" onAction="#clearRecentExperimentFiles"
+                                        text="Clear All"/>
+                          </items>
+                      </ContextMenu>
+                  </contextMenu>
+              </ListView>
+          </VBox>
+      </GridPane>
   </center>
   <top>
-    <AnchorPane prefHeight="117.0" prefWidth="600.0" style="-fx-border-width: 0 0 1px 0 ;&#10;-fx-border-color: gray;&#10;-fx-background-color:white;">
-      <children>
-        <Label text="Cross Correlation Explorer" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="7.0">
-          <font>
-            <Font size="26.0" />
-          </font>
-        </Label>
-        <ImageView fitHeight="79.80007673360599" fitWidth="114.00010681152344" pickOnBounds="true" preserveRatio="true" smooth="true" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="5.0">
-          <image>
-            <Image url="@../img/logo_gfz_de.gif" />
-          </image>
-        </ImageView>
-        <Label layoutY="87.0" text="Carl Witt" AnchorPane.leftAnchor="10.0" />
-        <Label layoutY="68.0" text="Patrick Köthur" AnchorPane.leftAnchor="10.0" />
-        <Label layoutY="87.0" text="carl.witt@gfz-potsdam.de" AnchorPane.leftAnchor="176.0" />
-        <Label layoutY="68.0" text="patrick.koethur@gfz-potsdam.de" AnchorPane.leftAnchor="130.0" />
-        <Label layoutX="10.0" layoutY="37.0" text="Prototype, Version 1" />
-      </children>
-    </AnchorPane>
+      <AnchorPane prefHeight="117.0" prefWidth="600.0"
+                  style="-fx-border-width: 0 0 1px 0 ;&#10;-fx-border-color: gray;&#10;-fx-background-color:white;">
+          <Label text="Cross Correlation Explorer" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="7.0">
+              <font>
+                  <Font size="26.0"/>
+              </font>
+          </Label>
+          <ImageView fitHeight="79.80007673360599" fitWidth="114.00010681152344" pickOnBounds="true"
+                     preserveRatio="true" smooth="true" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="5.0">
+              <Image url="@../img/logo_gfz_de.gif"/>
+          </ImageView>
+          <Label layoutY="87.0" text="Carl Witt" AnchorPane.leftAnchor="10.0"/>
+          <Label layoutY="68.0" text="Patrick Köthur" AnchorPane.leftAnchor="10.0"/>
+          <Label layoutY="87.0" text="carl.witt@gfz-potsdam.de" AnchorPane.leftAnchor="176.0"/>
+          <Label layoutY="68.0" text="patrick.koethur@gfz-potsdam.de" AnchorPane.leftAnchor="130.0"/>
+          <Label layoutX="10.0" layoutY="37.0" text="Prototype, Version 1"/>
+      </AnchorPane>
   </top>
 </BorderPane>

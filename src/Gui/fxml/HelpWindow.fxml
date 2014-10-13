@@ -9,12 +9,10 @@
     <WebView fx:id="browser" prefHeight="200.0" prefWidth="200.0" />
   </center>
   <top>
-    <ToolBar>
-      <items>
-        <Button mnemonicParsing="false" onAction="#goHome" text="Home" />
-        <Button mnemonicParsing="false" onAction="#back" text="&lt;" />
-        <Button mnemonicParsing="false" onAction="#forward" text="&gt;" />
-      </items>
-    </ToolBar>
+      <ToolBar>
+          <Button mnemonicParsing="false" onAction="#goHome" text="Home"/>
+          <Button mnemonicParsing="false" onAction="#back" text="&lt;"/>
+          <Button mnemonicParsing="false" onAction="#forward" text="&gt;"/>
+      </ToolBar>
   </top>
 </BorderPane>

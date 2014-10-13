@@ -5,7 +5,9 @@ import Data.Correlation.CorrelationMatrix;
 import Data.DataModel;
 import Data.SharedData;
 import Data.TimeSeries;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.ObservableList;
 import javafx.geometry.Point2D;
@@ -32,6 +34,10 @@ public class TimeSeriesChart extends CanvasChart {
     final int getDrawEachNthDataPoint(){ return drawEachNthDataPoint.get(); }
     public final IntegerProperty drawEachNthDataPointProperty(){ return drawEachNthDataPoint; }
 
+    protected final BooleanProperty[] drawEnsemble = new BooleanProperty[]{new SimpleBooleanProperty(true), new SimpleBooleanProperty(true)};
+    public final BooleanProperty drawEnsemble1Property(){ return drawEnsemble[0]; }
+    public final BooleanProperty drawEnsemble2Property(){ return drawEnsemble[1]; }
+
     public TimeSeriesChart(){
 
         xAxis.setMinTickUnit(1);
@@ -42,6 +48,9 @@ public class TimeSeriesChart extends CanvasChart {
         // the computed size can cause the correlogram to get stuck on a width that's too large for the container
         // (because there's no inherent way to compute the necessary space for a canvas).
         setPrefWidth(10); setPrefHeight(10);
+
+        drawEnsemble1Property().addListener((observable, oldValue, newValue) -> drawContents());
+        drawEnsemble2Property().addListener((observable, oldValue, newValue) -> drawContents());
 
     }
 
@@ -88,7 +97,6 @@ public class TimeSeriesChart extends CanvasChart {
 //        }
 
         // draw each set
-        Color setBColor = Color.web("#4333ff").deriveColor(0, 1, 1, 0.5);
         for (Map.Entry<Color, ObservableList<TimeSeries>> coloredSet : seriesSets.entrySet()) {
 
             // whether to render the time series shifted by the selected lag in the highlight window
@@ -412,6 +420,10 @@ public class TimeSeriesChart extends CanvasChart {
 
         axesRanges.set(newVisibleRange);
         drawContents();
+    }
+
+    public void setSharedData(SharedData sharedData){
+        this.sharedData = sharedData;
     }
     
 }

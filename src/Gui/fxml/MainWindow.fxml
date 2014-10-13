@@ -5,25 +5,19 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="600.0" minWidth="800.0" prefHeight="768.0" prefWidth="1024.0" spacing="0.0" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.MainWindowController">
-  <MenuBar>
-    <menus>
-      <Menu mnemonicParsing="false" text="File">
-        <items>
-          <MenuItem mnemonicParsing="false" onAction="#showStartUpWizard" text="Create or Open Experiment..." />
-          <MenuItem mnemonicParsing="false" onAction="#save" text="Save" />
-          <MenuItem mnemonicParsing="false" onAction="#saveAs" text="Save as..." />
-          <MenuItem mnemonicParsing="false" onAction="#exportCorrelogramImage" text="Export Correlogram as Image..." />
-          <SeparatorMenuItem mnemonicParsing="false" />
-          <MenuItem mnemonicParsing="false" onAction="#quit" text="Quit" />
-        </items>
-      </Menu>
-      <Menu mnemonicParsing="false" text="Help">
-        <items>
-          <MenuItem mnemonicParsing="false" onAction="#showGitHubWiki" text="Wiki Pages" />
-          <MenuItem mnemonicParsing="false" onAction="#showGitHubIssues" text="Report a bug (GitHub account required)" />
-        </items>
-      </Menu>
-    </menus>
+  <MenuBar useSystemMenuBar="true">
+    <Menu mnemonicParsing="false" text="File">
+      <MenuItem mnemonicParsing="false" onAction="#showStartUpWizard" text="Create or Open Experiment..." />
+      <MenuItem mnemonicParsing="false" onAction="#save" text="Save" />
+      <MenuItem mnemonicParsing="false" onAction="#saveAs" text="Save as..." />
+      <MenuItem mnemonicParsing="false" onAction="#exportCorrelogramImage" text="Export Correlogram as Image..." />
+      <SeparatorMenuItem mnemonicParsing="false" />
+      <MenuItem mnemonicParsing="false" onAction="#quit" text="Quit" />
+    </Menu>
+    <Menu mnemonicParsing="false" text="Help">
+      <MenuItem mnemonicParsing="false" onAction="#showGitHubWiki" text="Wiki Pages" />
+      <MenuItem mnemonicParsing="false" onAction="#showGitHubIssues" text="Report a bug (GitHub account required)" />
+    </Menu>
   </MenuBar>
   <SplitPane dividerPositions="0.33827493261455527" focusTraversable="false" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0" VBox.vgrow="ALWAYS">
     <StackPane minHeight="0.0" prefHeight="132.0" prefWidth="1002.0" visible="true">

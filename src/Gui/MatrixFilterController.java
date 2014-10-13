@@ -62,11 +62,11 @@ public class MatrixFilterController implements Initializable{
             resetButton.setOnAction(e -> {slider.setLowValue(slider.getMin()); slider.setHighValue(slider.getMax());});
 
             // add to grid pane
-            int rowIndex = 2 * i + 1;
-            sliderGrid.add(low,    0, rowIndex);
-            sliderGrid.add(slider, 1, rowIndex);
-            sliderGrid.add(high,   2, rowIndex);
-            sliderGrid.add(resetButton, 3, rowIndex);
+            int rowIndex = i;
+            sliderGrid.add(low,    1, rowIndex);
+            sliderGrid.add(slider, 2, rowIndex);
+            sliderGrid.add(high,   3, rowIndex);
+            sliderGrid.add(resetButton, 4, rowIndex);
             GridPane.setHalignment(low, HPos.RIGHT);
 
             // keep in memory

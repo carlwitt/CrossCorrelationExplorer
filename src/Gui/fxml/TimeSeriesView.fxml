@@ -3,6 +3,7 @@
 <!--This file doesn't contain much because most of the markup went into the CanvasChart class,
     but it is necessary because the fx:controller attribute can be used only on the root element of a file. -->
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
@@ -11,17 +12,11 @@
 <AnchorPane fx:id="timeSeriesPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="50.0" prefHeight="326.9999000000025" prefWidth="1022.0" style="-fx-background-color: gainsboro;" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.TimeSeriesViewController">
   <Text rotate="270.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Time Series View" AnchorPane.bottomAnchor="261.26" AnchorPane.leftAnchor="-43.0" AnchorPane.topAnchor="50.43" />
   <HBox id="HBox" alignment="CENTER" maxHeight="20.0" maxWidth="400.0" spacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="25.0">
-    <children>
-      <Label fx:id="transparencyLabel" text="render transparency: 0.05" />
-      <Slider fx:id="transparencySlider" blockIncrement="0.01" majorTickUnit="0.25" max="1.0" min="0.01" value="0.05" />
-    </children>
+    <Label fx:id="transparencyLabel" text="render transparency: 0.05" />
+    <Slider fx:id="transparencySlider" blockIncrement="0.01" majorTickUnit="0.25" max="1.0" min="0.01" value="0.05" />
   </HBox>
   <HBox id="HBox" alignment="CENTER" maxHeight="20.0" maxWidth="400.0" spacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="4.0">
-    <children>
-      <Label fx:id="levelOfDetailLabel" text="show every N-th point: 100" visible="true" />
-      <!--The chart is added manually because classes with inheritance can't use XML injection (unless there's a special mechanism for that which I don't know) -->
-      <Slider fx:id="detailSlider" blockIncrement="1.0" majorTickUnit="1.0" max="300.0" min="1.0" minHeight="-1.0" minWidth="200.0" prefHeight="15.99999988079071" prefWidth="206.0" showTickLabels="false" showTickMarks="false" snapToTicks="true" value="100.0" />
-    </children>
+    <Label fx:id="levelOfDetailLabel" text="show every N-th point: 100" visible="true" />
   </HBox>
   <Button cancelButton="false" contentDisplay="GRAPHIC_ONLY" defaultButton="false" graphicTextGap="0.0" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" onAction="#resetView" prefHeight="20.0" prefWidth="20.0" style=";" text="" translateX="-20.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="20.0">
     <graphic>
@@ -33,4 +28,14 @@
       <Tooltip text="Reset view" />
     </tooltip>
   </Button>
+  <HBox alignment="TOP_CENTER" prefHeight="-1.0" prefWidth="-1.0" AnchorPane.rightAnchor="5.0" AnchorPane.topAnchor="5.0">
+    <children>
+      <CheckBox fx:id="ensemble1CheckBox" mnemonicParsing="false" selected="true" text="Ensemble 1" />
+      <CheckBox fx:id="ensemble2CheckBox" mnemonicParsing="false" selected="true" text="Ensemble 2">
+        <HBox.margin>
+          <Insets left="5.0" />
+        </HBox.margin>
+      </CheckBox>
+    </children>
+  </HBox>
 </AnchorPane>

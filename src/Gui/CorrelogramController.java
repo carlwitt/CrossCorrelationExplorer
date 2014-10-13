@@ -12,6 +12,7 @@ import javafx.geometry.Rectangle2D;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.Tooltip;
+import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
@@ -41,6 +42,7 @@ public class CorrelogramController {
     @FXML VBox correlogramView;
     @FXML StackPane correlogramPane;
     @FXML StackPane legendPane;
+    @FXML ImageView correlogramHelpImg;
     @FXML ToggleButton linkWithTimeSeriesViewToggle;
     @FXML ToggleButton scatterPlotToggle;
     @FXML ToggleButton columnUncertaintyToggle;

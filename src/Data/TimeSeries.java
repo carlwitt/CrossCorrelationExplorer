@@ -19,25 +19,20 @@ public class TimeSeries implements Comparable<TimeSeries> {
     /** The coordinates of the points of the time series. 
      * X values are represented as real parts of complex numbers and Y values are represented as imaginary parts of complex numbers. */
     private ComplexSequence values = null;
-    
-    /** To automatically generate ids, decrements of the maximum int value are used. */
-//    private static int nextId = 1;
-    
+
+    /** The difference between x-coordinates of consecutive data points. Must be the same for all subsequent data points, but not necessarily 1. */
+    double xAxisSpacing = 1;
+
     /**
      * @param id
      * @param values The x and y values, specified in the real and imaginary parts of a complex sequence.
      */
     public TimeSeries(int id, @NotNull ComplexSequence values){
         this.id = id;
-//        this.id = nextId++;
         this.values = values;
     }
-//    public TimeSeries(@NotNull double[] xValues, @NotNull double[] yValues){
-//        this(nextId++, xValues, yValues);
-//    }
 
-    /** Create time series by specifying only the function values, useful if the x-coordinates don't matter.
-     * This will use an efficient way to represent some x-values.
+    /** Create time series by specifying only the function values, useful if the x-coordinates don't matter (will all be set to 0).
      * Note that the array is taken as is, meaning any changes to the passed array will write through to the time series and vice versa.
      * @param id
      * @param d The sequence of function values
@@ -50,6 +45,7 @@ public class TimeSeries implements Comparable<TimeSeries> {
     public TimeSeries(int id, double[] xValues, double[] yValues) {
         this.id = id;
         this.values = ComplexSequence.create(xValues, yValues);
+        xAxisSpacing = xValues.length > 1 ? xValues[1]-xValues[0] : 1;
     }
 
     /** Returns the number of x/y pairs in the time series. */

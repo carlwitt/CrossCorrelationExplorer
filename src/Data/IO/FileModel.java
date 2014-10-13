@@ -33,7 +33,8 @@ public class FileModel {
     /** A matrix representing all numbers in the file. The first dimension refers to rows and the second to columns. */
     double[][] rowValues;
     private double[] firstColumn; // cached first column of the matrix
-    
+    double xAxisSpacing = Double.NaN;
+
     private static final String DEFAULT_ENCODING = "UTF-8";
 
     private boolean isExecuted = false;
@@ -119,7 +120,7 @@ public class FileModel {
                     return null;
                 }
                 
-                @Override protected Void call() {
+                @Override protected Void call() throws UnevenSpacingException{
                     
                     // load file contents as list of lines
                     updateMessage("Loading File");
@@ -146,9 +147,19 @@ public class FileModel {
                         parseLinesConcurrent(lines, numThreads);
 
                     // cache first column
+                    xAxisSpacing = getTimeSeriesLength() > 1 ? rowValues[1][0]-rowValues[0][0] : Double.NaN;
                     firstColumn = new double[getTimeSeriesLength()];
                     for (int i = 0; i < firstColumn.length; i++) {
                         firstColumn[i] = rowValues[i][0];
+
+                        // check that the x axis location difference is the same as between all other points
+                        if(i>0) {
+                            double currentXAxisSpacing = firstColumn[i]-firstColumn[i-1];
+                            System.out.println(String.format("currentXAxisSpacing: %s", currentXAxisSpacing));
+                            if( Math.abs(currentXAxisSpacing - xAxisSpacing) > 1e-10){
+                               throw new UnevenSpacingException(String.format("The spacing between consecutive data points must be constant. Found %s between data points %s and %s while assuming a general spacing of %s.",currentXAxisSpacing,i,i+1,xAxisSpacing));
+                            }
+                        }
                     }
                     
                     return null;
@@ -176,7 +187,7 @@ public class FileModel {
         }
     }
 
-    public void execute(){
+    public void execute() throws UnevenSpacingException {
         if(isExecuted) return;
         File file = new File(getFilename());
 
@@ -200,6 +211,13 @@ public class FileModel {
         firstColumn = new double[getTimeSeriesLength()];
         for (int i = 0; i < firstColumn.length; i++) {
             firstColumn[i] = rowValues[i][0];
+            if(i>0) {
+                double currentXAxisSpacing = firstColumn[i]-firstColumn[i-1];
+                System.out.println(String.format("currentXAxisSpacing: %s", currentXAxisSpacing));
+                if( Math.abs(currentXAxisSpacing - xAxisSpacing) > 1e-10){
+                    throw new UnevenSpacingException(String.format("The spacing between consecutive data points must be constant. Found %s between data points %s and %s while assuming a general spacing of %s.",currentXAxisSpacing,i,i+1,xAxisSpacing));
+                } else { xAxisSpacing = currentXAxisSpacing; }
+            }
         }
         isExecuted = true;
     }
@@ -287,5 +305,11 @@ public class FileModel {
         FileUtils.writeLines(new File(targetPath), lines);
 
     }
-    
+
+    public class UnevenSpacingException extends Exception{
+
+        UnevenSpacingException(String message){super(message);}
+
+    }
+
 }

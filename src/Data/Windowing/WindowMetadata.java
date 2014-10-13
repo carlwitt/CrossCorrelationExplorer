@@ -141,7 +141,7 @@ public class WindowMetadata {
 
     public double getTimeInterval() {
         assert setA.size() > 0 : "At least one time series required in input set A.";
-        assert setA.get(0).getDataItems().size() > 1 : "Time Series must contain at least to data points.";
+        assert setA.get(0).getDataItems().size() > 1 : "Time Series must contain at least two data points.";
         return setA.get(0).getDataItems().re[1] - setA.get(0).getDataItems().re[0];
     }
 
