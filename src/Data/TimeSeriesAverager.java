@@ -39,8 +39,6 @@ public class TimeSeriesAverager {
 
         if(timeSeries.isEmpty()) return;
 
-        long before = System.currentTimeMillis();
-
         TimeSeries anyTimeSeries = timeSeries.get(0);
         int binSize = getBinSize();
 
@@ -62,18 +60,6 @@ public class TimeSeriesAverager {
                 sampleIdx++;
             }
         }
-
-        long ms = System.currentTimeMillis()-before;
-        System.out.println(String.format("Aggregated %s time series, bin size %s, %s ms", timeSeries.size(),binSize,ms));
-
-        // TODO differential update
-//        timeSeries.stream().map(new Function<TimeSeries, Object>() {
-//            @Override
-//            public Object apply(TimeSeries timeSeries) {
-//                double[] yValues = new double[xValues]
-//                return null;
-//            }
-//        }).collect()
 
     }
 

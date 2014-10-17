@@ -3,6 +3,8 @@ package Data;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
+import javafx.geometry.BoundingBox;
+import javafx.geometry.Bounds;
 
 import java.util.*;
 
@@ -63,6 +65,7 @@ public class DataModel {
      */
     public double getMinX(int ensembleID) {
 
+        assert timeSeriesByEnsemble.get(ensembleID).values().size() > 0 : "Ensemble " + ensembleID + " has no time series.";
         TimeSeries anyTimeSeries = timeSeriesByEnsemble.get(ensembleID).values().iterator().next();
 //        TimeSeries anyTimeSeries = allTimeSeries.column(ensembleID).values().iterator().next();
         if(anyTimeSeries.getSize() == 0) return 0;
@@ -183,4 +186,17 @@ public class DataModel {
     }
 
     public int getNumberOfEnsembles() { return timeSeriesByEnsemble.size(); }
+
+    /**
+     * @return null if no time series are present. the minimum and maximum x and y values of all time series in all ensembles otherwise.
+     */
+    public Bounds getDataBounds() {
+        assert getNumberOfEnsembles() == 2 : "Method not adapted to more than two ensembles.";
+        if(getNumberOfTimeSeries() == 0) return null;
+        double minX = Math.min(getMinX(0), getMinX(1));
+        double maxX = Math.max(getMaxX(0), getMaxX(1));
+        double minY = Math.min(getMinY(0), getMinY(1));
+        double maxY = Math.max(getMaxY(0), getMaxY(1));
+        return new BoundingBox(minX, minY, maxX-minX, maxY-minY);
+    }
 }

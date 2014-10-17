@@ -1,12 +1,14 @@
 package Visualization;
 
+import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
+import javafx.geometry.Orientation;
 import javafx.geometry.Point2D;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseButton;
@@ -15,7 +17,6 @@ import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-import javafx.scene.text.Text;
 import javafx.scene.transform.Affine;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Transform;
@@ -31,20 +32,35 @@ abstract class CanvasChart extends AnchorPane {
 
     /** This is used to draw the data. Much faster than adding all the data elements to the scene graph. */
     public final Canvas chartCanvas;
-    
-    AnchorPane canvasPane;
+
+    AnchorPane chartPane;
 
     public NumberAxis xAxis,
                       yAxis;
 
-    /** This field summarizes the current x- and y-axis bounds. The x-axis lower bound and range is stored in minX and width, and 
+    /** the margins around the core plot within the containing pane (is used for axes, legends, title, etc. */
+    protected double[] margins = new double[]{10, 10, 50, 70};
+    int TOP = 0, RIGHT = 1, BOTTOM = 2, LEFT = 3;
+
+    /** This field summarizes the current x- and y-axis bounds. The x-axis lower bound and range is stored in minX and width, and
      * the y-axis lower bound and range is stored in minY and height. Listening to changes in this property is simpler and faster than listening
      * for all four (x and y, lower and upper) properties.
-     * 
+     *
      * ! This field is currently updated manually! I.e. when changing the axis bounds, it is the developers duty to update this field as well.
-     * On the other hand, the axis bounds listen to the axisRanges object and adapt their bounds automatically when the object has changed. (see constructor)
+     * The recommended way is to change the axesRanges object rather than the axes ranges. The axis bounds listen to the axisRanges object and adapt their bounds automatically when the object has changed. (see {@link #CanvasChart()})
      */
-    final ObjectProperty<Rectangle2D> axesRanges = new SimpleObjectProperty<>();
+    protected final ObjectProperty<Bounds> axesRanges = new SimpleObjectProperty<>();
+    public Bounds getAxesRanges() { return axesRanges.get(); }
+    public void setAxesRanges(Bounds value) { axesRanges.set(value); }
+    public ObjectProperty<Bounds> axesRangesProperty() { return axesRanges; }
+
+    /** Defines a fixed aspect ratio between the two axes. If the value is NaN, the aspect ratio is not fixed.
+     * Otherwise, a block of width and height of 1 data point will be dataPointsPerPixelRatio higher than wide.
+     * Example: dataPointsPerPixelRatio = 2. One unit on the x axis takes e.g. 10 px. Then the y axis is kept at a scale that ensures that one unit takes 20px. */
+    protected final DoubleProperty dataPointsPerPixelRatio = new SimpleDoubleProperty(Double.NaN);
+    public double getDataPointsPerPixelRatio() { return dataPointsPerPixelRatio.get(); }
+    public void setDataPointsPerPixelRatio(double ratio) { dataPointsPerPixelRatio.set(ratio); }
+    public DoubleProperty dataPointsPerPixelRatioProperty() { return dataPointsPerPixelRatio; }
 
     /** whether the user can pan the viewe using {@link #PAN_MOUSE_BUTTON} */
     boolean allowPan = true;
@@ -57,7 +73,7 @@ abstract class CanvasChart extends AnchorPane {
      *  The convention is that this field is always null, except if a drag process is going on. */
     protected Point2D dragStartMousePositionSC;
     /** The axis lower and upper bounds (data coordinates) when the pan gesture was started. Allows for live panning. */
-    protected Rectangle2D panStartAxisBoundsDC;
+    protected BoundingBox panStartAxisBoundsDC;
 
     /** Mouse button used to pan the view. */
     protected MouseButton PAN_MOUSE_BUTTON = MouseButton.PRIMARY;
@@ -66,31 +82,34 @@ abstract class CanvasChart extends AnchorPane {
 
     /** Highlights the user selection */
     protected final Rectangle selectionRect = new javafx.scene.shape.Rectangle(10, 10, Color.gray(0, 0.33));
-    protected String normalSelectionHint = "";  //Zoom
-    protected String reverseSelectionHint = "";     //Reset View
-    protected Text selectionHint = new Text(normalSelectionHint);
 
     CanvasChart(){
-        
-        xAxis = new NumberAxis();
-        yAxis = new NumberAxis();
-        
-        chartCanvas = new Canvas();
-        
-        buildComponents();
-        
-        axesRangesProperty().addListener((ov, t, t1) -> {
-//                    if(t1 == null) return;
-                    // TODO check why t1 is null sometimes
-            assert t1 != null : "something went terribly wrong.";
-            Rectangle2D newRanges = (Rectangle2D) t1;
 
-            xAxis.setLowerBound(newRanges.getMinX());
-            xAxis.setUpperBound(newRanges.getMaxX());
-            yAxis.setLowerBound(newRanges.getMinY());
-            yAxis.setUpperBound(newRanges.getMaxY());
-        }
-        );
+        chartCanvas = new Canvas();
+
+        buildComponents();
+
+        axesRangesProperty().addListener((ov, t, newBounds) -> {
+            assert newBounds != null : "new axes ranges are invalid (null).";
+            xAxis.setLowerBound(newBounds.getMinX());
+            xAxis.setUpperBound(newBounds.getMaxX());
+            yAxis.setLowerBound(newBounds.getMinY());
+            yAxis.setUpperBound(newBounds.getMaxY());
+        });
+        xAxis.lowerBoundProperty().addListener(this::axisBoundChanged);
+        xAxis.upperBoundProperty().addListener(this::axisBoundChanged);
+        yAxis.lowerBoundProperty().addListener(this::axisBoundChanged);
+        yAxis.upperBoundProperty().addListener(this::axisBoundChanged);
+
+        dataPointsPerPixelRatio.addListener((observable, oldValue, newValue) -> {
+            adaptYAxis(xAxis.getAxisBounds());
+            xAxis.drawContents();
+            yAxis.drawContents();
+            drawContents();
+        });
+    }
+    public void axisBoundChanged(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+        axesRanges.set(new BoundingBox(xAxis.getLowerBound(),yAxis.getLowerBound(), xAxis.getRange(), yAxis.getRange()));
     }
 
     /** Core rendering routine. Draws the chart data. */
@@ -100,23 +119,18 @@ abstract class CanvasChart extends AnchorPane {
 
     /** Sets up the GUI components */
     private void buildComponents(){
-        
-        xAxis = new NumberAxis();
+
+        xAxis = new NumberAxis(Orientation.HORIZONTAL);
         xAxis.setIsHorizontal(true);
-        
-        yAxis = new NumberAxis();
+
+        yAxis = new NumberAxis(Orientation.VERTICAL);
         yAxis.setIsHorizontal(false);
-        
+
         this.setMinHeight(100);
         this.setStyle("-fx-background-color: white;");
 
-//        canvasPane = new BorderPane(chartCanvas, null, null, xAxis, yAxis);
-        canvasPane = new AnchorPane(chartCanvas, xAxis, yAxis, selectionRect, selectionHint);
-        Rectangle clip = new Rectangle();
-        clip.widthProperty().bind(chartCanvas.widthProperty());
-        clip.heightProperty().bind(chartCanvas.heightProperty());
-        selectionRect.setClip(clip);
-        getChildren().add(canvasPane);
+        chartPane = new AnchorPane(chartCanvas, xAxis, yAxis, selectionRect);
+        getChildren().add(chartPane);
 
         layoutBoundsProperty().addListener(this::resizeComponents);
 
@@ -132,24 +146,25 @@ abstract class CanvasChart extends AnchorPane {
         xAxis.setOnMouseReleased(this::mouseReleased);
         yAxis.setOnMouseReleased(this::mouseReleased);
 
-        // init selection rectangle and hint
+        xAxis.lowerBoundProperty().addListener((observable, oldValue, newValue) -> drawContents());
+        xAxis.upperBoundProperty().addListener((observable, oldValue, newValue) -> drawContents());
+        yAxis.lowerBoundProperty().addListener((observable, oldValue, newValue) -> drawContents());
+        yAxis.upperBoundProperty().addListener((observable, oldValue, newValue) -> drawContents());
+
+        // init selection rectangle
         selectionRect.setMouseTransparent(true);
         selectionRect.setVisible(false);
-        // position selection hint under the mouse cursor
-        chartCanvas.setOnMouseMoved(event -> {
-            selectionHint.setX(event.getX());
-            selectionHint.setY(event.getY());
-        });
-        selectionHint.setVisible(false);
     }
 
-    /** @return An affine transformation that transforms points in data space (e.g. year/temperature) into coordinates on the canvas */
+    /**
+     * Computes a transformation from data coordinates to screen coordinates, depending on the current axis bounds.
+     * @return An affine transformation that transforms points in data space (e.g. year/temperature) into coordinates on the canvas.
+     */
     Affine dataToScreen() {
         Transform translate = new Translate(-xAxis.getLowerBound(), -yAxis.getLowerBound());
         double sx = chartCanvas.getWidth() / (xAxis.getUpperBound() -xAxis.getLowerBound());
         double sy = chartCanvas.getHeight() / (yAxis.getUpperBound() -yAxis.getLowerBound());
         Transform scale = new Scale(sx, -sy);
-        //        Transform mirror = new Scale(1, -1).createConcatenation(new Translate(0, chartCanvas.getHeight()));
         Transform mirror = new Translate(0, chartCanvas.getHeight());
         return new Affine(mirror.createConcatenation(scale).createConcatenation(translate));
     }
@@ -185,64 +200,44 @@ abstract class CanvasChart extends AnchorPane {
         // this would be necessary only once, but avoids introducing a startRectangleSelection method.
         selectionRect.setX(dragStartMousePositionSC.getX());
         selectionRect.setY(dragStartMousePositionSC.getY());
-        selectionHint.setVisible(true);
 
         double width = t.getX() - dragStartMousePositionSC.getX();
         double height= t.getY() - dragStartMousePositionSC.getY();
-
-        // restricted selection if on one of the axes
-//        if(t.getSource() == xAxis){
-//            height = chartCanvas.getHeight();
-//            selectionRect.setY(0);
-//        } else if(t.getSource() == yAxis){
-//            width = chartCanvas.getWidth();
-//            selectionRect.setX(0);
-//        }
+        if(aspectRatioFixed()){
+            width = xAxis.getWidth()/yAxis.getHeight() * height;
+        }
 
         if(width > 0 && height > 0 && t.getX() < chartCanvas.getWidth() && t.getY() < chartCanvas.getHeight()){
             selectionRect.setVisible(true);
             selectionRect.setWidth(width);
             selectionRect.setHeight(height);
-            selectionHint.setText(normalSelectionHint);
         } else {
             selectionRect.setVisible(false);
-            selectionHint.setText(reverseSelectionHint);
         }
 
     }
 
     protected void finalizeRectangleSelection(MouseEvent t){
-        selectionHint.setVisible(false);
         selectionRect.setVisible(false);
 
-        double minXSC = dragStartMousePositionSC.getX();
-        double minYSC = dragStartMousePositionSC.getY();
-        double maxXSC = t.getX();
-        double maxYSC = t.getY();
+        double minXSC = selectionRect.getX();
+        double minYSC = selectionRect.getY();
+        double maxXSC = minXSC + selectionRect.getWidth();
+        double maxYSC = minYSC + selectionRect.getHeight();
 
-        double widthSC = maxXSC - minXSC;
-        double heightSC= maxYSC - minYSC;
+        boolean cancel = t.getX() < minXSC || t.getY() < minYSC;
 
-        // restricted selection if on one of the axes
-//        if(t.getSource() == xAxis){
-//            minYSC = chartCanvas.getHeight();
-//            maxYSC = 0;
-//        } else if(t.getSource() == yAxis){
-//            minXSC = 0;
-//            maxXSC = chartCanvas.getWidth();
-//        }
-
-        if(widthSC > 0 && heightSC > 0){
+        if( ! cancel){
             double minXDC = xAxis.fromScreen(minXSC);
             double minYDC = yAxis.fromScreen(maxYSC);
             double maxXDC = xAxis.fromScreen(maxXSC);
             double maxYDC = yAxis.fromScreen(minYSC);
-            axesRanges.set(new Rectangle2D(minXDC, minYDC, maxXDC - minXDC, maxYDC - minYDC));
-            drawContents();
+            setAxesRanges(new BoundingBox(minXDC, minYDC, maxXDC - minXDC, maxYDC - minYDC));
         } else {
             resetView();
-            drawContents();
         }
+
+        drawContents();
 
     }
 
@@ -250,7 +245,7 @@ abstract class CanvasChart extends AnchorPane {
 
     protected void recordDragStartPosition(MouseEvent t) {
         dragStartMousePositionSC = new Point2D(t.getX(), t.getY());
-        panStartAxisBoundsDC = new Rectangle2D(xAxis.getLowerBound(), yAxis.getLowerBound(), xAxis.getRange(), yAxis.getRange());
+        panStartAxisBoundsDC = new BoundingBox(xAxis.getLowerBound(), yAxis.getLowerBound(), xAxis.getRange(), yAxis.getRange());
     }
 
     protected void panViaMouseDrag(MouseEvent t) {
@@ -269,13 +264,8 @@ abstract class CanvasChart extends AnchorPane {
                 offsetX = 0;
             }
 
-            xAxis.setLowerBound(panStartAxisBoundsDC.getMinX() + offsetX);
-            xAxis.setUpperBound(panStartAxisBoundsDC.getMaxX() + offsetX);
-            yAxis.setLowerBound(panStartAxisBoundsDC.getMinY() + offsetY);
-            yAxis.setUpperBound(panStartAxisBoundsDC.getMaxY() + offsetY);
-            xAxis.drawContents();
-            yAxis.drawContents();
-            axesRanges.set(new Rectangle2D(xAxis.getLowerBound(), yAxis.getLowerBound(), xAxis.getRange(), yAxis.getRange()));
+            Bounds boundsTranslated = new Translate(offsetX,offsetY).transform(panStartAxisBoundsDC);
+            setAxesRanges(boundsTranslated);
 
             drawContents();
         }
@@ -296,21 +286,17 @@ abstract class CanvasChart extends AnchorPane {
             double zoomFactorX = 1 - scrollAmount;
             double zoomFactorY = 1 - scrollAmount;
 
-            if(t.getSource() == xAxis || t.isAltDown()){
+            if( ! aspectRatioFixed() && (t.getSource() == xAxis || t.isAltDown())){
                 zoomFactorY = 1;
-            } else if(t.getSource() == yAxis || t.isShiftDown()){
+            } else if( ! aspectRatioFixed() && (t.getSource() == yAxis || t.isShiftDown())){
                 zoomFactorX = 1;
             }
 
+            assert ! aspectRatioFixed() || Math.abs(zoomFactorX - zoomFactorY) < 1e-15 : "Aspect ratio violated: " + (zoomFactorX/zoomFactorY);
+
             Scale zoomScale = new Scale(zoomFactorX, zoomFactorY, xAxis.fromScreen(t.getX()), yAxis.fromScreen(t.getY()) );
             Bounds boundsZoomed = zoomScale.transform(boundsData);
-            xAxis.setLowerBound(boundsZoomed.getMinX());
-            xAxis.setUpperBound(boundsZoomed.getMaxX());
-            yAxis.setLowerBound(boundsZoomed.getMinY());
-            yAxis.setUpperBound(boundsZoomed.getMaxY());
-            xAxis.drawContents();
-            yAxis.drawContents();
-            axesRanges.set(new Rectangle2D(xAxis.getLowerBound(), yAxis.getLowerBound(), xAxis.getRange(), yAxis.getRange()));
+            setAxesRanges(boundsZoomed);
 
             drawContents();
         }
@@ -318,49 +304,29 @@ abstract class CanvasChart extends AnchorPane {
 
     // element positioning  ----------------------------------------------------
 
-
-//    @Override public void resize(double width, double height){
-//        super.resize(width, height);
-//        resizeComponents(null, null, null);
-//    }
-
     // resizes the canvas elements and positions them
     public void resizeComponents(ObservableValue<? extends Bounds> ov, Bounds t, Bounds t1) {
 
-//        if(getClass() == Correlogram.class)
-//            System.out.println(String.format("t  %s\nt1 %s\n", t, t1));
-
-        // the chart margins within the containing pane (can be used for legends, titles, labels, etc.
-        double[] margins = new double[]{10, 10, 40, 60};
-        int TOP = 0,
-            RIGHT = 1,
-            BOTTOM = 2,
-            LEFT = 3;
-
         // setting to the width of the root pane layout bounds avoids getting out of sync with the actual canvas pane layout bounds
-        AnchorPane.setTopAnchor(canvasPane, margins[TOP]);
-        AnchorPane.setRightAnchor(canvasPane, margins[RIGHT]);
-        AnchorPane.setBottomAnchor(canvasPane, margins[BOTTOM]);
-        AnchorPane.setLeftAnchor(canvasPane, margins[LEFT]);
-
-//            chartCanvas.setLayoutX(margins[LEFT]);
-//            chartCanvas.setLayoutY(margins[TOP]);
+        AnchorPane.setTopAnchor(chartPane, margins[TOP]);
+        AnchorPane.setRightAnchor(chartPane, margins[RIGHT]);
+        AnchorPane.setBottomAnchor(chartPane, margins[BOTTOM]);
+        AnchorPane.setLeftAnchor(chartPane, margins[LEFT]);
 
         // is contained in the canvas pane
-        chartCanvas.setWidth(getWidth()-margins[LEFT]-margins[RIGHT]-1);
-        chartCanvas.setHeight(getHeight()-margins[TOP]-margins[BOTTOM]-1); // not to occlude the border of the containing pane (the axis line)
-        chartCanvas.setTranslateY(1);
+        chartCanvas.setWidth(getWidth() - margins[LEFT] - margins[RIGHT]);
+        chartCanvas.setHeight(getHeight() - margins[TOP] - margins[BOTTOM]);
 
-        xAxis.setWidth(getWidth()-margins[LEFT]-margins[RIGHT]);
+        xAxis.setWidth(chartCanvas.getWidth()-1);
         xAxis.setHeight(margins[BOTTOM]);
-        xAxis.setTranslateY(getHeight()-margins[TOP]-margins[BOTTOM]);
-        xAxis.setTranslateX(-1);
+        xAxis.setTranslateY(chartCanvas.getHeight());
+        xAxis.setTranslateX(-1);    // to fill the pixel gap at (0,0) where the axes should meet
 
-        yAxis.setHeight(getHeight()-margins[TOP]-margins[BOTTOM]);
+        yAxis.setHeight(chartCanvas.getHeight());
         yAxis.setWidth(margins[LEFT]);
         yAxis.setTranslateX(-margins[LEFT]);
 
-//                .setLayoutX(20);    // doesn't have any effect
+        if(aspectRatioFixed()) adaptYAxis(xAxis.getAxisBounds());
 
         xAxis.drawContents();
         yAxis.drawContents();
@@ -369,23 +335,52 @@ abstract class CanvasChart extends AnchorPane {
 
     }
 
+    // fixed aspect ratio logic -------------------------------------------------
+
+    /** @return Whether the scales of the x and y axes are fixed to a certain ratio. */
+    public boolean aspectRatioFixed() {
+        return ! Double.isNaN(dataPointsPerPixelRatio.get());
+    }
+
+    /**
+     * Adapts the range of the y axis such that the {@link #dataPointsPerPixelRatio} is satisfied.
+     * @param xAxisBounds the desired bounds of the x axis
+     */
+    public void adaptYAxis(Bounds xAxisBounds) {
+        // using full width, reducing height to maintain quadratic-shape cells
+        // formula derivation
+        //      pixels per data point Y / pixels per data point X = ratio
+        //   => (height/rangeY) / (width/rangeX) = ratio
+        //      solve for rangeY
+        double newYRange = xAxisBounds.getWidth() * yAxis.getHeight() / xAxis.getWidth() / getDataPointsPerPixelRatio();
+        double diff = newYRange - yAxis.getRange();
+        // extend bounds in both directions of the y axis equally.
+        setAxesRanges(new BoundingBox(xAxisBounds.getMinX(), yAxis.getLowerBound() - diff/2, xAxisBounds.getWidth(), newYRange));
+    }
+
+    /**
+     * Adapts the range of the x axis such that the {@link #dataPointsPerPixelRatio} is satisfied.
+     * @param yAxisBounds the desired bounds for the y axis
+     */
+    public void adaptXAxis(Bounds yAxisBounds){
+        // formula is derived as in adaptYAxis
+        // using full height, reducing width to maintain quadratic-shape cells
+        double newXRange = yAxisBounds.getHeight() * xAxis.getWidth() * getDataPointsPerPixelRatio() / yAxis.getHeight();
+        setAxesRanges(new BoundingBox(xAxis.getLowerBound(), yAxisBounds.getMinY(), newXRange, yAxisBounds.getHeight()));
+    }
+
     /**
      * @return an image of the current contents of the visualization window
      */
     public WritableImage getCurrentViewAsImage(){
 
-        int width = (int) chartCanvas.getWidth(),
-            height = (int) chartCanvas.getHeight();
+        int width = (int) getWidth(),
+            height = (int) getHeight();
 
         WritableImage wim = new WritableImage(width, height);
 
-        chartCanvas.snapshot(null, wim);
-
+        snapshot(null, wim);
         return wim;
     }
 
-    public Rectangle2D getAxesRanges() { return axesRanges.get(); }
-    public void setAxesRanges(Rectangle2D value) { axesRanges.set(value); }
-    public ObjectProperty axesRangesProperty() { return axesRanges; }
-    
 }

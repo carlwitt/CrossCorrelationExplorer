@@ -7,8 +7,8 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
-import javafx.geometry.Rectangle2D;
 
 import java.awt.*;
 import java.util.Observable;
@@ -42,17 +42,17 @@ public class SharedData extends Observable {
     public final ObjectProperty<CorrelationMatrix> correlationMatrixProperty() { return correlationMatrix; }
 
     /** The min/max time (in the x component) that is visible in both the time series and correlogram view. */
-    private final ObjectProperty<Rectangle2D> visibleTimeRange = new SimpleObjectProperty<>();
-    public Rectangle2D getVisibleTimeRange() { return visibleTimeRange.get(); }
-    public void setVisibleTimeRange(Rectangle2D value) { visibleTimeRange.set(value); }
-    public ObjectProperty visibleTimeRangeProperty() { return visibleTimeRange; }
+    private final ObjectProperty<Bounds> visibleTimeRange = new SimpleObjectProperty<>();
+    public Bounds getVisibleTimeRange() { return visibleTimeRange.get(); }
+    public void setVisibleTimeRange(Bounds value) { visibleTimeRange.set(value); }
+    public ObjectProperty<Bounds> visibleTimeRangeProperty() { return visibleTimeRange; }
 
     /** Specifies the current time window and time lag in the correlation matrix which is currently under the mouse cursor.
      * The x component specifies the 0-based index of the column, the y component specifies the 0-based index of the cell.
      * No time lag splitting here! Simply the elements with their raw time lags in range [0..column length].
      * Integer.MAX_VALUE indicates that a component has no sensible range. */
     private final ObjectProperty<Point> highlightedCell = new SimpleObjectProperty<>(new Point(-1, -1));
-    public ObjectProperty highlightedCellProperty() { return highlightedCell; }
+    public ObjectProperty<Point> highlightedCellProperty() { return highlightedCell; }
     public Point getHighlightedCell() { return highlightedCell.get(); }
     public void setHighlightedCell(Point value) { highlightedCell.set(value); }
 
@@ -63,7 +63,7 @@ public class SharedData extends Observable {
      * The second dimension refers to the bound: 0: lower bound, 1: upper bound.
      */
     private final ObjectProperty<double[][]> matrixFilterRanges = new SimpleObjectProperty<>(new double[CorrelationMatrix.NUM_STATS][]);
-    public ObjectProperty matrixFilterRangesProperty(){ return matrixFilterRanges; }
+    public ObjectProperty<double[][]> matrixFilterRangesProperty(){ return matrixFilterRanges; }
     public double[][] getMatrixFilterRanges(){ return matrixFilterRanges.get(); }
     public void setMatrixFilterRanges(double[][] matrixFilterRanges){ this.matrixFilterRanges.set(matrixFilterRanges); }
 
@@ -72,7 +72,7 @@ public class SharedData extends Observable {
      * See {@link Visualization.Correlogram.UNCERTAINTY_VISUALIZATION}
      */
     private final ObjectProperty<Correlogram.UNCERTAINTY_VISUALIZATION> uncertaintyVisualization = new SimpleObjectProperty<>();
-    public ObjectProperty uncertaintyVisualizationProperty(){return uncertaintyVisualization;}
+    public ObjectProperty<Correlogram.UNCERTAINTY_VISUALIZATION> uncertaintyVisualizationProperty(){return uncertaintyVisualization;}
     public Correlogram.UNCERTAINTY_VISUALIZATION getUncertaintyVisualization(){return uncertaintyVisualization.get();}
     public void setUncertaintyVisualization(Correlogram.UNCERTAINTY_VISUALIZATION uncertaintyVisualization){this.uncertaintyVisualization.set(uncertaintyVisualization);}
 

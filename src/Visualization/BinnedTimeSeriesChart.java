@@ -48,8 +48,7 @@ public class BinnedTimeSeriesChart extends TimeSeriesChart {
 
         // determine bin size from screen space
         int numDataPointsInRange = dataModel.getNumDataPointsInRange(0, xAxis.getLowerBound(), xAxis.getUpperBound());
-        System.out.println(String.format("numDataPointsInRange: %s", numDataPointsInRange));
-        int optimalBinSize = (int) Math.ceil(1. * numDataPointsInRange / getWidth());
+        int optimalBinSize = (int) Math.max(1, Math.ceil(1. * numDataPointsInRange / getWidth()));
         aggregators[0].setBinSize(optimalBinSize);
         aggregators[1].setBinSize(optimalBinSize);
 
@@ -65,13 +64,13 @@ public class BinnedTimeSeriesChart extends TimeSeriesChart {
             double[] xValues = aggregators[ensembleID].getXValues();
 
             // find the horizontal clipping
-            int firstDataPointIdx = 0, lastDataPointIdx = xValues.length-1;
-            for (int i = 0; i < xValues.length; i++) {
-                if(xValues[i] < xAxis.getLowerBound()) firstDataPointIdx++;
-                if(xValues[i] > xAxis.getUpperBound()) { lastDataPointIdx = i; break; }
-            }
-            System.out.println(String.format("firstDataPointIdx: %s", firstDataPointIdx));
-            System.out.println(String.format("lastDataPointIdx: %s", lastDataPointIdx));
+            double xAxisSpacing = xValues[1] - xValues[0];
+            double leftPadding = Math.max(0, xAxis.getLowerBound() - xValues[0]);
+            double rightPadding = Math.max(0, xValues[xValues.length-1] - xAxis.getUpperBound());
+            int invisiblePointsFront = (int)Math.floor(leftPadding/xAxisSpacing);
+            int invisiblePointsBack = (int)Math.floor(rightPadding/xAxisSpacing);
+            int firstDataPointIdx = invisiblePointsFront;
+            int lastDataPointIdx = xValues.length-1-invisiblePointsBack;
 
             // draw each series
             for (int tsID = 0; tsID < aggregators[ensembleID].getNumberOfTimeSeries(); tsID++) {

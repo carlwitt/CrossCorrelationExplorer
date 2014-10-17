@@ -163,6 +163,8 @@ public class MatrixFilterController implements Initializable{
             slider.setHighValue(slider.getMax());
         }
 
+        publishChanges(null);
+
 //        // restore previous auto update state
 //        autoUpdateCheckBox.setSelected(previousState);
 //        // trigger the pending update if auto update was enabled previously

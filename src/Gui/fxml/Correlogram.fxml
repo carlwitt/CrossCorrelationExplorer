@@ -5,8 +5,8 @@
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Text?>
-<AnchorPane layoutX="0.0" layoutY="0.0" prefHeight="-1.0" prefWidth="-1.0" style="-fx-background-color: gainsboro;" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.CorrelogramController">
-  <VBox id="VBox" alignment="CENTER" maxWidth="20.0" minWidth="20.0" prefWidth="20.0" spacing="5.0" style="&#10;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
+<AnchorPane layoutX="0.0" layoutY="0.0" prefHeight="-1.0" prefWidth="-1.0" style="-fx-background-color: white;" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.CorrelogramController">
+  <VBox id="VBox" alignment="CENTER" maxWidth="20.0" minWidth="20.0" prefWidth="20.0" spacing="5.0" style="-fx-background-color: gainsboro;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
     <Text fontSmoothingType="GRAY" rotate="270.0" smooth="true" strikethrough="false" strokeType="OUTSIDE" strokeWidth="0.0" text="Correlation View" translateX="0.0" translateY="45.0" VBox.vgrow="NEVER">
       <VBox.margin>
         <Insets top="2.0" />
@@ -19,7 +19,20 @@
         <Insets bottom="20.0" />
       </VBox.margin>
     </ImageView>
-    <ToggleButton id="linkWithTimeSeriesViewToggle" fx:id="columnUncertaintyToggle" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" rotate="0.0" selected="false" text="" translateX="0.0" translateY="0.0">
+    <ToggleButton id="linkWithTimeSeriesViewToggle" fx:id="hintonUncertaintyToggle" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" rotate="0.0" selected="false" text="" translateX="0.0" translateY="0.0">
+      <graphic>
+        <ImageView fitHeight="10.0" fitWidth="10.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" rotate="90.0" smooth="false">
+          <Image url="@../img/glyphicons_155_show_big_thumbnails.png" />
+        </ImageView>
+      </graphic>
+      <toggleGroup>
+        <ToggleGroup fx:id="uncertaintyVisualizationMethod" />
+      </toggleGroup>
+      <tooltip>
+        <Tooltip text="Toggle between uncertainty visualization methods color and column width." />
+      </tooltip>
+    </ToggleButton>
+    <ToggleButton id="linkWithTimeSeriesViewToggle" fx:id="columnUncertaintyToggle" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" rotate="0.0" selected="false" text="" toggleGroup="$uncertaintyVisualizationMethod" translateX="0.0" translateY="0.0">
       <graphic>
         <ImageView fitHeight="14.0" fitWidth="14.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" rotate="90.0" smooth="false">
           <Image url="@../img/histogram.png" />

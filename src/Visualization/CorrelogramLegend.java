@@ -267,7 +267,7 @@ public class CorrelogramLegend extends CanvasChart {
                 // draw rectangle
                 Paint paint;
                 // if there's no source statistic for the vertical axis defined or if uncertainty is encoded via column width, use one dimensional color palette.
-                if(sourceStatistic[VERTICAL] == null || uncertaintyVisualization == Correlogram.UNCERTAINTY_VISUALIZATION.COLUMN_WIDTH)
+                if(sourceStatistic[VERTICAL] == null || uncertaintyVisualization != Correlogram.UNCERTAINTY_VISUALIZATION.COLOR)
                     paint = paintScale.getPaint(
                         values[rowIdx][colIdx][HORIZONTAL]
                     );

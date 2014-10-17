@@ -7,17 +7,16 @@
 package Visualization;
 
 import com.sun.javafx.tk.FontLoader;
+import javafx.geometry.Orientation;
+import javafx.scene.text.Font;
+import javafx.util.converter.NumberStringConverter;
+import org.junit.*;
+
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
-import javafx.scene.text.Font;
-import javafx.util.converter.NumberStringConverter;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import static org.junit.Assert.*;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  *
@@ -40,7 +39,7 @@ public class NumberAxisTest {
     
     @Before
     public void setUp() {
-        instance = new NumberAxis();
+        instance = new NumberAxis(Orientation.HORIZONTAL);
     }
     
     @After

@@ -4,11 +4,11 @@ import Data.SharedData;
 import Visualization.Correlogram;
 import Visualization.CorrelogramLegend;
 import Visualization.MultiDimensionalPaintScale;
-import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
-import javafx.geometry.Rectangle2D;
+import javafx.geometry.BoundingBox;
+import javafx.geometry.Bounds;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.Tooltip;
@@ -46,7 +46,10 @@ public class CorrelogramController {
     @FXML ToggleButton linkWithTimeSeriesViewToggle;
     @FXML ToggleButton scatterPlotToggle;
     @FXML ToggleButton columnUncertaintyToggle;
+    @FXML ToggleButton hintonUncertaintyToggle;
     @FXML TabPane visualizationSelector;
+
+//    ComboBox<Correlogram.UNCERTAINTY_VISUALIZATION> uncertaintyVisualizationComboBox = new ComboBox<>(FXCollections.observableArrayList(Correlogram.UNCERTAINTY_VISUALIZATION.values()));
 
     private static final String[] renderModeLabels = new String[]{
             "Mean/Std Dev",           // mean and standard deviation
@@ -109,11 +112,27 @@ public class CorrelogramController {
             legend.drawContents();
         });
 
-        columnUncertaintyToggle.selectedProperty().addListener((observable, oldValue, newValue) -> {
-            // toggle down means "use column width uncertainty visualization"
-            if(newValue) sharedData.setUncertaintyVisualization(Correlogram.UNCERTAINTY_VISUALIZATION.COLUMN_WIDTH);
-            else         sharedData.setUncertaintyVisualization(Correlogram.UNCERTAINTY_VISUALIZATION.COLOR);
+        columnUncertaintyToggle.selectedProperty().addListener((observable, oldValue, toggleActive) -> {
+            Correlogram.UNCERTAINTY_VISUALIZATION newVis;
+            if(toggleActive)
+                newVis = Correlogram.UNCERTAINTY_VISUALIZATION.COLUMN_WIDTH;
+            else
+                newVis = hintonUncertaintyToggle.isSelected() ? Correlogram.UNCERTAINTY_VISUALIZATION.HINTON : Correlogram.UNCERTAINTY_VISUALIZATION.COLOR;
+
+            sharedData.setUncertaintyVisualization(newVis);
         });
+
+        hintonUncertaintyToggle.selectedProperty().addListener((observable, oldValue, toggleActive) -> {
+            Correlogram.UNCERTAINTY_VISUALIZATION newVis;
+            if(toggleActive)
+                newVis = Correlogram.UNCERTAINTY_VISUALIZATION.HINTON;
+            else
+                newVis = columnUncertaintyToggle.isSelected() ? Correlogram.UNCERTAINTY_VISUALIZATION.COLUMN_WIDTH : Correlogram.UNCERTAINTY_VISUALIZATION.COLOR;
+
+            sharedData.setUncertaintyVisualization(newVis);
+        });
+
+
 
     }
     
@@ -124,14 +143,17 @@ public class CorrelogramController {
         legend.setSharedData(sharedData);
         
         // report navigation in the correlogram to the time series view (via the shared data)
-        correlogram.axesRangesProperty().addListener(pushCorrelogramNavigation);
+        correlogram.axesRangesProperty().addListener(this::pushCorrelogramNavigation);
         
 //        listen to navigation in the time series view (via shared data)
-        sharedData.visibleTimeRangeProperty().addListener((ov, t, t1) -> {
+        sharedData.visibleTimeRangeProperty().addListener((ov, t, newBounds) -> {
             if(linkWithTimeSeriesViewToggle.isSelected()){
-                Rectangle2D newBounds = (Rectangle2D) t1;
-                correlogram.xAxis.setLowerBound(newBounds.getMinX());
-                correlogram.xAxis.setUpperBound(newBounds.getMaxX());
+                if(correlogram.aspectRatioFixed())
+                    correlogram.adaptYAxis(newBounds);
+                else {
+                    correlogram.xAxis.setLowerBound(newBounds.getMinX());
+                    correlogram.xAxis.setUpperBound(newBounds.getMaxX());
+                }
                 correlogram.drawContents();
             }
         });
@@ -139,22 +161,19 @@ public class CorrelogramController {
     } // set shared data
     
     // report changes in the correlogram axis bounds to sync the time series view
-    private final ChangeListener<Object> pushCorrelogramNavigation = new ChangeListener<Object>() {
-        @Override public void changed(ObservableValue<?> ov, Object t, Object t1) {
+    private void pushCorrelogramNavigation(ObservableValue<?> ov, Bounds t, Bounds newBounds) {
 
-            Rectangle2D oldTimeSeriesBounds = sharedData.getVisibleTimeRange();
+        Bounds oldTimeSeriesBounds = sharedData.getVisibleTimeRange();
 
-            if(linkWithTimeSeriesViewToggle.isSelected() && oldTimeSeriesBounds != null){
-                Rectangle2D newCorrelogramBounds = (Rectangle2D) t1;
-                Rectangle2D newTimeSeriesBounds = new Rectangle2D(
-                        newCorrelogramBounds.getMinX(),
-                        oldTimeSeriesBounds.getMinY(),
-                        newCorrelogramBounds.getWidth(),
-                        oldTimeSeriesBounds.getHeight());
-                sharedData.setVisibleTimeRange(newTimeSeriesBounds);
-            }
+        if(linkWithTimeSeriesViewToggle.isSelected() && oldTimeSeriesBounds != null){
+            Bounds newTimeSeriesBounds = new BoundingBox(
+                    newBounds.getMinX(),
+                    oldTimeSeriesBounds.getMinY(),
+                    newBounds.getWidth(),
+                    oldTimeSeriesBounds.getHeight());
+            sharedData.setVisibleTimeRange(newTimeSeriesBounds);
         }
-    };
+    }
 
     public void resetView() {
         correlogram.resetView();

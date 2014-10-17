@@ -6,6 +6,7 @@ import Visualization.BinnedTimeSeriesChart;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.geometry.Bounds;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
@@ -52,7 +53,15 @@ public class TimeSeriesViewController {
         
         timeSeriesChart.setSharedData(sharedData);
         timeSeriesChart.seriesSets = seriesSets;
-        
+
+        // axes scroll bars
+        Bounds dataBounds = sharedData.experiment.dataModel.getDataBounds();
+        if(dataBounds != null){
+            timeSeriesChart.xAxis.setScrollBarBoundsDC(dataBounds);
+            timeSeriesChart.yAxis.setScrollBarBoundsDC(dataBounds);
+        }
+
+
 //        timeSeriesChart.drawEachNthDataPointProperty().bind(detailSlider.valueProperty());
 
         sharedData.highlightedCellProperty().addListener((ov, t, t1) -> timeSeriesChart.drawContents());
@@ -80,7 +89,7 @@ public class TimeSeriesViewController {
         timeSeriesChart.toBack(); // the reset button etc. are to be displayed on top of the chart
         AnchorPane.setTopAnchor(timeSeriesChart, 0.);
         AnchorPane.setRightAnchor(timeSeriesChart, 0.);
-        AnchorPane.setBottomAnchor(timeSeriesChart, 0.);
+        AnchorPane.setBottomAnchor(timeSeriesChart, 20.);
         AnchorPane.setLeftAnchor(timeSeriesChart, 20.);
 
         // auto adjust tick labels and detail slider
@@ -89,8 +98,8 @@ public class TimeSeriesViewController {
         timeSeriesChart.yAxis.lowerBoundProperty().addListener(axisRangeChanged);
         timeSeriesChart.yAxis.upperBoundProperty().addListener(axisRangeChanged);
 
+        // axes configuration
         timeSeriesChart.xAxis.setTickLabelFormatter(new NumberStringConverter(new  DecimalFormat("####")));
-
         timeSeriesChart.xAxis.setLabel("Year");
         timeSeriesChart.yAxis.setLabel("Temperature ˚C");
 

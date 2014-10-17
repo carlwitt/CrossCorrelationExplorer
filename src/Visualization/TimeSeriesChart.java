@@ -10,8 +10,9 @@ import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.ObservableList;
+import javafx.geometry.BoundingBox;
+import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import javafx.scene.transform.Affine;
@@ -416,7 +417,7 @@ public class TimeSeriesChart extends CanvasChart {
             yRange = 1;
                     
         }
-        Rectangle2D newVisibleRange = new Rectangle2D(minX, minY, xRange, yRange);
+        Bounds newVisibleRange = new BoundingBox(minX, minY, xRange, yRange);
 
         axesRanges.set(newVisibleRange);
         drawContents();

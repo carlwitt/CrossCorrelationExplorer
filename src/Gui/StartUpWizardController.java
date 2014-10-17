@@ -104,13 +104,6 @@ public class StartUpWizardController extends WindowController implements Initial
             loadButton.setDisable(false);
         }
 
-        // TODO: remove file presets
-//        ts1Selector.setFile(new File("data/lianhua_realisations.txt"));
-//        ts2Selector.setFile(new File("data/dongge_realisations.txt"));
-//        ts1Selector.setFile(new File("data/laggedBrownian.txt"));
-//        ts2Selector.setFile(new File("data/laggedSines.txt"));
-//        createButton.setDisable(false);
-
     }
 
     public void loadExperiment(){
