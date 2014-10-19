@@ -2,6 +2,7 @@ package Data.Correlation;
 
 import Data.TimeSeries;
 import Data.Windowing.WindowMetadata;
+import Visualization.Correlogram;
 import com.google.common.base.Joiner;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
@@ -216,6 +217,56 @@ public class CorrelationMatrix {
                 L2NormsB[tsIdx][offset] = CrossCorrelation.rootOfSummedSquares(normalizedValues);
             }
         }
+
+    }
+
+    /**
+     * Aggregates cells from a square region of the matrix by finding some statistics on them.
+     * @param region the object to take the paramters from and to store the results to
+     */
+    public void aggregate(Correlogram.MatrixRegionAggregation region) {
+
+        // clip start and end to bounds
+        int maxColumnIdx = getSize() - 1;
+        int maxRowIdx = metadata.getNumberOfDifferentTimeLags() - 1;
+        int firstColumnIdx = Math.max(0, Math.min(region.column, maxColumnIdx));
+        int firstRowIdx = Math.max(0, Math.min(region.row, maxRowIdx));
+        int lastColumnIdx = Math.min(firstColumnIdx + region.size, maxColumnIdx);
+        int lastRowIdx = Math.min(firstRowIdx + region.size, maxRowIdx);
+
+        region.width = lastColumnIdx - firstColumnIdx + 1;
+        region.height = lastRowIdx - firstRowIdx + 1;
+
+        double averageCorrelation = 0;
+        double minUncertainty = Double.POSITIVE_INFINITY, averageUncertainty = 0, maxUncertainty = Double.NEGATIVE_INFINITY;
+        int notNaNCorrelations = 0, notNaNUncertainties = 0;
+        for (int i = firstColumnIdx; i <= lastColumnIdx; i++) {
+            CorrelationColumn correlationColumn = getColumn(i);
+            for (int j = firstRowIdx; j <= lastRowIdx; j++) {
+                double correlation = correlationColumn.data[region.CORRELATION_DIM][j];
+                double uncertainty = correlationColumn.data[region.UNCERTAINTY_DIM][j];
+                if( ! Double.isNaN(correlation)){
+                    averageCorrelation += correlation;
+                    notNaNCorrelations++;
+                }
+                if( ! Double.isNaN(uncertainty)){
+                    minUncertainty = Math.min(minUncertainty, uncertainty);
+                    maxUncertainty = Math.max(maxUncertainty, uncertainty);
+                    averageUncertainty += uncertainty;
+                    notNaNUncertainties++;
+
+                    assert Double.isNaN(minUncertainty) || minUncertainty >= 0 : String.format("Negative uncertainty: %s in column \n%s",minUncertainty, correlationColumn);
+                    assert Double.isNaN(maxUncertainty) || maxUncertainty >= 0 : String.format("Negative max uncertainty: %s", maxUncertainty);
+                }
+            }
+        }
+
+        region.averageCorrelation = notNaNCorrelations > 0 ? averageCorrelation / notNaNCorrelations : Double.NaN;
+        region.minUncertainty = notNaNUncertainties > 0 ? minUncertainty : Double.NaN;
+        region.averageUncertainty = notNaNUncertainties > 0 ? averageUncertainty / notNaNUncertainties : Double.NaN;
+        region.maxUncertainty = notNaNUncertainties > 0 ? maxUncertainty : Double.NaN;
+
+        assert Double.isNaN(region.averageUncertainty) || region.averageUncertainty <= region.maxUncertainty : String.format("Average uncertainty %s larger than max uncertainty %s",region.averageUncertainty,region.maxUncertainty);
 
     }
 
@@ -482,8 +533,6 @@ public class CorrelationMatrix {
          * @param lagIdx the offset of the cell in the column (0 corresponds to the minimum time lag)
          */
         public void computeCell(DescriptiveStatistics descriptiveStatistics, int numValues, int lagIdx) {
-
-//            System.out.println(String.format("compute cell %s (%s values): %s", lagIdx, numValues, Arrays.toString(descriptiveStatistics.getValues())));
 
             data[MEAN][lagIdx] = descriptiveStatistics.getMean();
             data[STD_DEV][lagIdx] = Math.sqrt(descriptiveStatistics.getPopulationVariance());

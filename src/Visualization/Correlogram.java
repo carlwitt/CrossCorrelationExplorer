@@ -294,10 +294,16 @@ public class Correlogram extends CanvasChart {
 
         switch(renderMode){
             case MEAN_STD_DEV:
-                drawContentsMultivariate(gc, matrix, minColMinLag, maxColMaxLag, windowStep, lagStep, MEAN, STD_DEV);
+                if(uncertaintyVisualization == UNCERTAINTY_VISUALIZATION.HINTON)
+                    drawContentsHinton(gc, matrix, minColMinLag, maxColMaxLag, windowStep, lagStep, MEAN, STD_DEV);
+                else
+                    drawContentsMultivariate(gc, matrix, minColMinLag, maxColMaxLag, windowStep, lagStep, MEAN, STD_DEV);
                 break;
             case MEDIAN_IQR:
-                drawContentsMultivariate(gc, matrix, minColMinLag, maxColMaxLag, windowStep, lagStep, MEDIAN, IQR);
+                if(uncertaintyVisualization == UNCERTAINTY_VISUALIZATION.HINTON)
+                    drawContentsHinton(gc, matrix, minColMinLag, maxColMaxLag, windowStep, lagStep, MEDIAN, IQR);
+                else
+                    drawContentsMultivariate(gc, matrix, minColMinLag, maxColMaxLag, windowStep, lagStep, MEDIAN, IQR);
                 break;
             case NEGATIVE_SIGNIFICANT:
                 drawContentsUnivariate(gc, matrix, minColMinLag, maxColMaxLag, windowStep, lagStep, NEGATIVE_SIGNIFICANT);
@@ -329,6 +335,7 @@ public class Correlogram extends CanvasChart {
                heightSC = blockSizeSC.getY() +1;
 
         double[] srcPts = new double[2], dstPts = new double[2];
+        double[][] matrixFilterRanges = sharedData.getMatrixFilterRanges();
 
         for (int i = minColMinLag.x; i <= maxColMaxLag.x; i += windowStep) {
 
@@ -341,8 +348,17 @@ public class Correlogram extends CanvasChart {
                 srcPts[0] = i; srcPts[1] = lag;
                 cellToScreen.transform2DPoints(srcPts, 0, dstPts, 0, 1);
 
-                // draw cell
                 gc.setFill(paintScale.getPaint(column.data[DIM][lag]));
+                for (int STAT = 0; STAT < CorrelationMatrix.NUM_STATS; STAT++) {
+                    if(matrixFilterRanges[STAT] == null) continue;
+                    if(column.data[STAT][lag] < matrixFilterRanges[STAT][0] ||
+                            column.data[STAT][lag] > matrixFilterRanges[STAT][1]){
+                        gc.setFill(filtered);
+                        break;
+                    }
+                }
+
+                // draw cell
                 gc.fillRect(dstPts[0], dstPts[1], widthSC, heightSC);
 
             }
@@ -358,7 +374,7 @@ public class Correlogram extends CanvasChart {
         double uncertainty;     // relative uncertainty (compared to the maximum uncertainty present in the matrix) in the current cell (only used with UNCERTAINTY_VISUALIZATION.COLUMN_WIDTH)
         double slimDown = 0;    // results from the relative uncertainty. A high uncertainty will make the cell much slimmer, no uncertainty will leave it at its full width.
         double minUncertainty = 0;         // matrix.getMin(UNCERTAINTY_DIM) would actually underestimate the uncertainty! (if the minimum uncertainty is high, a full width column would actually represent an uncertain value)
-        double maxUncertainty = matrix.getMax(UNCERTAINTY_DIM)*1.01;   // this overestimates the uncertainty but makes the differences much better visible (since an sd of 1 almost never occurs)
+        double maxUncertainty = matrix.getMax(UNCERTAINTY_DIM);   // this overestimates the uncertainty but makes the differences much better visible (since an sd of 1 almost never occurs)
 
         Affine cellToScreen = cellToScreen(matrix.metadata);
         Point2D blockSizeSC = cellToScreen.deltaTransform(1,-1);
@@ -375,23 +391,10 @@ public class Correlogram extends CanvasChart {
 
             for (int lag = minColMinLag.y; lag <= maxColMaxLag.y; lag += lagStep) {
 
-                switch (uncertaintyVisualization) {
-                    case COLUMN_WIDTH:
-                        uncertainty = (column.data[UNCERTAINTY_DIM][lag] - minUncertainty) / (maxUncertainty - minUncertainty);
-                        if(widthSC >= heightSC)
-                            slimDown = widthSC * uncertainty;
-                        else
-                            slimDown = heightSC * uncertainty;
-
-                        if (Double.isNaN(slimDown)) slimDown = 0; // NaNs occur naturally in empty cells
-                        break;
-                    case HINTON:
-                        if(matrix.metadata.setA.size() == 1 && matrix.metadata.setB.size()==0) uncertainty=0;
-                        else uncertainty = (column.data[UNCERTAINTY_DIM][lag] - minUncertainty) / (maxUncertainty - minUncertainty);
-                        slimDown = widthSC * (1-Math.sqrt(1-uncertainty)) / 2;
-                        if(Double.isNaN(uncertainty)) slimDown = 0; // NaNs occur naturally in empty cells
-
-                        break;
+                if(uncertaintyVisualization == UNCERTAINTY_VISUALIZATION.COLUMN_WIDTH){
+                    uncertainty = (column.data[UNCERTAINTY_DIM][lag] - minUncertainty) / (maxUncertainty - minUncertainty);
+                    slimDown = widthSC >= heightSC ? widthSC * uncertainty : heightSC * uncertainty;
+                    if (Double.isNaN(slimDown)) slimDown = 0; // NaNs occur naturally in empty cells
                 }
 
                 srcPts[0] = i; srcPts[1] = lag;
@@ -416,24 +419,149 @@ public class Correlogram extends CanvasChart {
                     }
                 }
 
-                switch (uncertaintyVisualization) {
-                    case HINTON:
-                        gc.fillRect(dstPts[0]+slimDown, dstPts[1]+slimDown, widthSC - 2*slimDown, heightSC-2*slimDown);
-                        break;
-                    default:
-                        if(widthSC >= heightSC)
-                            gc.fillRect(dstPts[0], dstPts[1], widthSC - slimDown, heightSC);
-                        else
-                            gc.fillRect(dstPts[0], dstPts[1] + slimDown, widthSC, heightSC - slimDown);
-                }
+                if(widthSC >= heightSC)
+                    gc.fillRect(dstPts[0], dstPts[1], widthSC - slimDown, heightSC);
+                else
+                    gc.fillRect(dstPts[0], dstPts[1] + slimDown, widthSC, heightSC - slimDown);
 
 
             }
 
-//            Point2D low = dataToScreen.transform(minX,column.tauMin + 1 + blockYOffset);
-//            Point2D high = dataToScreen.transform(minX,column.tauMin + column.getSize() + blockYOffset);
-//            gc.strokeLine(low.getX(), low.getY(), high.getX(), high.getY());
         }
+    }
+
+    /**
+     * Aggregates and renders the matrix data in a hinton diagram style.
+     */
+    void drawContentsHinton(GraphicsContext gc, CorrelationMatrix matrix, Point minColMinLag, Point maxColMaxLag, int windowStep, int lagStep, int CORRELATION_DIM, int UNCERTAINTY_DIM) {
+
+        double uncertainty;     // relative uncertainty (compared to the maximum uncertainty present in the matrix) in the current cell (only used with UNCERTAINTY_VISUALIZATION.COLUMN_WIDTH)
+        double slimDown = 0;    // results from the relative uncertainty. A high uncertainty will make the cell much slimmer, no uncertainty will leave it at its full width.
+        double minUncertainty = 0;         // matrix.getMin(UNCERTAINTY_DIM) would actually underestimate the uncertainty! (if the minimum uncertainty is high, a full width column would actually represent an uncertain value)
+        double maxUncertainty = matrix.getMax(UNCERTAINTY_DIM);   // this overestimates the uncertainty but makes the differences much better visible (since an sd of 1 almost never occurs)
+        if(maxUncertainty < 1e-15) maxUncertainty = 1;
+
+        Affine cellToScreen = cellToScreen(matrix.metadata);
+        Point2D blockSizeSC = cellToScreen.deltaTransform(1,-1);
+        double widthSC = blockSizeSC.getX(),
+               heightSC = blockSizeSC.getY();
+//        assert Math.abs(widthSC - heightSC) < 0.5 : "width height difference too large: "+Math.abs(widthSC - heightSC); // height and width shouldn't differ by more than one tenth of a pixel
+
+        //        double[][] matrixFilterRanges = sharedData.getMatrixFilterRanges();
+
+        // aggregation
+        double minCellSize = 8;   // pixels. a cell is an unaggregated item of the correlation matrix
+        double minGlyphSize = 50; // pixels. a glyph represents aggregated items
+
+        double[] srcPts = new double[2], dstPts = new double[2];
+
+        // draw unaggregated
+        if(widthSC >= minCellSize){
+            for (int i = minColMinLag.x; i <= maxColMaxLag.x; i += windowStep) {
+
+                CorrelationMatrix.CorrelationColumn column = matrix.getResultItems().get(i);
+
+                for (int lag = minColMinLag.y; lag <= maxColMaxLag.y; lag += lagStep) {
+
+                    if(matrix.metadata.setA.size() == 1 && matrix.metadata.setB.size()==0) uncertainty=0;
+                    else uncertainty = (column.data[UNCERTAINTY_DIM][lag] - minUncertainty) / (maxUncertainty - minUncertainty);
+                    slimDown = widthSC * (1-Math.sqrt(1-uncertainty)) / 2;
+                    if(Double.isNaN(uncertainty)) slimDown = 0; // NaNs occur naturally in empty cells
+
+                    srcPts[0] = i; srcPts[1] = lag;
+                    cellToScreen.transform2DPoints(srcPts, 0, dstPts, 0, 1);
+
+                    gc.setFill(paintScale.getPaint(column.data[CORRELATION_DIM][lag]));
+
+                    gc.fillRect(dstPts[0]+slimDown, dstPts[1]+slimDown, widthSC - 2*slimDown, heightSC-2*slimDown);
+
+
+                }
+            }
+        }
+        // draw aggregated
+        else {
+
+            int groupSize = (int) Math.ceil(minGlyphSize / widthSC);
+            groupSize = Math.min(groupSize, Math.min(matrix.getSize(), matrix.metadata.getNumberOfDifferentTimeLags()));
+
+            Point2D glyphSizeSC = cellToScreen.deltaTransform(groupSize,0);
+            double glyphSizePx = glyphSizeSC.getX();
+
+            int minCol = minColMinLag.x - Math.abs(minColMinLag.x % groupSize);
+            int minLag = minColMinLag.y - Math.abs(minColMinLag.y % groupSize);
+
+            MatrixRegionAggregation matrixRegionAggregation = new MatrixRegionAggregation();
+            matrixRegionAggregation.size = groupSize;
+            matrixRegionAggregation.CORRELATION_DIM = CORRELATION_DIM;
+            matrixRegionAggregation.UNCERTAINTY_DIM = UNCERTAINTY_DIM;
+
+            double minUncertaintyRelative = Double.NaN,
+                   averageUncertaintyRelative = Double.NaN,
+                   maxUncertaintyRelative = Double.NaN,
+                   uncertaintyRange = maxUncertainty - minUncertainty;
+
+            for (int col = minCol; col <= maxColMaxLag.x; col += groupSize) {
+
+                for (int lag = minLag; lag <= maxColMaxLag.y; lag += groupSize) {
+
+                    // aggregate square range
+                    matrixRegionAggregation.column = col;
+                    matrixRegionAggregation.row = lag;
+                    matrix.aggregate(matrixRegionAggregation);
+
+                    minUncertaintyRelative = (matrixRegionAggregation.minUncertainty - minUncertainty) / uncertaintyRange;
+                    averageUncertaintyRelative = (matrixRegionAggregation.averageUncertainty - minUncertainty) / uncertaintyRange;
+                    maxUncertaintyRelative = (matrixRegionAggregation.maxUncertainty - minUncertainty) / uncertaintyRange;
+
+                    // render
+                    srcPts[0] = col; srcPts[1] = lag-1;       // lower left corner of a single cell
+                    cellToScreen.transform2DPoints(srcPts, 0, dstPts, 0, 1);
+
+//                    gc.strokeRect(dstPts[0], dstPts[1]-glyphSizePx, glyphSizePx, glyphSizePx);
+
+                    // min uncertainty
+                    slimDown = glyphSizePx * (1-Math.sqrt(1-minUncertaintyRelative)) / 2;
+
+                    if(Double.isNaN(averageUncertaintyRelative)) continue;
+
+                    if(Double.isNaN(minUncertaintyRelative)) slimDown = 0; // NaNs occur naturally in empty cells
+                    assert slimDown >= 0: String.format("Min uncertainty %s invalid, slimdown %s raw minUC %s",minUncertainty,slimDown,matrixRegionAggregation.minUncertainty);
+                    gc.strokeRect(dstPts[0]+slimDown, dstPts[1]-glyphSizePx+slimDown, glyphSizePx - 2*slimDown, glyphSizePx-2*slimDown);
+
+                    // average uncertainty
+                    slimDown = glyphSizePx * (1-Math.sqrt(1-averageUncertaintyRelative)) / 2;
+                    assert slimDown >= 0: "Avg uncertainty "+averageUncertaintyRelative+" invalid, slimdown: "+slimDown;
+                    gc.setFill(paintScale.getPaint(matrixRegionAggregation.averageCorrelation));
+                    gc.fillRect(dstPts[0]+slimDown, dstPts[1]-glyphSizePx+slimDown, glyphSizePx - 2*slimDown, glyphSizePx-2*slimDown);
+
+                    // max uncertainty
+                    slimDown = glyphSizePx * (1-Math.sqrt(1-maxUncertaintyRelative)) / 2;
+                    if(Double.isNaN(maxUncertaintyRelative)) slimDown = 0; // NaNs occur naturally in empty cells
+                    assert slimDown >= 0: "Max uncertainty "+maxUncertaintyRelative+" invalid, slimdown: "+slimDown;
+                    gc.strokeRect(dstPts[0]+slimDown, dstPts[1]-glyphSizePx+slimDown, glyphSizePx - 2*slimDown, glyphSizePx-2*slimDown);
+
+                }
+            }
+        }
+
+    }
+
+    public static class MatrixRegionAggregation {
+        // input parameters
+        /** The upper left corner of the region to aggregate. */
+        public int column, row;
+        /** The side length (rows/columns) of the square region to aggregate. */
+        public int size;
+        /** Which data dimensions to use as source for the correlation and uncertainty data. */
+        public int CORRELATION_DIM, UNCERTAINTY_DIM;
+        // output parameters
+        /** Number of matrix columns/rows actually covered by the aggregation region (can be influenced by clipping to the matrix size). */
+        public int width, height;
+        /** The average correlation of the cells in the region. */
+        public double averageCorrelation;
+        public double minUncertainty, averageUncertainty, maxUncertainty;
+
     }
 
     /** Defines the domain and the range of the paint scale.

@@ -132,7 +132,7 @@ public class CrossCorrelation {
                     double r = partialResults[tsIdx].getResultItems().get(colIdx).data[CorrelationMatrix.MEAN][lag];
                     if(Double.isNaN(r)) continue;
                     descriptiveStatistics.addValue(r);
-                    if(tester.significanceTest(Math.abs(r))){
+                    if(tester.significanceTest(r)){
                         if(r < 0) numNegSig++;
                         else numPosSig++;
                     }

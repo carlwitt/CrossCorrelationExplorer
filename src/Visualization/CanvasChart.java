@@ -51,7 +51,19 @@ abstract class CanvasChart extends AnchorPane {
      */
     protected final ObjectProperty<Bounds> axesRanges = new SimpleObjectProperty<>();
     public Bounds getAxesRanges() { return axesRanges.get(); }
-    public void setAxesRanges(Bounds value) { axesRanges.set(value); }
+    public void setAxesRanges(Bounds newBounds) {
+        assert newBounds != null;
+        Bounds currentAxesRanges = getAxesRanges();
+        if(currentAxesRanges == null ||
+           Math.abs(currentAxesRanges.getMinX() - newBounds.getMinX()) > 1e-5 ||
+           Math.abs(currentAxesRanges.getMaxX() - newBounds.getMaxX()) > 1e-5 ||
+           Math.abs(currentAxesRanges.getMinY() - newBounds.getMinY()) > 1e-5 ||
+           Math.abs(currentAxesRanges.getMaxY() - newBounds.getMaxY()) > 1e-5  )
+        {
+            axesRanges.set(newBounds);
+        }
+
+    }
     public ObjectProperty<Bounds> axesRangesProperty() { return axesRanges; }
 
     /** Defines a fixed aspect ratio between the two axes. If the value is NaN, the aspect ratio is not fixed.
@@ -109,7 +121,7 @@ abstract class CanvasChart extends AnchorPane {
         });
     }
     public void axisBoundChanged(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-        axesRanges.set(new BoundingBox(xAxis.getLowerBound(),yAxis.getLowerBound(), xAxis.getRange(), yAxis.getRange()));
+        setAxesRanges(new BoundingBox(xAxis.getLowerBound(), yAxis.getLowerBound(), xAxis.getRange(), yAxis.getRange()));
     }
 
     /** Core rendering routine. Draws the chart data. */
