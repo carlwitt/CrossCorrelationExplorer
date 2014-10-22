@@ -75,8 +75,7 @@ public class TimeSeriesViewController {
 
         sharedData.experiment.dataModel.correlationSetAAggregator.binSizeProperty().addListener((observable, oldValue, newValue) -> {
                 levelOfDetailLabel.setText(
-                        newValue.intValue() == 1 ? "Showing full resolution.":
-                                     String.format("Averaging each %s data points into one.", newValue.intValue())
+                        newValue.intValue() == 1 ? "Showing full resolution." : "bin size: "+newValue.intValue()
                 );
         });
 

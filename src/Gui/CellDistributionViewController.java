@@ -58,7 +58,7 @@ public class CellDistributionViewController implements Initializable {
         });
     }
 
-    double criticalCorrelationValue = 0.8;
+    double criticalCorrelationValue = 1.;
 
     /**
      * Retrieves the distribution within the given cell and updates the histogram plot.

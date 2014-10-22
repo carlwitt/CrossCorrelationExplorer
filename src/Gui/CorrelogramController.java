@@ -47,10 +47,12 @@ public class CorrelogramController {
     @FXML ToggleButton scatterPlotToggle;
     @FXML ToggleButton columnUncertaintyToggle;
     @FXML ToggleButton hintonUncertaintyToggle;
+    @FXML ToggleButton hintonDrawQuartilesToggle;
     @FXML TabPane visualizationSelector;
 
 //    ComboBox<Correlogram.UNCERTAINTY_VISUALIZATION> uncertaintyVisualizationComboBox = new ComboBox<>(FXCollections.observableArrayList(Correlogram.UNCERTAINTY_VISUALIZATION.values()));
 
+    /** Captions for the tabs that allow switching between the render modes. */
     private static final String[] renderModeLabels = new String[]{
             "Mean/Std Dev",           // mean and standard deviation
             "Median/IQR",             // median and interquartile range
@@ -112,6 +114,7 @@ public class CorrelogramController {
             legend.drawContents();
         });
 
+        // switch between uncertainty visualization methods
         columnUncertaintyToggle.selectedProperty().addListener((observable, oldValue, toggleActive) -> {
             Correlogram.UNCERTAINTY_VISUALIZATION newVis;
             if(toggleActive)
@@ -121,7 +124,6 @@ public class CorrelogramController {
 
             sharedData.setUncertaintyVisualization(newVis);
         });
-
         hintonUncertaintyToggle.selectedProperty().addListener((observable, oldValue, toggleActive) -> {
             Correlogram.UNCERTAINTY_VISUALIZATION newVis;
             if(toggleActive)
@@ -132,6 +134,11 @@ public class CorrelogramController {
             sharedData.setUncertaintyVisualization(newVis);
         });
 
+        // switch between hinton variants
+        hintonDrawQuartilesToggle.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            correlogram.hintonDrawQuartiles = newValue;
+            correlogram.drawContents();
+        });
 
 
     }

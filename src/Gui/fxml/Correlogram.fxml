@@ -19,6 +19,19 @@
         <Insets bottom="20.0" />
       </VBox.margin>
     </ImageView>
+    <ToggleButton id="linkWithTimeSeriesViewToggle" fx:id="hintonDrawQuartilesToggle" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" rotate="0.0" selected="false" text="" translateX="0.0" translateY="0.0">
+      <graphic>
+        <ImageView fitHeight="10.0" fitWidth="10.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" rotate="45.0" smooth="false">
+          <Image url="@../img/glyphicons_155_show_big_thumbnails.png" />
+        </ImageView>
+      </graphic>
+      <toggleGroup>
+        <ToggleGroup />
+      </toggleGroup>
+      <tooltip>
+        <Tooltip text="Toggle between hinton visualization variants: either the average correlation is shown or the first and third quartiles." />
+      </tooltip>
+    </ToggleButton>
     <ToggleButton id="linkWithTimeSeriesViewToggle" fx:id="hintonUncertaintyToggle" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" rotate="0.0" selected="false" text="" translateX="0.0" translateY="0.0">
       <graphic>
         <ImageView fitHeight="10.0" fitWidth="10.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" rotate="90.0" smooth="false">

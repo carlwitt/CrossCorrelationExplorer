@@ -132,7 +132,7 @@ public class MultiDimensionalPaintScale
         return colors[satIndex][hueIndex];
     }
 
-    Paint getPaint(double d){
+    Color getPaint(double d){
         if(Double.isNaN(d)) return Color.GRAY;
 
         double huePercent = interpolate(d, 0);

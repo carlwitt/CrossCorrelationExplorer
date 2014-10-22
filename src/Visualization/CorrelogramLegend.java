@@ -169,14 +169,11 @@ public class CorrelogramLegend extends CanvasChart {
         }
 
         // update axis labels
-        xAxis.setLabel(CorrelationMatrix.statisticsLabels[sourceStatistic[HORIZONTAL]]);
-        if(sourceStatistic[VERTICAL] != null){
-            yAxis.setLabel(CorrelationMatrix.statisticsLabels[sourceStatistic[VERTICAL]]);
-//            yAxis.setVisible(true);   // doesn't work!
-        }
-        else
-//            yAxis.setVisible(false); // doesn't work!
-            yAxis.setLabel("");
+        String xAxisLabel = CorrelationMatrix.statisticsLabels[sourceStatistic[HORIZONTAL]];
+        if(sharedData != null && (sourceStatistic[HORIZONTAL]==CorrelationMatrix.NEGATIVE_SIGNIFICANT || sourceStatistic[HORIZONTAL]==CorrelationMatrix.ABSOLUTE_SIGNIFICANT || sourceStatistic[HORIZONTAL]==CorrelationMatrix.POSITIVE_SIGNIFICANT))
+            xAxisLabel += String.format(" (p = %s)", CorrelationMatrix.getSignificanceLevel(sharedData.getCorrelationMatrix().metadata));
+        xAxis.setLabel(xAxisLabel);
+        yAxis.setLabel(sourceStatistic[VERTICAL] == null ? "" : CorrelationMatrix.statisticsLabels[sourceStatistic[VERTICAL]]);
 
     }
 

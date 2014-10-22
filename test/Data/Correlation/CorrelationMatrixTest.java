@@ -3,6 +3,7 @@ package Data.Correlation;
 import Data.TimeSeries;
 import Data.TimeSeriesTest;
 import Data.Windowing.WindowMetadata;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -117,15 +118,15 @@ public class CorrelationMatrixTest {
 
     }
 
-    @Test public void testPerformance() {
+    @Test @Ignore public void testPerformance() {
 
-        int numTimeSeries = 20;
+        int numTimeSeries = 100;
         int length = 1000;
 
         List<TimeSeries> tsA = TimeSeriesTest.randomTimeSeries(numTimeSeries, length, 1l);
         List<TimeSeries> tsB = TimeSeriesTest.randomTimeSeries(numTimeSeries, length, 1l);
 
-        int windowSize = 200, baseWindowOffset = 30, tauMin = -100, tauMax = 100, tauStep = 1;
+        int windowSize = 200, baseWindowOffset = 30, tauMin = -100, tauMax = 100, tauStep = 10;
         WindowMetadata metadata = new WindowMetadata(tsA, tsB, windowSize, tauMin, tauMax, tauStep, baseWindowOffset);
         CorrelationMatrix.setSignificanceLevel(metadata, 0.05);
 
@@ -133,8 +134,35 @@ public class CorrelationMatrixTest {
         CorrelationMatrix result = new CorrelationMatrix(metadata);
         result.compute();
 
-        System.out.println(String.format("mem: %s", System.currentTimeMillis()-before));
+        System.out.println(String.format("milliseconds: %s", System.currentTimeMillis()-before));
 
     }
 
+    // test whether there's a performance difference in the way array elements are accessed.
+    // java doesn't exactly use row-major or column-major order because multidimensional arrays are arrays of objects.
+    // nevertheless, it turns out that accessing a multidimensional array by dereferencing the innermost array with the fastest running variable (~row-wise, for i ... for j ... sum += array[i][j])
+    // CAN BE 30x faster than the other way around. This heavily depends on the array dimensions! also, the effects are much more pronounced for read access than for write access.
+    // the reason is probably the cache line size. if accessing different arrays, they need to be evaded from the cache repeatedly, if they are too large. ---
+    int[] sizes = new int[]{500,5,30000};
+    private double[][][] randomArray(){
+        double[][][] randoms = new double[sizes[0]][sizes[1]][sizes[2]];
+        for (int i = 0; i < sizes[0]; i++) for (int j = 0; j < sizes[1]; j++) for (int k = 0; k < sizes[2]; k++) randoms[i][j][k] = Math.random();
+        return randoms;
+    }
+    /** Accesses the array row-wise, i.e. array[1][1], array[1][2], ... array[m][1], ..., array[m][n]*/
+    @Test @Ignore public void rowMajorOrder(){
+        double[][][] randoms = randomArray();
+        double sum = 0;
+        long before = System.currentTimeMillis();
+        for (int i = 0; i < sizes[0]; i++) for (int j = 0; j < sizes[1]; j++) for (int k = 0; k < sizes[2]; k++) sum += randoms[i][j][k];
+        System.out.println(String.format("sum: %s (%s ms)", sum, System.currentTimeMillis() - before));
+    }
+    /** Accesses the array column-wise, i.e. array[1][1], array[2][1], ... array[1][n], ..., array[m][n]*/
+    @Test @Ignore public void columnMajorOrder(){
+        double[][][] randoms = randomArray();
+        double sum = 0;
+        long before = System.currentTimeMillis();
+        for (int i = 0; i < sizes[2]; i++) for (int j = 0; j < sizes[1]; j++) for (int k = 0; k < sizes[0]; k++) sum += randoms[k][j][i];
+        System.out.println(String.format("sum: %s (%s ms)", sum, System.currentTimeMillis() - before));
+    }
 }

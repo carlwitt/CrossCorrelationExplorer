@@ -220,11 +220,15 @@ public class CorrelationMatrix {
 
     }
 
+    DescriptiveStatistics aggregateCorrelationStatistics = new DescriptiveStatistics();
     /**
      * Aggregates cells from a square region of the matrix by finding some statistics on them.
      * @param region the object to take the paramters from and to store the results to
+     * @param matrixFilterRanges specification of the current matrix filter (see {@link Data.SharedData#getMatrixFilterRanges()})
      */
-    public void aggregate(Correlogram.MatrixRegionAggregation region) {
+    public void aggregate(Correlogram.MatrixRegionAggregation region, double[][] matrixFilterRanges) {
+
+        aggregateCorrelationStatistics.clear();
 
         // clip start and end to bounds
         int maxColumnIdx = getSize() - 1;
@@ -237,16 +241,28 @@ public class CorrelationMatrix {
         region.width = lastColumnIdx - firstColumnIdx + 1;
         region.height = lastRowIdx - firstRowIdx + 1;
 
-        double averageCorrelation = 0;
         double minUncertainty = Double.POSITIVE_INFINITY, averageUncertainty = 0, maxUncertainty = Double.NEGATIVE_INFINITY;
         int notNaNCorrelations = 0, notNaNUncertainties = 0;
+
         for (int i = firstColumnIdx; i <= lastColumnIdx; i++) {
             CorrelationColumn correlationColumn = getColumn(i);
+
+            evaluateCell:
             for (int j = firstRowIdx; j <= lastRowIdx; j++) {
+
+                // check matrix filters
+                for (int STAT = 0; STAT < CorrelationMatrix.NUM_STATS; STAT++) {
+                    if(matrixFilterRanges[STAT] == null) continue;
+                    if(correlationColumn.data[STAT][j] < matrixFilterRanges[STAT][0] ||
+                            correlationColumn.data[STAT][j] > matrixFilterRanges[STAT][1])
+                        continue evaluateCell;
+                }
+
+
                 double correlation = correlationColumn.data[region.CORRELATION_DIM][j];
                 double uncertainty = correlationColumn.data[region.UNCERTAINTY_DIM][j];
                 if( ! Double.isNaN(correlation)){
-                    averageCorrelation += correlation;
+                    aggregateCorrelationStatistics.addValue(correlation);
                     notNaNCorrelations++;
                 }
                 if( ! Double.isNaN(uncertainty)){
@@ -258,10 +274,16 @@ public class CorrelationMatrix {
                     assert Double.isNaN(minUncertainty) || minUncertainty >= 0 : String.format("Negative uncertainty: %s in column \n%s",minUncertainty, correlationColumn);
                     assert Double.isNaN(maxUncertainty) || maxUncertainty >= 0 : String.format("Negative max uncertainty: %s", maxUncertainty);
                 }
+
             }
         }
 
-        region.averageCorrelation = notNaNCorrelations > 0 ? averageCorrelation / notNaNCorrelations : Double.NaN;
+        region.minCorrelation = notNaNCorrelations > 0 ? aggregateCorrelationStatistics.getMin() : Double.NaN;
+        region.averageCorrelation = notNaNCorrelations > 0 ? aggregateCorrelationStatistics.getMean() : Double.NaN;
+        region.maxCorrelation = notNaNCorrelations > 0 ? aggregateCorrelationStatistics.getMax() : Double.NaN;
+        region.firstQuartileCorrelation = notNaNCorrelations > 0 ? aggregateCorrelationStatistics.getPercentile(25) : Double.NaN;
+        region.thirdQuartileCorrelation = notNaNCorrelations > 0 ? aggregateCorrelationStatistics.getPercentile(75) : Double.NaN;
+
         region.minUncertainty = notNaNUncertainties > 0 ? minUncertainty : Double.NaN;
         region.averageUncertainty = notNaNUncertainties > 0 ? averageUncertainty / notNaNUncertainties : Double.NaN;
         region.maxUncertainty = notNaNUncertainties > 0 ? maxUncertainty : Double.NaN;

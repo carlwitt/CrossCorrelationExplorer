@@ -351,7 +351,7 @@ abstract class CanvasChart extends AnchorPane {
 
     /** @return Whether the scales of the x and y axes are fixed to a certain ratio. */
     public boolean aspectRatioFixed() {
-        return ! Double.isNaN(dataPointsPerPixelRatio.get());
+        return ! Double.isNaN(getDataPointsPerPixelRatio());
     }
 
     /**

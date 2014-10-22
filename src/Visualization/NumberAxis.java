@@ -288,6 +288,11 @@ public class NumberAxis extends StackPane {
         else
             return new BoundingBox(0, getLowerBound(), 0, getRange());
     }
+
+    /** Returns the number of pixels spent for one unit on the axis. (e.g. 800px for 2 years => 400px per unit) */
+    public double getPxPerUnit() {
+        return (isHorizontal ? getWidth() : getHeight()) / getRange();
+    }
     
     // -------------------------------------------------------------------------
     // content drawing 
@@ -315,7 +320,7 @@ public class NumberAxis extends StackPane {
         }
         // draw axis label
         g.setStroke(Color.BLACK);
-        g.setLineWidth(0.5);
+        g.setLineWidth(1);
         Point2D textSize = renderedTextSize(label, tickLabelFont);
         if(isHorizontal){
             g.strokeText(label, getWidth()/2 - textSize.getX()/2, getHeight()-21);
