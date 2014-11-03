@@ -2,7 +2,11 @@ package Visualization;
 
 import Data.Correlation.CorrelationMatrix;
 import Data.SharedData;
+import Data.Statistics.AggregatedCorrelationMatrix;
+import Gui.CorrelogramController;
 import com.sun.javafx.tk.FontLoader;
+import javafx.geometry.BoundingBox;
+import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
@@ -12,10 +16,10 @@ import javafx.scene.transform.Affine;
 import javafx.scene.transform.Translate;
 import javafx.util.converter.NumberStringConverter;
 
-import java.awt.*;
 import java.util.Locale;
 
 import static Data.Correlation.CorrelationMatrix.*;
+import static Visualization.Correlogram.UNCERTAINTY_VISUALIZATION;
 
 /**
  * Draws the legend for the correlogram by taking the extrema in its dimensions (mean/std dev, median/iqr, etc.)
@@ -48,10 +52,6 @@ public class CorrelogramLegend extends CanvasChart {
      * can be null, if the legend is to be rendered in only one dimension. */
     final Integer[] sourceStatistic = new Integer[2/*vertical, horizontal*/];
 
-    /** These values are shown explicitly in the legend using a small cross mark.
-     * Used to make reading the correlogram easier by displaying the mean and std dev under the mouse pointer. */
-    private final Double[] highlightValues = new Double[2/*vertical, horizontal*/];
-
     private final NumberStringConverter legendTipConverter = new NumberStringConverter(Locale.ENGLISH, "#.###");
     private final Font legendTipFont = new Font(10);
 
@@ -61,7 +61,7 @@ public class CorrelogramLegend extends CanvasChart {
     private final int verticalResolution = 4;
     private double xTickUnit, yTickUnit;
 
-    Correlogram.UNCERTAINTY_VISUALIZATION uncertaintyVisualization = Correlogram.DEFAULT_UNCERTAINTY_VISUALIZATION;
+    UNCERTAINTY_VISUALIZATION uncertaintyVisualization = Correlogram.DEFAULT_UNCERTAINTY_VISUALIZATION;
 
     /** The paintscale used to convert multi-dimensional values into colors.
      *  Using the correlograms paintscale is not possible, since when extending the displayed value range (e.g. to center the zero value along a dimension)
@@ -105,26 +105,17 @@ public class CorrelogramLegend extends CanvasChart {
             drawContents();
         });
 
+        sharedData.matrixFilterRangesProperty().addListener((observable, oldValue, newValue) -> drawContents());
+
         // when the use hovers over a correlogram cell, extract the mean and standard deviation of this cell for display in the legend (legendTip)
-        sharedData.highlightedCellProperty().addListener((ov, t, t1) -> {
-            Point activeCell = (Point) t1;
-            // check whether the column exists the
-            if(activeCell.x >= 0 && activeCell.x < sharedData.getCorrelationMatrix().getResultItems().size() ){
-                CorrelationMatrix.CorrelationColumn activeColumn = sharedData.getCorrelationMatrix().getResultItems().get(activeCell.x);
-                // check whether the row exists
-                if(activeCell.y >= 0 && activeCell.y < activeColumn.data[MEAN].length){
-                    // get data according to the render mode
-                    highlightValues[HORIZONTAL] = activeColumn.data[sourceStatistic[HORIZONTAL]][activeCell.y];
-                    if(sourceStatistic[VERTICAL] != null)
-                        highlightValues[VERTICAL] = activeColumn.data[sourceStatistic[VERTICAL]][activeCell.y];
-                    drawContents();
-                }
-            }
+        sharedData.activeCorrelationMatrixRegionProperty().addListener((observable, oldValue, activeRegion) -> {
+            if(activeRegion == null) return;
+            drawContents();
         });
 
         sharedData.uncertaintyVisualizationProperty().addListener((observable, oldValue, newValue) -> {
             if(this.uncertaintyVisualization != newValue){
-                this.uncertaintyVisualization = (Correlogram.UNCERTAINTY_VISUALIZATION) newValue;
+                this.uncertaintyVisualization = newValue;
                 drawContents();
             }
         });
@@ -169,11 +160,12 @@ public class CorrelogramLegend extends CanvasChart {
         }
 
         // update axis labels
-        String xAxisLabel = CorrelationMatrix.statisticsLabels[sourceStatistic[HORIZONTAL]];
+        String xAxisLabel = CorrelogramController.statisticsLabels[sourceStatistic[HORIZONTAL]];
+        // if the data source involves significance, add the significance level to the axis label
         if(sharedData != null && (sourceStatistic[HORIZONTAL]==CorrelationMatrix.NEGATIVE_SIGNIFICANT || sourceStatistic[HORIZONTAL]==CorrelationMatrix.ABSOLUTE_SIGNIFICANT || sourceStatistic[HORIZONTAL]==CorrelationMatrix.POSITIVE_SIGNIFICANT))
             xAxisLabel += String.format(" (p = %s)", CorrelationMatrix.getSignificanceLevel(sharedData.getCorrelationMatrix().metadata));
         xAxis.setLabel(xAxisLabel);
-        yAxis.setLabel(sourceStatistic[VERTICAL] == null ? "" : CorrelationMatrix.statisticsLabels[sourceStatistic[VERTICAL]]);
+        yAxis.setLabel(sourceStatistic[VERTICAL] == null ? "" : CorrelogramController.statisticsLabels[sourceStatistic[VERTICAL]]);
 
     }
 
@@ -204,8 +196,9 @@ public class CorrelogramLegend extends CanvasChart {
             xAxis.setTickUnit(xTickUnit);
 
             // the visible range is different from where the ticks are placed
-            xAxis.setLowerBound(horizontalMin - xAxis.getTickUnit()/2);
-            xAxis.setUpperBound(horizontalMax + xAxis.getTickUnit()/2);
+            double lowerBound = horizontalMin - xAxis.getTickUnit() / 2;
+            double upperBound = horizontalMax + xAxis.getTickUnit() / 2;
+            xAxis.setAxisBoundsDC(new BoundingBox(lowerBound, 0, upperBound-lowerBound, 0));
 
         }
 
@@ -221,8 +214,9 @@ public class CorrelogramLegend extends CanvasChart {
             yAxis.setTickUnit(yTickUnit);
 
             // the visible range is different from where the ticks are placed
-            yAxis.setLowerBound(verticalMin - yAxis.getTickUnit()/2);
-            yAxis.setUpperBound(verticalMax + yAxis.getTickUnit()/2);
+            double lowerBound = verticalMin - yAxis.getTickUnit() / 2;
+            double upperBound = verticalMax + yAxis.getTickUnit() / 2;
+            yAxis.setAxisBoundsDC(new BoundingBox(0, lowerBound, 0, upperBound-lowerBound));
         }
 
     }
@@ -264,7 +258,7 @@ public class CorrelogramLegend extends CanvasChart {
                 // draw rectangle
                 Paint paint;
                 // if there's no source statistic for the vertical axis defined or if uncertainty is encoded via column width, use one dimensional color palette.
-                if(sourceStatistic[VERTICAL] == null || uncertaintyVisualization != Correlogram.UNCERTAINTY_VISUALIZATION.COLOR)
+                if(sourceStatistic[VERTICAL] == null || uncertaintyVisualization != UNCERTAINTY_VISUALIZATION.COLOR)
                     paint = paintScale.getPaint(
                         values[rowIdx][colIdx][HORIZONTAL]
                     );
@@ -282,7 +276,13 @@ public class CorrelogramLegend extends CanvasChart {
 
         if(drawScatterPlot) drawMatrixValuesScatter(gc, dataToScreen);
 
-        drawLegendTip(gc, dataToScreen);
+        if(correlogram.getUncertaintyVisualization() == UNCERTAINTY_VISUALIZATION.HINTON_AGGREGATED){
+            drawLegendTipAggregated(gc, dataToScreen);
+        } else {
+            drawLegendTipUnaggregated(gc, dataToScreen);
+        }
+
+
         
         xAxis.drawContents();
         yAxis.drawContents();
@@ -298,15 +298,22 @@ public class CorrelogramLegend extends CanvasChart {
         Integer notNullDirection = sourceStatistic[VERTICAL] == null ? sourceStatistic[HORIZONTAL] : sourceStatistic[VERTICAL];
         assert notNullDirection != null;
 
+        long timeOut = 1000; // stop drawing after one second
+        long started = System.currentTimeMillis();
+
         gc.save();
-        gc.setFill(Color.BLACK.deriveColor(0,1,1,0.8));
-//        gc.setFill(Color.BLACK);
-        for (CorrelationMatrix.CorrelationColumn column : matrix.getResultItems()){
+        gc.setFill(Color.BLACK.deriveColor(0,1,1,0.5));
+        for (CorrelationMatrix.CorrelationColumn column : matrix.getColumns()){
             for (int lag = 0; lag < column.data[notNullDirection].length; lag++) {
                 double valX = srcHorizontal == null ? 0 : column.data[srcHorizontal][lag],
                        valY = srcVertical   == null ? 0 : column.data[srcVertical][lag] ;
                 Point2D screen = dataToScreen.transform(valX, valY);
-                gc.fillRect(screen.getX(), screen.getY(), 1, 1 );
+                gc.fillRect(screen.getX(), screen.getY(), 1, 1);
+            }
+            long elapsedTime = System.currentTimeMillis() - started;
+            if(elapsedTime > timeOut) {
+                System.out.println(String.format("Aborting scatter plot draw. Elapsed time: %s (time out set to %s ms)", elapsedTime, timeOut));
+                break;
             }
         }
         gc.restore();
@@ -317,31 +324,36 @@ public class CorrelogramLegend extends CanvasChart {
      * @param gc canvas to draw on
      * @param dataToScreen transformation between legend (mean, std dev) and screen coordinates
      */
-    private void drawLegendTip(GraphicsContext gc, Affine dataToScreen) {
+    private void drawLegendTipUnaggregated(GraphicsContext gc, Affine dataToScreen) {
 
         // cross size in pixels
         double crossSize = 5;
 
-        // handle no highlight value: return
-        if(highlightValues[VERTICAL] == null || highlightValues[HORIZONTAL] == null) return;
+        AggregatedCorrelationMatrix.MatrixRegionData matrixRegionData = sharedData.getActiveCorrelationMatrixRegion();
 
-        String horizontalValueString = Double.isNaN(highlightValues[HORIZONTAL]) ? "Not a Number" : legendTipConverter.toString(highlightValues[HORIZONTAL]);
-        String verticalValueString = Double.isNaN(highlightValues[VERTICAL]) ? "Not a Number" : legendTipConverter.toString(highlightValues[VERTICAL]);
+        // handle no data: return
+        if(matrixRegionData == null) return;
+
+        double horizontalValue = matrixRegionData.medianCorrelation;
+        double verticalValue = matrixRegionData.averageUncertainty;
+
+        String horizontalValueString = Double.isNaN(horizontalValue) ? "Not a Number" : legendTipConverter.toString(horizontalValue);
+        String verticalValueString = Double.isNaN(verticalValue) ? "Not a Number" : legendTipConverter.toString(verticalValue);
 
         // handle NaN: position label in center of legend
-        highlightValues[HORIZONTAL] = Double.isNaN(highlightValues[HORIZONTAL]) ? 0 : highlightValues[HORIZONTAL];
-        highlightValues[VERTICAL]   = Double.isNaN(highlightValues[VERTICAL]) ? 0 : highlightValues[VERTICAL];
+        horizontalValue = Double.isNaN(horizontalValue) ? 0 : horizontalValue;
+        verticalValue   = Double.isNaN(verticalValue) ? 0 : verticalValue;
 
         // format values
         String label;
         if(sourceStatistic[VERTICAL] != null)
-            label = String.format("%s = %s, %s = %s", statisticsLabels[sourceStatistic[HORIZONTAL]], horizontalValueString, statisticsLabels[sourceStatistic[VERTICAL]], verticalValueString);
+            label = String.format("%s = %s, %s = %s", CorrelogramController.statisticsLabels[sourceStatistic[HORIZONTAL]], horizontalValueString, CorrelogramController.statisticsLabels[sourceStatistic[VERTICAL]], verticalValueString);
         else
-            label = String.format("%s = %s", statisticsLabels[sourceStatistic[HORIZONTAL]], horizontalValueString);
+            label = String.format("%s = %s", CorrelogramController.statisticsLabels[sourceStatistic[HORIZONTAL]], horizontalValueString);
 
         // position label relative to the crosshair (left/right, top/bottom) where the most space is available
         Point2D labelSize = renderedTextSize(label, legendTipFont);
-        Point2D sc = dataToScreen.transform(highlightValues[HORIZONTAL], highlightValues[VERTICAL]);
+        Point2D sc = dataToScreen.transform(horizontalValue, verticalValue);
         double xOffset = sc.getX() < getWidth()/2 ?
                 crossSize :                         // right
                 - crossSize - labelSize.getX();     // left
@@ -367,7 +379,88 @@ public class CorrelogramLegend extends CanvasChart {
         gc.restore();
     }
 
-    /** 
+    private void drawLegendTipAggregated(GraphicsContext gc, Affine dataToScreen) {
+
+        AggregatedCorrelationMatrix.MatrixRegionData matrixRegionData = sharedData.getActiveCorrelationMatrixRegion();
+
+        // handle no data: return
+        if(matrixRegionData == null) return;
+
+        // boxplot height/width
+        double whiskerSize = 25;    // pixels
+
+        double yValue = yAxis.getLowerBound();
+        double[] horizontalValues = new double[]{
+            matrixRegionData.minCorrelation, yValue,
+            matrixRegionData.firstQuartileCorrelation, yValue,
+            matrixRegionData.medianCorrelation, yValue,
+            matrixRegionData.thirdQuartileCorrelation, yValue,
+            matrixRegionData.maxCorrelation, yValue
+        };
+        double xValue = xAxis.getLowerBound();
+        double[] verticalValues = new double[]{
+            xValue, matrixRegionData.minUncertainty,
+            xValue, matrixRegionData.averageUncertainty,
+            xValue, matrixRegionData.maxUncertainty
+        };
+
+        // position label relative to the crosshair (left/right, top/bottom) where the most space is available
+        dataToScreen.transform2DPoints(horizontalValues, 0, horizontalValues, 0, horizontalValues.length/2);
+        dataToScreen.transform2DPoints(verticalValues, 0, verticalValues, 0, verticalValues.length/2);
+
+        // prepare drawing: push current graphics context properties on a stack and set properties for legend drawing
+        gc.save();
+        gc.setStroke(Color.BLACK);
+        gc.setLineWidth(1);
+
+        // -- box plot for correlation / horizontal dimension
+        // min and max whisker
+        gc.strokeLine(horizontalValues[0], horizontalValues[1]-whiskerSize, horizontalValues[0], horizontalValues[1]);
+        gc.strokeLine(horizontalValues[8], horizontalValues[9]-whiskerSize, horizontalValues[8], horizontalValues[9]);
+        // median line
+        gc.strokeLine(horizontalValues[4], horizontalValues[5]-whiskerSize, horizontalValues[4], horizontalValues[5]);
+        // box
+        gc.strokeRect(horizontalValues[2], horizontalValues[3]-whiskerSize, horizontalValues[6]-horizontalValues[2], whiskerSize);
+        // connectors
+        gc.strokeLine(horizontalValues[0], horizontalValues[1]-whiskerSize/2, horizontalValues[2], horizontalValues[3]-whiskerSize/2);
+        gc.strokeLine(horizontalValues[6], horizontalValues[7]-whiskerSize/2, horizontalValues[8], horizontalValues[9]-whiskerSize/2);
+
+        // -- "box plot" for uncertainty / vertical dimension
+        // min and max whisker
+        gc.strokeLine(verticalValues[0], verticalValues[1], verticalValues[0]+whiskerSize, verticalValues[1]);
+        gc.strokeLine(verticalValues[4], verticalValues[5], verticalValues[4]+whiskerSize, verticalValues[5]);
+        // median line
+        gc.strokeLine(verticalValues[2], verticalValues[3], verticalValues[2]+whiskerSize, verticalValues[3]);
+        //connector
+        gc.strokeLine(verticalValues[0]+whiskerSize/2, verticalValues[1], verticalValues[4]+whiskerSize/2, verticalValues[5]);
+
+        // -- actual cell values / horizontal + vertical dimension
+        double[] pointCoordinates = new double[2];
+        double[][] matrixFilterRanges = sharedData.getMatrixFilterRanges();
+        CorrelationMatrix matrix = sharedData.getCorrelationMatrix();
+        for (int i = matrixRegionData.column; i < matrixRegionData.column+matrixRegionData.croppedWidth; i++) {
+            CorrelationMatrix.CorrelationColumn column = matrix.getColumns().get(i);
+            plotCell:
+            for (int j = matrixRegionData.row; j < matrixRegionData.row+matrixRegionData.croppedHeight; j++) {
+
+                for (int STAT = 0; STAT < NUM_STATS; STAT++) {
+                    if(matrixFilterRanges[STAT] == null) continue;
+                    if(column.data[STAT][j] < matrixFilterRanges[STAT][0] ||
+                            column.data[STAT][j] > matrixFilterRanges[STAT][1])
+                        continue plotCell; // filtered cell isn't plotted
+                }
+
+                pointCoordinates[0] = column.data[matrixRegionData.CORRELATION_DIM][j];
+                pointCoordinates[1] = column.data[matrixRegionData.UNCERTAINTY_DIM][j];
+                dataToScreen.transform2DPoints(pointCoordinates, 0, pointCoordinates, 0, 1);
+                gc.strokeRect(pointCoordinates[0]-0.5, pointCoordinates[1]-0.5, 1, 1);
+            }
+        }
+
+        gc.restore();
+    }
+
+    /**
      * Computes evenly spaced samples of the given statistics value ranges of the current correlation matrix.
      * @param requestedHorizontalResolution number of samples taken from the value range of the first dimension (correlation mean). Must be at least two.
      * @param requestedVerticalResolution number of samples taken from the value range of the second dimension (correlation standard deviation). Must be at least two.
@@ -382,7 +475,7 @@ public class CorrelogramLegend extends CanvasChart {
 
         if(matrix == null) return null;
 
-        Double[][] ranges = getValueRanges(matrix);
+        Bounds ranges = getValueRanges(matrix);
 
         double[] horizontalValueExtrema = new double[2]; // MINIMUM and MAXIMUM
         double horizontalValueRange = 0, verticalValueRange = 0;
@@ -391,7 +484,7 @@ public class CorrelogramLegend extends CanvasChart {
             case MEAN_STD_DEV:
             case MEDIAN_IQR:
                 // center horizontal zero value at the middle of the axis
-                double horizontalRangeAbsMax = Math.max(Math.abs(ranges[HORIZONTAL][MINIMUM]), Math.abs(ranges[HORIZONTAL][MAXIMUM]));
+                double horizontalRangeAbsMax = Math.max(Math.abs(ranges.getMinX()), Math.abs(ranges.getMaxX()));
                 horizontalValueExtrema = new double[]{-horizontalRangeAbsMax, horizontalRangeAbsMax};
                 break;
             case NEGATIVE_SIGNIFICANT:
@@ -399,7 +492,7 @@ public class CorrelogramLegend extends CanvasChart {
             case ABSOLUTE_SIGNIFICANT:
                 horizontalValueExtrema = new double[]{0, 1};
         }
-        verticalValueRange = ranges[VERTICAL] != null ? ranges[VERTICAL][MAXIMUM] - ranges[VERTICAL][MINIMUM] : 0;
+        verticalValueRange = !Double.isNaN(ranges.getHeight()) ? ranges.getHeight() : 0;
         horizontalValueRange = horizontalValueExtrema[1] - horizontalValueExtrema[0];
 
         // if the lower bound equals the upper bound, use only one return value in that dimension
@@ -419,7 +512,7 @@ public class CorrelogramLegend extends CanvasChart {
             for (int rowIdx = 0; rowIdx < verticalResolution; rowIdx++) {
                 
                 sample[rowIdx][colIdx][HORIZONTAL] = horizontalValueExtrema[0] + colIdx*horizontalStep;
-                sample[rowIdx][colIdx][VERTICAL] = ranges[VERTICAL] != null ? ranges[VERTICAL][MINIMUM] + rowIdx*verticalStep : 0;
+                sample[rowIdx][colIdx][VERTICAL] = !Double.isNaN(ranges.getHeight()) ? ranges.getMinY() + rowIdx*verticalStep : 0;
 
             }
         }
@@ -473,39 +566,37 @@ public class CorrelogramLegend extends CanvasChart {
      * @return the extreme values in each dimension. the first dimension refers to the direction, index with {@link #VERTICAL}, {@link #HORIZONTAL}.
      * The second dimension refers to minimum maximum, index with {@link #MINIMUM}, {@link #MAXIMUM}.
      */
-    Double[/*vertical, horizontal*/][/*min, max*/] getValueRanges(CorrelationMatrix m) {
+    Bounds getValueRanges(CorrelationMatrix m) {
 
         /** these values describe the extreme values the legend covers. */
+        double minX = Double.NaN, maxX = Double.NaN;
+        double minY = Double.NaN, maxY = Double.NaN;
 
-        Double[][] ranges = new Double[2][2];
-
-        if(sourceStatistic[VERTICAL] == null)
-            ranges[VERTICAL] = null;
-
-        ranges[HORIZONTAL][MINIMUM] = m.getMin(sourceStatistic[HORIZONTAL]);
-        ranges[HORIZONTAL][MAXIMUM] = m.getMax(sourceStatistic[HORIZONTAL]);
-
+        if(sourceStatistic[HORIZONTAL] != null){
+            minX = m.getMin(sourceStatistic[HORIZONTAL]);
+            maxX = m.getMax(sourceStatistic[HORIZONTAL]);
+        }
         if(sourceStatistic[VERTICAL] != null){
-            ranges[VERTICAL][MINIMUM] = m.getMin(sourceStatistic[VERTICAL]);
-            ranges[VERTICAL][MAXIMUM] = m.getMax(sourceStatistic[VERTICAL]);
+            minY = m.getMin(sourceStatistic[VERTICAL]);
+            maxY = m.getMax(sourceStatistic[VERTICAL]);
         }
 
         switch (correlogram.renderMode){
             case MEAN_STD_DEV:
             case MEDIAN_IQR:
                 // center horizontal zero value at the middle of the axis
-                double horizontalRangeAbsMax = Math.max(Math.abs(ranges[HORIZONTAL][MINIMUM]), Math.abs(ranges[HORIZONTAL][MAXIMUM]));
-                ranges[HORIZONTAL][MINIMUM] = -horizontalRangeAbsMax;
-                ranges[HORIZONTAL][MAXIMUM] = horizontalRangeAbsMax;
+                double horizontalRangeAbsMax = Math.max(Math.abs(minX), Math.abs(maxX));
+                minX = -horizontalRangeAbsMax;
+                maxX = horizontalRangeAbsMax;
                 break;
             case NEGATIVE_SIGNIFICANT:
             case POSITIVE_SIGNIFICANT:
             case ABSOLUTE_SIGNIFICANT:
-                ranges[HORIZONTAL][MINIMUM] = 0.;
-                ranges[HORIZONTAL][MAXIMUM] = 1.;
+                minX = 0.;
+                maxX = 1.;
                 if(sourceStatistic[VERTICAL] != null){
-                    ranges[VERTICAL][MINIMUM] = null;
-                    ranges[VERTICAL][MAXIMUM] = null;
+                    minY = Double.NaN;
+                    maxY = Double.NaN;
                 }
                 break;
             default:
@@ -513,7 +604,7 @@ public class CorrelogramLegend extends CanvasChart {
 
         }
 
-        return ranges;
+        return new BoundingBox(minX, minY, maxX - minX, maxY - minY);
     }
 
     private final static FontLoader fontLoader = com.sun.javafx.tk.Toolkit.getToolkit().getFontLoader();

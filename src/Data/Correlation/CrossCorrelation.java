@@ -117,7 +117,7 @@ public class CrossCorrelation {
         final int numColumns = partialResults[0].getSize();
         for (int colIdx = 0; colIdx < numColumns; colIdx++) {
 
-            final CorrelationMatrix.CorrelationColumn representativeColumn = partialResults[0].getResultItems().get(colIdx);
+            final CorrelationMatrix.CorrelationColumn representativeColumn = partialResults[0].getColumns().get(colIdx);
             int colLen = representativeColumn.getSize();
 
             double[][] data = new double[CorrelationMatrix.NUM_STATS][colLen];
@@ -129,7 +129,7 @@ public class CrossCorrelation {
                 DescriptiveStatistics descriptiveStatistics = new DescriptiveStatistics();
                 int numNegSig = 0, numPosSig = 0;
                 for (int tsIdx = 0; tsIdx < numMatrices; tsIdx++) {
-                    double r = partialResults[tsIdx].getResultItems().get(colIdx).data[CorrelationMatrix.MEAN][lag];
+                    double r = partialResults[tsIdx].getColumns().get(colIdx).data[CorrelationMatrix.MEAN][lag];
                     if(Double.isNaN(r)) continue;
                     descriptiveStatistics.addValue(r);
                     if(tester.significanceTest(r)){

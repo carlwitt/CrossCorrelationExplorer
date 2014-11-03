@@ -1,7 +1,6 @@
 package Data;
 
 import Data.Correlation.CorrelationMatrix;
-import Visualization.Correlogram;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleObjectProperty;
@@ -10,8 +9,10 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 
-import java.awt.*;
 import java.util.Observable;
+
+import static Data.Statistics.AggregatedCorrelationMatrix.MatrixRegionData;
+import static Visualization.Correlogram.UNCERTAINTY_VISUALIZATION;
 
 /**
  * Stores the data that is shared between the different views. 
@@ -47,14 +48,12 @@ public class SharedData extends Observable {
     public void setVisibleTimeRange(Bounds value) { visibleTimeRange.set(value); }
     public ObjectProperty<Bounds> visibleTimeRangeProperty() { return visibleTimeRange; }
 
-    /** Specifies the current time window and time lag in the correlation matrix which is currently under the mouse cursor.
-     * The x component specifies the 0-based index of the column, the y component specifies the 0-based index of the cell.
-     * No time lag splitting here! Simply the elements with their raw time lags in range [0..column length].
-     * Integer.MAX_VALUE indicates that a component has no sensible range. */
-    private final ObjectProperty<Point> highlightedCell = new SimpleObjectProperty<>(new Point(-1, -1));
-    public ObjectProperty<Point> highlightedCellProperty() { return highlightedCell; }
-    public Point getHighlightedCell() { return highlightedCell.get(); }
-    public void setHighlightedCell(Point value) { highlightedCell.set(value); }
+    /** Specifies the region in the correlation matrix which is currently selected by the user.
+     * A null value specifies that no selection is present. */
+    private final ObjectProperty<MatrixRegionData> activeCorrelationMatrixRegion = new SimpleObjectProperty<>(null);
+    public ObjectProperty<MatrixRegionData> activeCorrelationMatrixRegionProperty() { return activeCorrelationMatrixRegion; }
+    public MatrixRegionData getActiveCorrelationMatrixRegion() { return activeCorrelationMatrixRegion.get(); }
+    public void setActiveCorrelationMatrixRegion(MatrixRegionData value) { activeCorrelationMatrixRegion.set(value); }
 
     /**
      * Specifies filter ranges on the cells of the correlogram.
@@ -69,12 +68,12 @@ public class SharedData extends Observable {
 
     /**
      * Specifies how uncertainty is visualized in the correlogam.
-     * See {@link Visualization.Correlogram.UNCERTAINTY_VISUALIZATION}
+     * See {@link UNCERTAINTY_VISUALIZATION}
      */
-    private final ObjectProperty<Correlogram.UNCERTAINTY_VISUALIZATION> uncertaintyVisualization = new SimpleObjectProperty<>();
-    public ObjectProperty<Correlogram.UNCERTAINTY_VISUALIZATION> uncertaintyVisualizationProperty(){return uncertaintyVisualization;}
-    public Correlogram.UNCERTAINTY_VISUALIZATION getUncertaintyVisualization(){return uncertaintyVisualization.get();}
-    public void setUncertaintyVisualization(Correlogram.UNCERTAINTY_VISUALIZATION uncertaintyVisualization){this.uncertaintyVisualization.set(uncertaintyVisualization);}
+    private final ObjectProperty<UNCERTAINTY_VISUALIZATION> uncertaintyVisualization = new SimpleObjectProperty<>();
+    public ObjectProperty<UNCERTAINTY_VISUALIZATION> uncertaintyVisualizationProperty(){return uncertaintyVisualization;}
+    public UNCERTAINTY_VISUALIZATION getUncertaintyVisualization(){return uncertaintyVisualization.get();}
+    public void setUncertaintyVisualization(UNCERTAINTY_VISUALIZATION uncertaintyVisualization){this.uncertaintyVisualization.set(uncertaintyVisualization);}
 
     // -----------------------------------------------------------------------------------------------------------------
     // METHODS
@@ -87,9 +86,9 @@ public class SharedData extends Observable {
 
     public CorrelationMatrix.CorrelationColumn getHighlightedColumn() {
         if(getCorrelationMatrix() == null) return null;
-        int x = getHighlightedCell().x;
-        if(x < 0 || x >= getCorrelationMatrix().getResultItems().size()) return null;
-        return getCorrelationMatrix().getResultItems().get(x);
+        int x = getActiveCorrelationMatrixRegion().column;
+        if(x < 0 || x >= getCorrelationMatrix().getSize()) return null;
+        return getCorrelationMatrix().getColumns().get(x);
     }
 
 

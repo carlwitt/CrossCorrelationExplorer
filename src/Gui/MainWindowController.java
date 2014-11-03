@@ -5,10 +5,7 @@ import Data.SharedData;
 import Global.Main;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ProgressBar;
-import javafx.scene.control.TabPane;
+import javafx.scene.control.*;
 import javafx.scene.layout.Pane;
 import javafx.stage.FileChooser;
 import org.controlsfx.control.action.Action;
@@ -70,9 +67,18 @@ public class MainWindowController extends WindowController implements Initializa
         correlationViewController.setSharedData(sharedData);
         matrixFilterController.setSharedData(sharedData);
 
+        // assert that tab labels have not changed and referencing tabs by labels still works
+        String[] tabLabels = new String[]{"Parameters", "Cell Distribution", "Time Series", "Matrix Filter"};
+        for (int i = 0; i < tabLabels.length; i++) assert inputTabPane.getTabs().get(i).getText().equals(tabLabels[i]) : "Tab labels changed, please review Main Window Controller code.";
+
+        // activate/deactivate time series rendering based on the visibility of the tab
         inputTabPane.getSelectionModel().selectedIndexProperty().addListener((observable, oldValue, newValue) -> {
-            if((int) newValue == 1) timeSeriesViewController.drawContents();
+            Tab activeTab = inputTabPane.getTabs().get(newValue.intValue());
+            timeSeriesViewController.setDeferringDrawRequests( ! activeTab.getText().equals("Time Series"));
+            cellDistributionViewController.setDeferringDrawRequests( ! activeTab.getText().equals("Cell Distribution"));
         });
+        timeSeriesViewController.setDeferringDrawRequests(true);
+        cellDistributionViewController.setDeferringDrawRequests(true);
 
     }
 

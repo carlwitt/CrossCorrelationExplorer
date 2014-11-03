@@ -1,11 +1,15 @@
 package Visualization;
 
+import Data.Cacheable;
 import Data.Correlation.CorrelationMatrix;
 import Data.SharedData;
+import Data.Statistics.AggregatedCorrelationMatrix;
 import Data.Windowing.WindowMetadata;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
+import javafx.scene.Node;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
@@ -14,8 +18,10 @@ import javafx.scene.shape.StrokeType;
 import javafx.scene.transform.*;
 
 import java.awt.*;
+import java.util.Arrays;
 
 import static Data.Correlation.CorrelationMatrix.*;
+import static Data.Statistics.AggregatedCorrelationMatrix.MatrixRegionData;
 
 /**
  * Used to draw the correlogram. Takes an aggregated correlation matrix and renders its cells as a colored blocks.
@@ -42,9 +48,10 @@ public class Correlogram extends CanvasChart {
     }
     /** How to encode the second number (usually uncertainty) associated with each correlogram cell. */
     public static enum UNCERTAINTY_VISUALIZATION {
-        COLUMN_WIDTH,   // manipulate column width
-        HINTON,         // manipulate column width and height
-        COLOR           // manipulate base color (e.g. changing saturation)
+        COLUMN_WIDTH,       // manipulate column width
+        HINTON,             // manipulate column width and height
+        HINTON_AGGREGATED,  // aggregate cells instead of displaying them directly
+        COLOR               // manipulate base color (e.g. changing saturation)
     }
 
     /** default uncertainty visualization. */
@@ -62,14 +69,10 @@ public class Correlogram extends CanvasChart {
     /** which method to use to visualize uncertainty. */
     private UNCERTAINTY_VISUALIZATION uncertaintyVisualization = DEFAULT_UNCERTAINTY_VISUALIZATION;
     /** which data dimensions to visualize. */
-    RENDER_MODE renderMode = defaultRenderMode;
+    RENDER_MODE renderMode;
 
-    /** encodes 2D values in a single color */
-    private final MultiDimensionalPaintScale paintScale;
-    /** The matrix for which the paint scale was computed. */
-    private CorrelationMatrix paintScaleMatrix;
-    /** The render mode for which the paint scale was computed. */
-    private RENDER_MODE paintScaleRenderMode;
+    /** Contains parameters about the aggregation (how many rows and columns per region, etc.) */
+    private MatrixRegionData aggregationPrototype = new MatrixRegionData();
 
     /** width and height (in data coordinates) of a cell in the correlogram. */
     protected double blockWidthDC, blockHeightDC;
@@ -79,20 +82,81 @@ public class Correlogram extends CanvasChart {
     final Affine identity = new Affine(new Translate());
 
     private final Rectangle activeWindowRect = new javafx.scene.shape.Rectangle(10, 10);
-    private final double activeWindowStrokeWidth = 2;
-
-    Color backgroundColor = Color.GRAY;//Color.gray(0.176);//new Color(0.78, 0.78, 0.78, 1);
-    Color filteredColor = backgroundColor;
-
-    // how to draw the border of the correlogram
-    int borderwidthPx = 1;                  // line width in pixels
-    Color borderColor=Color.gray(0.176);    // line color
 
     /** Determines whether mouse overs will highlight cells. Cells can be frozen (will turn hoverSensitive to false) and unfrozen by double clicking. */
     private boolean hoverSensitive = true;
 
     /** Affects the hinton render mode. If true, instead of the average correlation, the first and third quartiles are shown in a glyph. */
     public boolean hintonDrawQuartiles = false;
+    /** The minimum side length of a glyph in pixels. A glyph represents a region of the correlation matrix, i.e. an aggregation of matrix cells. */
+    double minGlyphSize = 50;
+
+    Color backgroundColor = Color.GRAY;//Color.gray(0.176);//new Color(0.78, 0.78, 0.78, 1);
+    Color filteredColor = backgroundColor;
+    // how to draw the border of the correlogram
+    int borderwidthPx = 1;                  // line width in pixels
+    Color borderColor=Color.gray(0.176);    // line color
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // CACHEABLES
+    // -----------------------------------------------------------------------------------------------------------------
+
+    /** encodes 2D values in a single color */
+    private final Cacheable<MultiDimensionalPaintScale> paintScale = new Cacheable<MultiDimensionalPaintScale>() {
+
+        /** The matrix for which the paint scale was computed. */
+        private CorrelationMatrix paintScaleMatrix;
+        /** The render mode for which the paint scale was computed. */
+        private RENDER_MODE paintScaleRenderMode;
+
+        @Override public boolean isValid() {
+            CorrelationMatrix matrix = sharedData.getCorrelationMatrix();
+            // the matrix is immutable, so comparing references is faster than comparing with equals()
+            return matrix == paintScaleMatrix && renderMode.equals(paintScaleRenderMode);
+        }
+
+        @Override public void recompute() {
+            CorrelationMatrix matrix = sharedData.getCorrelationMatrix();
+            // depending on the render mode, configure the paintscale (expensive for high-resolution color scales)
+            Correlogram.this.configurePaintscale(matrix, cachedValue);
+            paintScaleMatrix = matrix;
+            paintScaleRenderMode = renderMode;
+        }
+    };
+
+    final Cacheable<AggregatedCorrelationMatrix> aggregatedCorrelationMatrix = new Cacheable<AggregatedCorrelationMatrix>() {
+
+        /** The deep hash code of the filter ranges array. Saves the hassle of making deep copies of the filter ranges array. */
+        int filterRangesHash = Integer.MIN_VALUE;
+        CorrelationMatrix aggregateOf;
+
+        // the group size for which the aggregation was done is implicitly stored in the aggregated matrix.
+
+        @Override public boolean isValid() {
+            CorrelationMatrix matrix = sharedData.getCorrelationMatrix();
+            int newHashCode = Arrays.deepHashCode(sharedData.getMatrixFilterRanges());
+            int groupSize = computeGroupSize(sharedData.getCorrelationMatrix(), minGlyphSize);
+            return cachedValue != null
+                    && matrix == aggregateOf // matrices should be immutable, so comparing references should be fast enough
+                    && groupSize == cachedValue.getColumnsPerRegion()
+                    && groupSize == cachedValue.getRowsPerRegion()
+                    && newHashCode == filterRangesHash;
+
+        }
+
+        @Override public void recompute() {
+            CorrelationMatrix matrix = sharedData.getCorrelationMatrix();
+            double[][] matrixFilterRanges = sharedData.getMatrixFilterRanges();
+
+            int groupSize = computeGroupSize(matrix, minGlyphSize);
+            aggregationPrototype.width = groupSize;
+            aggregationPrototype.height = groupSize;
+            cachedValue = new AggregatedCorrelationMatrix(matrix, matrixFilterRanges, aggregationPrototype);
+
+            filterRangesHash = Arrays.deepHashCode(matrixFilterRanges);
+            aggregateOf = matrix;
+        }
+    };
 
     // -----------------------------------------------------------------------------------------------------------------
     // METHODS
@@ -102,17 +166,19 @@ public class Correlogram extends CanvasChart {
 
         margins[TOP] = 0;
 
-        this.paintScale=paintScale;
+        this.paintScale.set(paintScale);
         xAxis.setMinTickUnit(1);
         yAxis.setMinTickUnit(1);
 
-        chartCanvas.setOnMouseMoved(this::reportHighlightedCell);
-        chartCanvas.setOnMouseClicked(this::freezeHighlightedCell);
+        chartCanvas.setOnMouseMoved(this::reportActiveMatrixRegion);
+        // toggle hover sensitivity on double click
+        chartCanvas.setOnMouseClicked(event -> { if(event.getClickCount()==2) hoverSensitive = !hoverSensitive; });
         // initialize the active window highlight rectangle
         activeWindowRect.setFill(Color.rgb(0, 0, 0, 0));    // transparent fill
         activeWindowRect.setStroke(Color.web("#fff500")); // yellow border
         activeWindowRect.setStrokeType(StrokeType.OUTSIDE);
         activeWindowRect.setVisible(false);
+        double activeWindowStrokeWidth = 2;
         activeWindowRect.setStrokeWidth(activeWindowStrokeWidth);
         activeWindowRect.setMouseTransparent(true);
         chartPane.getChildren().add(activeWindowRect);
@@ -123,6 +189,8 @@ public class Correlogram extends CanvasChart {
         // the computed size can cause the correlogram to get stuck on a width that's too large for the container
         // (because there's no inherent way to compute the necessary space for a canvas).
         setPrefWidth(10); setPrefHeight(10);
+
+        setRenderMode(defaultRenderMode);
 
     }
 
@@ -135,20 +203,28 @@ public class Correlogram extends CanvasChart {
             yAxis.setTickOrigin(m.metadata.tauMin);   // good for small lag ranges (exact tick labels), bad for large lag ranges (odd tick labels)
             xAxis.setScrollBarBoundsDC(new BoundingBox(m.metadata.getMinXValue(),0,m.metadata.baseWindowOffset*m.metadata.getTimeInterval()*m.getSize(),0));
             yAxis.setScrollBarBoundsDC(new BoundingBox(0,m.metadata.tauMin,0,m.metadata.getNumberOfDifferentTimeLags()*m.metadata.tauStep));
+            aggregatedCorrelationMatrix.set(null);
             if(aspectRatioFixed()) adaptAspectRatioForMatrix(m);
             resetView();
             drawContents();
         });
 
         // listen to changes in the matrix filter ranges
-        sharedData.matrixFilterRangesProperty().addListener((ov, t, m) -> drawContents());
+        sharedData.matrixFilterRangesProperty().addListener((ov, t, m) -> {
 
+            drawContents();
+        });
+
+        // listen to the current uncertainty visualization method
         sharedData.uncertaintyVisualizationProperty().addListener((observable, oldValue, newValue) -> {
             if(uncertaintyVisualization != newValue){
                 setUncertaintyVisualization(newValue);
                 drawContents();
             }
         });
+
+        // listen to changes in the highlighted matrix region
+        sharedData.activeCorrelationMatrixRegionProperty().addListener(this::highlightActiveMatrixRegion);
 
     }
 
@@ -189,23 +265,11 @@ public class Correlogram extends CanvasChart {
         return new Affine(dataToScreen().createConcatenation(toUpperLeftCorner.createConcatenation(cellToData(metadata))));
     }
 
-    private void freezeHighlightedCell(MouseEvent mouseEvent) {
-
-        if(mouseEvent.getClickCount()==2){
-            if(hoverSensitive){
-                hoverSensitive = false;
-            } else {
-                hoverSensitive = true;
-            }
-        }
-
-    }
-
     /*
      This handler listens to mouse moves on the correlogram and informs the shared data object about
      the correlation matrix cell index (window index index and lag index) under the mouse cursor.
     */
-    private void reportHighlightedCell(MouseEvent t) {
+    private void reportActiveMatrixRegion(MouseEvent t) {
 
         if(! hoverSensitive) return;
 
@@ -221,15 +285,33 @@ public class Correlogram extends CanvasChart {
         int columnIdx = (int) Math.floor(cellCoordinates.getX());
         int lagIdx    = (int) Math.ceil(cellCoordinates.getY());
 
-        Point activeCell = new Point(columnIdx, lagIdx);
-        if(columnIdx < 0 || columnIdx >= matrix.getSize() ||
-              lagIdx < 0 || lagIdx    >= matrix.metadata.getNumberOfDifferentTimeLags())
-            activeCell = new Point(Integer.MAX_VALUE, Integer.MAX_VALUE);
+        MatrixRegionData newRegion = null;
+        if (columnIdx >= 0 && columnIdx < matrix.getSize() &&
+                lagIdx >= 0 && lagIdx < matrix.metadata.getNumberOfDifferentTimeLags()) {
 
-        // report only if changes have occured
-        if (!sharedData.getHighlightedCell().equals(activeCell)) {
-            sharedData.setHighlightedCell(activeCell);
-            highlightActiveCell();
+            newRegion = new MatrixRegionData();
+            if(uncertaintyVisualization == UNCERTAINTY_VISUALIZATION.HINTON_AGGREGATED){
+                newRegion = aggregatedCorrelationMatrix.get().getRegion(columnIdx, lagIdx);
+            } else {
+                newRegion.column = columnIdx;
+                newRegion.row = lagIdx;
+                newRegion.height = 1;
+                newRegion.width = 1;
+                CorrelationMatrix.CorrelationColumn column = matrix.getColumn(columnIdx);
+                if(getCorrelationStatistic() >= 0) newRegion.medianCorrelation = column.data[getCorrelationStatistic()][lagIdx];
+                if(getUncertaintyStatistic() >= 0) newRegion.averageUncertainty = column.data[getUncertaintyStatistic()][lagIdx];
+            }
+        }
+
+        // report only if necessary
+        MatrixRegionData currentRegion = sharedData.getActiveCorrelationMatrixRegion();
+        // is null has null -> no update
+        if (currentRegion != null || newRegion != null) {
+            // is null has something -> update
+            if(currentRegion == null) sharedData.setActiveCorrelationMatrixRegion(newRegion);
+            // is something has null -> update (equals fails)
+            // is something has something -> update if necessary (equals fails)
+            else if(!currentRegion.equals(newRegion)) sharedData.setActiveCorrelationMatrixRegion(newRegion);
         }
     }
 
@@ -243,6 +325,8 @@ public class Correlogram extends CanvasChart {
      */
     @Override public void drawContents() {
 
+        //TODO drawContents() is triggered by several events leading to up to 18 draws when e.g. selecting a correlogram from the list (performance? correctness?)
+
         GraphicsContext gc = chartCanvas.getGraphicsContext2D();
 
         gc.setTransform(identity);
@@ -253,13 +337,6 @@ public class Correlogram extends CanvasChart {
 
         // retrieve data to render
         CorrelationMatrix matrix = sharedData.getCorrelationMatrix();
-
-        // depending on the render mode, configure the paintscale (expensive for high-resolution color scales)
-        if(matrix != paintScaleMatrix || !renderMode.equals(paintScaleRenderMode)){
-            configurePaintscale(matrix, paintScale);
-            paintScaleMatrix = matrix;
-            paintScaleRenderMode = renderMode;
-        }
 
         Affine cellToScreen = cellToScreen(matrix.metadata);
 
@@ -275,7 +352,7 @@ public class Correlogram extends CanvasChart {
         // clipping the contents to render
         // ------------------------------------------------------------
         // horizontally and vertically
-        Bounds axesRanges = getAxesRanges();
+        Bounds axesRanges = getClipRegionDC();
         if(axesRanges != null){
             try {
                 Affine cellToData = cellToData(matrix.metadata);
@@ -300,34 +377,49 @@ public class Correlogram extends CanvasChart {
         gc.setLineWidth(borderwidthPx);
         gc.strokeRect(boundaryULC.getX()-1, boundaryULC.getY()-1, widthHeight.getX()+2, widthHeight.getY()+2);
 
-        switch(renderMode){
-            case MEAN_STD_DEV:
-                if(uncertaintyVisualization == UNCERTAINTY_VISUALIZATION.HINTON)
-                    drawContentsHinton(gc, matrix, minColMinLag, maxColMaxLag, windowStep, lagStep, MEAN, STD_DEV);
-                else
-                    drawContentsMultivariate(gc, matrix, minColMinLag, maxColMaxLag, windowStep, lagStep, MEAN, STD_DEV);
-                break;
-            case MEDIAN_IQR:
-                if(uncertaintyVisualization == UNCERTAINTY_VISUALIZATION.HINTON)
-                    drawContentsHinton(gc, matrix, minColMinLag, maxColMaxLag, windowStep, lagStep, MEDIAN, IQR);
-                else
-                    drawContentsMultivariate(gc, matrix, minColMinLag, maxColMaxLag, windowStep, lagStep, MEDIAN, IQR);
-                break;
-            case NEGATIVE_SIGNIFICANT:
-                drawContentsUnivariate(gc, matrix, minColMinLag, maxColMaxLag, windowStep, lagStep, NEGATIVE_SIGNIFICANT);
-                break;
-            case POSITIVE_SIGNIFICANT:
-                drawContentsUnivariate(gc, matrix, minColMinLag, maxColMaxLag, windowStep, lagStep, POSITIVE_SIGNIFICANT);
-                break;
-            case ABSOLUTE_SIGNIFICANT:
-                drawContentsUnivariate(gc, matrix, minColMinLag, maxColMaxLag, windowStep, lagStep, ABSOLUTE_SIGNIFICANT);
-                break;
+        // if a uncertainty statistic is defined, draw bivariate
+        if(getUncertaintyStatistic() >= 0){
+            if(usingHintonVisualization())
+                drawContentsHinton(gc, matrix, minColMinLag, maxColMaxLag, windowStep, lagStep, getCorrelationStatistic(), getUncertaintyStatistic());
+            else
+                drawContentsMultivariate(gc, matrix, minColMinLag, maxColMaxLag, windowStep, lagStep, getCorrelationStatistic(), getUncertaintyStatistic());
+        // no uncertainty statistic defined, draw univariate
+        } else {
+            drawContentsUnivariate(gc, matrix, minColMinLag, maxColMaxLag, windowStep, lagStep, getCorrelationStatistic());
         }
 
         xAxis.drawContents();
         yAxis.drawContents();
-        highlightActiveCell();
 
+        MatrixRegionData activeRegion = sharedData.getActiveCorrelationMatrixRegion();
+
+        // if the filter ranges triggered a redraw (and thus a reaggregation) publish the new region data
+        if(activeRegion != null && usingHintonVisualization())
+            sharedData.setActiveCorrelationMatrixRegion(aggregatedCorrelationMatrix.get().getRegion(activeRegion.column, activeRegion.row));
+
+        // redraw the active matrix region rectangle, becaues zooming changes its screen size but usually doesn't change it
+        highlightActiveMatrixRegion(null, null, sharedData.getActiveCorrelationMatrixRegion());
+
+    }
+
+    /** @return the matrix statistic that the render mode prescribes for the correlation value. if the value is -1, no statistic is defined. */
+    protected int getCorrelationStatistic(){
+        switch(renderMode){
+            case MEAN_STD_DEV: return MEAN;
+            case MEDIAN_IQR: return MEDIAN;
+            case NEGATIVE_SIGNIFICANT: return NEGATIVE_SIGNIFICANT;
+            case POSITIVE_SIGNIFICANT: return POSITIVE_SIGNIFICANT;
+            case ABSOLUTE_SIGNIFICANT: return ABSOLUTE_SIGNIFICANT;
+            default: return -1;
+        }
+    }
+    /** @return the matrix statistic that the render mode prescribes for the uncertainty value. if the value is -1, no statistic is defined. */
+    protected int getUncertaintyStatistic(){
+        switch(renderMode){
+            case MEAN_STD_DEV: return STD_DEV;
+            case MEDIAN_IQR: return IQR;
+            default: return -1;
+        }
     }
 
     void drawContentsUnivariate(GraphicsContext gc, CorrelationMatrix matrix, Point minColMinLag, Point maxColMaxLag, int windowStep, int lagStep, int DIM) {// for each column of the matrix (or, equivalently, for each time window)
@@ -339,10 +431,11 @@ public class Correlogram extends CanvasChart {
 
         double[] srcPts = new double[2], dstPts = new double[2];
         double[][] matrixFilterRanges = sharedData.getMatrixFilterRanges();
+        MultiDimensionalPaintScale paintScale = this.paintScale.get();
 
         for (int i = minColMinLag.x; i <= maxColMaxLag.x; i += windowStep) {
 
-            CorrelationMatrix.CorrelationColumn column = matrix.getResultItems().get(i);
+            CorrelationMatrix.CorrelationColumn column = matrix.getColumns().get(i);
 
             for (int lag = minColMinLag.y; lag <= maxColMaxLag.y; lag += lagStep) {
 
@@ -374,6 +467,8 @@ public class Correlogram extends CanvasChart {
      */
     void drawContentsMultivariate(GraphicsContext gc, CorrelationMatrix matrix, Point minColMinLag, Point maxColMaxLag, int windowStep, int lagStep, int CORRELATION_DIM, int UNCERTAINTY_DIM) {
 
+        long before=System.currentTimeMillis();
+
         double uncertainty;     // relative uncertainty (compared to the maximum uncertainty present in the matrix) in the current cell (only used with UNCERTAINTY_VISUALIZATION.COLUMN_WIDTH)
         double slimDown = 0;    // results from the relative uncertainty. A high uncertainty will make the cell much slimmer, no uncertainty will leave it at its full width.
         double minUncertainty = 0;         // matrix.getMin(UNCERTAINTY_DIM) would actually underestimate the uncertainty! (if the minimum uncertainty is high, a full width column would actually represent an uncertain value)
@@ -387,10 +482,11 @@ public class Correlogram extends CanvasChart {
         double[][] matrixFilterRanges = sharedData.getMatrixFilterRanges();
 
         double[] srcPts = new double[2], dstPts = new double[2];
+        MultiDimensionalPaintScale paintScale = this.paintScale.get();
 
         for (int i = minColMinLag.x; i <= maxColMaxLag.x; i += windowStep) {
 
-            CorrelationMatrix.CorrelationColumn column = matrix.getResultItems().get(i);
+            CorrelationMatrix.CorrelationColumn column = matrix.getColumns().get(i);
 
             for (int lag = minColMinLag.y; lag <= maxColMaxLag.y; lag += lagStep) {
 
@@ -431,6 +527,7 @@ public class Correlogram extends CanvasChart {
             }
 
         }
+
     }
 
     /**
@@ -442,37 +539,41 @@ public class Correlogram extends CanvasChart {
         double slimDown;        // results from the relative uncertainty. A high uncertainty will make the cell much slimmer, no uncertainty will leave it at its full width.
         double minUncertainty = 0;         // matrix.getMin(UNCERTAINTY_DIM) would actually underestimate the uncertainty! (if the minimum uncertainty is high, a full width column would actually represent an uncertain value)
         double maxUncertainty = matrix.getMax(UNCERTAINTY_DIM);   // this overestimates the uncertainty but makes the differences much better visible (since an sd of 1 almost never occurs)
+        if(maxUncertainty < 1e-15) maxUncertainty = 1;            // if there is no uncertainty, avoid dividing by zero (no slimdown will be computed)
+        else maxUncertainty *= 1.01;                              // adding one percent avoids reducing the size of a glyph (element) to zero
         double uncertaintyRange = maxUncertainty - minUncertainty;
-        if(uncertaintyRange < 1e-15) uncertaintyRange = 1;            // if there is no uncertainty, avoid dividing by zero (no slimdown will be computed)
 
         Affine cellToScreen = cellToScreen(matrix.metadata);
-        Point2D blockSizeSC = cellToScreen.deltaTransform(1,-1);
-        double widthSC = blockSizeSC.getX(),
-               heightSC = blockSizeSC.getY();
-//        assert Math.abs(widthSC - heightSC) < 0.5 : "width height difference too large: "+Math.abs(widthSC - heightSC); // height and width shouldn't differ by more than one tenth of a pixel
+        Point2D blockSizeSC = cellToScreen.deltaTransform(1, -1);
+        double singleCellWidth = blockSizeSC.getX(),
+               singleCellHeight = blockSizeSC.getY();
+//        assert Math.abs(singleCellWidth - singleCellHeight) < 0.5 : "width height difference too large: "+Math.abs(singleCellWidth - singleCellHeight); // height and width shouldn't differ by more than one tenth of a pixel
 
         double[][] matrixFilterRanges = sharedData.getMatrixFilterRanges();
+        MultiDimensionalPaintScale paintScale = this.paintScale.get();
 
         // aggregation
         double minCellSize = 8;   // pixels. a cell is an unaggregated item of the correlation matrix
-        double minGlyphSize = 50; // pixels. a glyph represents aggregated items
 
         double[] srcPts = new double[2], dstPts = new double[2];
 
         boolean drawFilteredLikeBackground = filteredColor.equals(backgroundColor);
 
         // draw unaggregated
-        if(widthSC >= minCellSize && heightSC >= minCellSize){
+        if(singleCellWidth >= minCellSize && singleCellHeight >= minCellSize){
+
+            // unaggregated view
+            this.uncertaintyVisualization = UNCERTAINTY_VISUALIZATION.HINTON;
 
             for (int i = minColMinLag.x; i <= maxColMaxLag.x; i += windowStep) {
 
-                CorrelationMatrix.CorrelationColumn column = matrix.getResultItems().get(i);
+                CorrelationMatrix.CorrelationColumn column = matrix.getColumns().get(i);
 
                 renderColumn: for (int lag = minColMinLag.y; lag <= maxColMaxLag.y; lag += lagStep) {
 
                     if(matrix.metadata.setA.size() == 1 && matrix.metadata.setB.size()==0) uncertainty=0;
                     else uncertainty = (column.data[UNCERTAINTY_DIM][lag] - minUncertainty) / uncertaintyRange;
-                    slimDown = widthSC * (1-Math.sqrt(1-uncertainty)) / 2;
+                    slimDown = singleCellWidth * (1-Math.sqrt(1-uncertainty)) / 2;
                     if(Double.isNaN(uncertainty)) slimDown = 0; // NaNs occur naturally in empty cells
 
                     boolean isFiltered = false;
@@ -491,7 +592,7 @@ public class Correlogram extends CanvasChart {
 
                     gc.setFill(isFiltered ? filteredColor : paintScale.getPaint(column.data[CORRELATION_DIM][lag]));
 
-                    gc.fillRect(dstPts[0]+slimDown, dstPts[1]+slimDown, widthSC - 2*slimDown, heightSC-2*slimDown);
+                    gc.fillRect(dstPts[0]+slimDown, dstPts[1]+slimDown, singleCellWidth - 2*slimDown, singleCellHeight-2*slimDown);
 
 
                 }
@@ -500,8 +601,11 @@ public class Correlogram extends CanvasChart {
         // draw aggregated
         else {
 
-            int groupSize = (int) Math.ceil(minGlyphSize / widthSC);
-            groupSize = Math.min(groupSize, Math.min(matrix.getSize(), matrix.metadata.getNumberOfDifferentTimeLags()));
+            // unaggregated view
+            this.uncertaintyVisualization = UNCERTAINTY_VISUALIZATION.HINTON_AGGREGATED;
+
+            AggregatedCorrelationMatrix aggMatrix = aggregatedCorrelationMatrix.get();
+            int groupSize = aggMatrix.getColumnsPerRegion();
 
             Point2D glyphSizeSC = cellToScreen.deltaTransform(groupSize,0);
             double glyphSizePx = glyphSizeSC.getX();
@@ -509,14 +613,11 @@ public class Correlogram extends CanvasChart {
             int minCol = minColMinLag.x - Math.abs(minColMinLag.x % groupSize);
             int minLag = minColMinLag.y - Math.abs(minColMinLag.y % groupSize);
 
-            MatrixRegionAggregation matrixRegionAggregation = new MatrixRegionAggregation();
-            matrixRegionAggregation.size = groupSize;
-            matrixRegionAggregation.CORRELATION_DIM = CORRELATION_DIM;
-            matrixRegionAggregation.UNCERTAINTY_DIM = UNCERTAINTY_DIM;
-
             double minUncertaintyRelative,
                    averageUncertaintyRelative,
                    maxUncertaintyRelative;
+
+            MatrixRegionData matrixRegionData;
 
             gc.setStroke(borderColor);
 
@@ -525,16 +626,14 @@ public class Correlogram extends CanvasChart {
                 for (int lag = minLag; lag <= maxColMaxLag.y; lag += groupSize) {
 
                     // aggregate square range
-                    matrixRegionAggregation.column = col;
-                    matrixRegionAggregation.row = lag;
-                    matrix.aggregate(matrixRegionAggregation, matrixFilterRanges);
+                    matrixRegionData = aggMatrix.getRegion(col,lag);
 
-                    minUncertaintyRelative = (matrixRegionAggregation.minUncertainty - minUncertainty) / uncertaintyRange;
-                    averageUncertaintyRelative = (matrixRegionAggregation.averageUncertainty - minUncertainty) / uncertaintyRange;
-                    maxUncertaintyRelative = (matrixRegionAggregation.maxUncertainty - minUncertainty) / uncertaintyRange;
+                    minUncertaintyRelative = (matrixRegionData.minUncertainty - minUncertainty) / uncertaintyRange;
+                    averageUncertaintyRelative = (matrixRegionData.averageUncertainty - minUncertainty) / uncertaintyRange;
+                    maxUncertaintyRelative = (matrixRegionData.maxUncertainty - minUncertainty) / uncertaintyRange;
 
                     // render
-                    srcPts[0] = col; srcPts[1] = lag-1;       // lower left corner of a single cell
+                    srcPts[0] = matrixRegionData.column; srcPts[1] = matrixRegionData.row - 1;       // lower left corner of a single cell
                     cellToScreen.transform2DPoints(srcPts, 0, dstPts, 0, 1);
 
                     // skip regions containg only NaNs
@@ -551,13 +650,13 @@ public class Correlogram extends CanvasChart {
 //                    gc.fillRect(dstPts[0]+slimDown+glyphSizePx/2 - slimDown, dstPts[1]-glyphSizePx+slimDown, glyphSizePx/2 - slimDown, glyphSizePx-2*slimDown);
                     if(hintonDrawQuartiles){
                         // draw min max correlation and average uncertainty as two triangles
-                        gc.setFill(paintScale.getPaint(matrixRegionAggregation.firstQuartileCorrelation));
+                        gc.setFill(paintScale.getPaint(matrixRegionData.minCorrelation));
                         gc.fillPolygon(new double[]{dstPts[0]+slimDown,dstPts[0]+glyphSizePx-slimDown,dstPts[0]+slimDown},new double[]{dstPts[1]-glyphSizePx+slimDown,dstPts[1]-glyphSizePx+slimDown,dstPts[1]-slimDown},3);
-                        gc.setFill(paintScale.getPaint(matrixRegionAggregation.thirdQuartileCorrelation));
+                        gc.setFill(paintScale.getPaint(matrixRegionData.maxCorrelation));
                         gc.fillPolygon(new double[]{dstPts[0]+slimDown,dstPts[0]+glyphSizePx-slimDown,dstPts[0]+glyphSizePx-slimDown},new double[]{dstPts[1]-slimDown,dstPts[1]-glyphSizePx+slimDown,dstPts[1]-slimDown},3);
                     } else {
 //                    draw average correlation and uncertainty as single rect
-                        gc.setFill(paintScale.getPaint(matrixRegionAggregation.averageCorrelation));
+                        gc.setFill(paintScale.getPaint(matrixRegionData.medianCorrelation));
                         gc.fillRect(dstPts[0]+slimDown, dstPts[1]-glyphSizePx+slimDown, glyphSizePx - 2*slimDown, glyphSizePx-2*slimDown);
 
                     }
@@ -565,7 +664,7 @@ public class Correlogram extends CanvasChart {
                     // min uncertainty
                     slimDown = glyphSizePx * (1-Math.sqrt(1-minUncertaintyRelative)) / 2;
                     if(Double.isNaN(minUncertaintyRelative)) slimDown = 0; // NaNs occur naturally in empty cells
-                    assert slimDown >= 0: String.format("Min uncertainty %s invalid, slimdown %s raw minUC %s",minUncertainty,slimDown,matrixRegionAggregation.minUncertainty);
+                    assert slimDown >= 0: String.format("Min uncertainty %s invalid, slimdown %s raw minUC %s",minUncertainty,slimDown, matrixRegionData.minUncertainty);
                     gc.strokeRect(dstPts[0]+slimDown, dstPts[1]-glyphSizePx+slimDown, glyphSizePx - 2*slimDown, glyphSizePx-2*slimDown);
 
                     // max uncertainty
@@ -593,23 +692,20 @@ public class Correlogram extends CanvasChart {
 
     }
 
-    public static class MatrixRegionAggregation {
-        // input parameters
-        /** The upper left corner of the region to aggregate. */
-        public int column, row;
-        /** The side length (rows/columns) of the square region to aggregate. */
-        public int size;
-        /** Which data dimensions to use as source for the correlation and uncertainty data. */
-        public int CORRELATION_DIM, UNCERTAINTY_DIM;
-        // output parameters
-        /** Number of matrix columns/rows actually covered by the aggregation region (can be influenced by clipping to the matrix size). */
-        public int width, height;
-        /** The average correlation of the cells in the region. */
-        public double averageCorrelation;
-        public double minCorrelation, firstQuartileCorrelation, thirdQuartileCorrelation, maxCorrelation;
+    /** Computes the number of cells to group horizontally and vertically into a single region to satisfy the minimum glyph size. */
+    private int computeGroupSize(CorrelationMatrix matrix, double minGlyphSize) {
 
-        public double minUncertainty, averageUncertainty, maxUncertainty;
+        // compute the dimensions of a single cell on screen
+        Point2D blockSizeSC = cellToScreen(matrix.metadata).deltaTransform(1, -1);
 
+        // compute the number of cells that cover at least the width and height of one glyph
+        int groupSize = (int) Math.ceil(minGlyphSize / blockSizeSC.getX());
+
+        // the group size must be at most min(matrix width, matrix height) to be able to form complete groups
+        groupSize = Math.min(groupSize, Math.min(matrix.getSize(), matrix.metadata.getNumberOfDifferentTimeLags()));
+
+        assert groupSize > 0 : String.format("Negative group size %s, width of a single cell: %.5f px", groupSize, blockSizeSC.getX());
+        return groupSize;
     }
 
     /** Defines the domain and the range of the paint scale.
@@ -618,7 +714,7 @@ public class Correlogram extends CanvasChart {
      */
     public void configurePaintscale(CorrelationMatrix matrix, MultiDimensionalPaintScale paintScale) {
 
-        switch (renderMode){
+        switch(renderMode){
             case MEAN_STD_DEV:
                 paintScale.setBiPolar(true);
                 paintScale.setPrimaryColor(Color.BLUE);
@@ -662,33 +758,42 @@ public class Correlogram extends CanvasChart {
      * Highlights the active cell, i.e. the (time,lag) coordinate in the correlogram that is hovered by the user.
      * This is done by moving a rectangle in the scene graph over the according position.
      */
-    void highlightActiveCell(){
+    void highlightActiveMatrixRegion(ObservableValue<? extends AggregatedCorrelationMatrix.MatrixRegionData> observable, MatrixRegionData oldValue, MatrixRegionData activeRegion){
 
-        Point activeWindow = sharedData.getHighlightedCell();
-        // check whether the active window is a valid coordinate
-        boolean drawWindow = activeWindow.x >= 0 && activeWindow.x != Integer.MAX_VALUE && activeWindow.y >= 0 && activeWindow.y != Integer.MAX_VALUE;
-
-        // position rectangle over the window in the correlogram
         CorrelationMatrix matrix = sharedData.getCorrelationMatrix();
-        if(drawWindow && matrix != null){
-
-            // transform data to screen coordinates
-            Affine cellToScreen = cellToScreen(matrix.metadata);
-            Point2D anchorScreen = cellToScreen.transform(activeWindow.getX(), activeWindow.getY());
-            Point2D dimensionsScreen = cellToScreen.deltaTransform(1, -1);
-
-            // check that the rectangle doesn't extend the panes
-            BoundingBox boundsScreen = new BoundingBox(anchorScreen.getX(), anchorScreen.getY(), dimensionsScreen.getX(), dimensionsScreen.getY());
-            if(chartPane.getLayoutBounds().contains(boundsScreen)){
-                activeWindowRect.setLayoutX(anchorScreen.getX());
-                activeWindowRect.setLayoutY(anchorScreen.getY());
-                activeWindowRect.setWidth(dimensionsScreen.getX());
-                activeWindowRect.setHeight(dimensionsScreen.getY());
-            } else drawWindow = false;
-
+        if(activeRegion == null || matrix == null) {
+            activeWindowRect.setVisible(false);
+            return;
         }
 
-        activeWindowRect.setVisible(drawWindow);
+        // transform data to screen coordinates
+        Affine cellToScreen = cellToScreen(matrix.metadata);
+        Bounds boundsScreen = cellToScreen.transform(new BoundingBox(activeRegion.column, activeRegion.row+activeRegion.height-1, activeRegion.width, -activeRegion.height));
+
+        // position rectangle over the window in the correlogram
+        activeWindowRect.setLayoutX(boundsScreen.getMinX());
+        activeWindowRect.setLayoutY(boundsScreen.getMinY());
+        activeWindowRect.setWidth(boundsScreen.getWidth());
+        activeWindowRect.setHeight(boundsScreen.getHeight());
+
+        // clip if rectangle extends outside the plot area
+        if( ! chartCanvas.getLayoutBounds().contains(boundsScreen)){
+            double cutX = chartCanvas.getLayoutX() - activeWindowRect.getLayoutX();
+            double cutY = chartCanvas.getLayoutY() - activeWindowRect.getLayoutY();
+            Node currentClip = activeWindowRect.getClip();
+            if(currentClip != null){
+                double currentCutX = currentClip.getLayoutX();
+                double currentCutY = currentClip.getLayoutY();
+                if(Math.abs(currentCutX-cutX) > 1e-5 || Math.abs(currentCutY-cutY) > 1e-5)
+                    activeWindowRect.setClip(new Rectangle(cutX, cutY,chartCanvas.getWidth(),chartCanvas.getHeight()));
+            } else{
+                activeWindowRect.setClip(new Rectangle(cutX, cutY,chartCanvas.getWidth(),chartCanvas.getHeight()));
+            }
+        } else {
+            activeWindowRect.setClip(null);
+        }
+
+        activeWindowRect.setVisible(true);
     }
 
     /** Resets the axes such that they fit the matrix bounds. */
@@ -698,7 +803,7 @@ public class Correlogram extends CanvasChart {
         CorrelationMatrix m = sharedData.getCorrelationMatrix();
 
         if(aspectRatioFixed()) fitWithAspectRatioAxesBounds(m);
-        else                   axesRanges.set(useAllSpaceAxesBounds(m));
+        else                   clipRegionDC.set(useAllSpaceAxesBounds(m));
 
     }
 
@@ -724,7 +829,7 @@ public class Correlogram extends CanvasChart {
     protected void fitWithAspectRatioAxesBounds(CorrelationMatrix m) {
 
         Bounds fullFitBounds = useAllSpaceAxesBounds(m);
-        setAxesRanges(fullFitBounds);   // start with a full fit
+        setClipRegionDC(fullFitBounds);   // start with a full fit
         cellToData(m.metadata);         // recompute block dimensions
 
         // since blocks are quadratic, the chart will be elongation times wider than high
@@ -738,20 +843,32 @@ public class Correlogram extends CanvasChart {
     }
 
     /** @param renderMode see {@link Visualization.Correlogram.RENDER_MODE} */
-    public void setRenderMode(RENDER_MODE renderMode) { this.renderMode = renderMode; }
+    public void setRenderMode(RENDER_MODE renderMode) {
+        this.renderMode = renderMode;
+        aggregationPrototype.CORRELATION_DIM = getCorrelationStatistic();
+        aggregationPrototype.UNCERTAINTY_DIM = getUncertaintyStatistic();
+    }
 
+    public UNCERTAINTY_VISUALIZATION getUncertaintyVisualization() {
+        return uncertaintyVisualization;
+    }
     /** @param uncertaintyVisualization see {@link Visualization.Correlogram.UNCERTAINTY_VISUALIZATION} */
     public void setUncertaintyVisualization(UNCERTAINTY_VISUALIZATION uncertaintyVisualization) {
         this.uncertaintyVisualization = uncertaintyVisualization;
 
         // fix the aspect ratio for the hinton visualization method
-        if(uncertaintyVisualization == UNCERTAINTY_VISUALIZATION.HINTON && sharedData.getCorrelationMatrix() != null){
+        if(usingHintonVisualization() && sharedData.getCorrelationMatrix() != null){
             adaptAspectRatioForMatrix(sharedData.getCorrelationMatrix());
             resetView();
         } else {
             // unlock aspect ratio
             setDataPointsPerPixelRatio(Double.NaN);
         }
+    }
+
+    /** Whether the uncertainty visualization is aggregated or unaggregated hinton. */
+    private boolean usingHintonVisualization() {
+        return uncertaintyVisualization == UNCERTAINTY_VISUALIZATION.HINTON || uncertaintyVisualization == UNCERTAINTY_VISUALIZATION.HINTON_AGGREGATED;
     }
 
     /** Selects a width/height ratio such that each cell is rendered as a square on the screen. */

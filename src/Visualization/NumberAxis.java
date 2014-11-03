@@ -1,5 +1,6 @@
 package Visualization;
 
+import Gui.BidirectionalBinding;
 import com.sun.javafx.tk.FontLoader;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
@@ -51,25 +52,15 @@ public class NumberAxis extends StackPane {
 
     // axes ranges -----------------------------------------------------------------------------------------------------
 
+    /** Contains the lower and upper bound of the axis. If the axis is horizontal, the values are stored in
+     * minX and maxX. If the axis is vertical, the values are stored in minY and maxY. */
+    private final ObjectProperty<Bounds> axisBoundsDC = new SimpleObjectProperty<>(new BoundingBox(0,0,0,0));
+    public ObjectProperty<Bounds> axisBoundsDCProperty(){ return axisBoundsDC; }
+    public Bounds getAxisBoundsDC(){ return axisBoundsDC.get(); }
+    public void setAxisBoundsDC(Bounds newBounds){ axisBoundsDC.set(newBounds); }
     /** The smallest value on the axis (doesn't necessarily correspond to a tick position). */
-    private final DoubleProperty lowerBound = new SimpleDoubleProperty();
-    public DoubleProperty lowerBoundProperty() { return lowerBound; }
-    public double getLowerBound() { return lowerBound.get(); }
-    public void setLowerBound(double value) {
-        // by updating only on real changes, feedback loops can be avoided:
-        // the lower bound changes and updates the scroll bar, then the scroll bar updates the lower bound, etc.
-        if(Math.abs(value - getLowerBound()) > 1e-5)  lowerBound.set(value);
-    }
-
-    /** The largest value on the axis (doesn't necessarily correspond to a tick position). */
-    private final DoubleProperty upperBound = new SimpleDoubleProperty();
-    public DoubleProperty upperBoundProperty() { return upperBound; }
-    public double getUpperBound() { return upperBound.get(); }
-    public void setUpperBound(double value) {
-        // by updating only on real changes, feedback loops can be avoided:
-        // the upper bound changes and updates the scroll bar, then the scroll bar updates the upper bound, etc.
-        if(Math.abs(value - getUpperBound()) > 1e-5) upperBound.set(value);
-    }
+    public double getLowerBound() { return isHorizontal ? getAxisBoundsDC().getMinX() : getAxisBoundsDC().getMinY(); }
+    public double getUpperBound() { return isHorizontal ? getAxisBoundsDC().getMaxX() : getAxisBoundsDC().getMaxY(); }
 
     /**
      * The scrollbar bounds contain the axis bounds (data coordinates) that are covered by the scroll bar.
@@ -100,7 +91,7 @@ public class NumberAxis extends StackPane {
     
     /** Specifies the minimum distance between two successive ticks. 
      * E.g. set to 1 for an axis that displays integers to avoid tick marks at non-integer positions like 1940.5 */
-    private double minTickUnit = Double.NEGATIVE_INFINITY;
+    private double minTickUnit = Double.MIN_VALUE;
 
     /** Defines a value (data coordinates) that is used to derive the set of tick marks. */
     private final DoubleProperty tickOrigin = new SimpleDoubleProperty(0);
@@ -122,44 +113,56 @@ public class NumberAxis extends StackPane {
         scrollBar.setOrientation(orientation);
         if(!isHorizontal) scrollBar.setRotate(180); // since the axis values increase from the screen bottom to the screen top, the scrollbar values should do so, too
 
-        // update scroll bar when the scroll bar bounds change
-        scrollBarBoundsDCProperty().addListener((observable, oldValue, newValue) -> updateScrollBarSlider());
-        // or the axis bounds change
-        lowerBoundProperty().addListener((observable, oldValue, newValue) -> updateScrollBarSlider());
-        upperBoundProperty().addListener((observable, oldValue, newValue) -> updateScrollBarSlider());
+//        update scroll bar when the scroll bar bounds change
+        scrollBarBoundsDCProperty().addListener(this::updateScrollBarSlider);
 
-        // update the axis bounds when the scroll bar slider is moved
-        scrollBar.valueProperty().addListener(this::updateAxisBounds);
+        BidirectionalBinding.<Number,Bounds>bindBidirectional(
+            scrollBar.valueProperty(),
+            axisBoundsDCProperty(),
+            this::updateAxisBounds,
+            this::updateScrollBarSlider
+        );
+
         canvas.getGraphicsContext2D().setFont(tickLabelFont);
         buildComponents();
 
     }
 
+    // scrolling -------------------------------------------------------------------------------------------------------
+
+
     /**
      * Updates the scroll bar size, position and visibility depending on the current visible range of the axis.
      */
-    protected void updateScrollBarSlider(){
-        Bounds bounds = getScrollBarBoundsDC();
+    protected void updateScrollBarSlider(ObservableValue<? extends Bounds> observable, Bounds oldValue, Bounds newBounds){
+
+        Bounds scrollBarBounds = getScrollBarBoundsDC();
 
         // not all axes have a defined min/max for scrolling
-        if(bounds == null){
+        if(scrollBarBounds == null){
             scrollBar.setVisible(false);
         } else {
 
             // adapt slider size
-            double fullRange = isHorizontal ? bounds.getWidth() : bounds.getHeight();
+            double fullRange = isHorizontal ? scrollBarBounds.getWidth() : scrollBarBounds.getHeight();
             double visibleAmount = 100. * getRange() / fullRange;
             scrollBar.setVisibleAmount(visibleAmount);
-            scrollBar.setVisible(visibleAmount > 1 && visibleAmount < 99);
 
-            // adapt slider position
-            // should be 0 if the lower bound is scrollBounds.minValue
-            // should be 100 if the lower bound is scrollBounds.maxValue - getRange()
-            double minValue = isHorizontal ? bounds.getMinX() : bounds.getMinY();
-            double maxValue = isHorizontal ? bounds.getMaxX() : bounds.getMaxY();
+            boolean scrollbarNecessary = visibleAmount > 0.1 && visibleAmount < 99.9;
+            scrollBar.setVisible(scrollbarNecessary);
 
-            double newValue = 100. * (getLowerBound() - minValue) / (maxValue - getRange() - minValue);
-            if(Math.abs(newValue - scrollBar.getValue()) > 1e-5) scrollBar.setValue(newValue);
+            if(scrollbarNecessary){
+
+                double minValue = isHorizontal ? scrollBarBounds.getMinX() : scrollBarBounds.getMinY();
+                double maxValue = isHorizontal ? scrollBarBounds.getMaxX() : scrollBarBounds.getMaxY();
+
+                // is 0 if the lower bound is scrollBounds.minValue
+                // is 100 if the lower bound is scrollBounds.maxValue - getRange()
+                double newValue = 100. * (getLowerBound() - minValue) / (maxValue - getRange() - minValue);
+
+                scrollBar.setValue(newValue);
+            }
+
         }
     }
 
@@ -170,22 +173,29 @@ public class NumberAxis extends StackPane {
     protected void updateAxisBounds(ObservableValue<? extends Number> observable, Number oldValue, Number newValue){
 
         Bounds bounds = getScrollBarBoundsDC();
-
         assert bounds != null;
+
+        // scrollbar set to invalid position (can that happen?)
         if(Double.isNaN(newValue.doubleValue())) return;
 
         double minValue = isHorizontal ? bounds.getMinX() : bounds.getMinY();
         double maxValue = isHorizontal ? bounds.getMaxX() : bounds.getMaxY();
-        double range = getRange();
+        double fullRange = isHorizontal ? bounds.getWidth() : bounds.getHeight();
+
+        double range = scrollBar.getVisibleAmount() * fullRange / 100;
 
         assert ! Double.isNaN(range);
 
         double newLowerBound = newValue.doubleValue() / 100. * (maxValue - range - minValue) + minValue;
-        setLowerBound(newLowerBound);
-        double newUpperBound = getLowerBound() + range;
-        setUpperBound(newUpperBound);
-//        System.out.println(String.format("%s axis range: [%.2f, %.2f]", isHorizontal ? "x" : "y", getLowerBound(), getUpperBound()));
+        double newUpperBound = newLowerBound + range;
+        Bounds newBounds = isHorizontal ?
+                new BoundingBox(newLowerBound, 0, newUpperBound-newLowerBound, 0) :
+                new BoundingBox(0, newLowerBound, 0, newUpperBound - newLowerBound);
+        setAxisBoundsDC(newBounds);
+
     }
+
+    // widget methods --------------------------------------------------------------------------------------------------
 
     public void setWidth(double width){
         setMaxWidth(width);
@@ -218,7 +228,6 @@ public class NumberAxis extends StackPane {
         canvas.setHeight(getHeight());
         if(isHorizontal) scrollBar.setPrefWidth(getWidth());
         else scrollBar.setPrefHeight(getHeight());
-        updateScrollBarSlider();
         drawContents();
     }
     
@@ -235,13 +244,13 @@ public class NumberAxis extends StackPane {
         double scaleX, scaleY;
         
         if(isHorizontal){
-            offsetX = lowerBound.get();
+            offsetX = getLowerBound();
             offsetY = 0;
             scaleX = getWidth() / getRange();
             scaleY = 1;
         } else {
             offsetX = 0;
-            offsetY = lowerBound.get();
+            offsetY = getLowerBound();
             scaleX = 1;
             scaleY = getHeight() / getRange();
         }
@@ -276,24 +285,12 @@ public class NumberAxis extends StackPane {
                 return computeDataToScreen().inverseTransform(0, value).getY();
         } catch (NonInvertibleTransformException ex) {
             System.err.println(String.format("Axis is malconfigured, the data to screen transform can not be inverted.\n"
-                    + "axis label: %s horizontal: %s lower bound: %s upper bound: %s", 
-                    label, isHorizontal,lowerBound.get(),upperBound.get()));
+                    + "axis label: %s horizontal: %s axis bounds: %s",
+                    label, isHorizontal,getAxisBoundsDC()));
             return 0;
         }
     }
 
-    public Bounds getAxisBounds() {
-        if(isHorizontal)
-            return new BoundingBox(getLowerBound(), 0, getRange(), 0);
-        else
-            return new BoundingBox(0, getLowerBound(), 0, getRange());
-    }
-
-    /** Returns the number of pixels spent for one unit on the axis. (e.g. 800px for 2 years => 400px per unit) */
-    public double getPxPerUnit() {
-        return (isHorizontal ? getWidth() : getHeight()) / getRange();
-    }
-    
     // -------------------------------------------------------------------------
     // content drawing 
     // -------------------------------------------------------------------------
@@ -500,9 +497,7 @@ public class NumberAxis extends StackPane {
     // -------------------------------------------------------------------------
 
     /** Returns the total range (data coordinates) that is covered by the axis. */
-    public double getRange(){
-        return upperBound.get() - lowerBound.get();
-    }
+    public double getRange(){ return isHorizontal ? getAxisBoundsDC().getWidth() : getAxisBoundsDC().getHeight(); }
 
     public void setLabel(String label) { this.label=label; }
     public void setIsHorizontal(boolean isHorizontal) { this.isHorizontal = isHorizontal; }

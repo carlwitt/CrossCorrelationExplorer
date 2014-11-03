@@ -2,14 +2,12 @@ package Gui;
 
 import Data.SharedData;
 import Data.TimeSeries;
-import Visualization.BinnedTimeSeriesChart;
-import javafx.beans.value.ChangeListener;
+import Visualization.HistogramTimeSeriesChart;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Bounds;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.Slider;
+import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
 import javafx.util.converter.NumberStringConverter;
@@ -28,16 +26,21 @@ public class TimeSeriesViewController {
     /** maps a color to each set of time series (for instance the time series in correlation set A, in correlation set B and temporary time series for preview). */
     private final HashMap<Color, ObservableList<TimeSeries>> seriesSets = new HashMap<>();
     
-    private final Visualization.TimeSeriesChart timeSeriesChart = new BinnedTimeSeriesChart();
+    private final Visualization.TimeSeriesChart timeSeriesChart = new HistogramTimeSeriesChart();
     
     /** controls the level of detail with which time series are drawn.
      * this is important since rendering all series with all points takes very long and is not the main purpose of the software. */
 //    @FXML protected Slider detailSlider;
     @FXML protected Label levelOfDetailLabel;
-    @FXML protected Slider transparencySlider;
-    @FXML protected Label transparencyLabel;
+    @FXML protected Slider histogramResolutionSlider;
+    @FXML protected Label histogramResolutionLabel;
+    @FXML ToggleGroup transferFunction;
     @FXML CheckBox ensemble1CheckBox;
     @FXML CheckBox ensemble2CheckBox;
+    @FXML ToggleButton transferLogarithmicToggle;
+    @FXML ToggleButton transferLinearToggle;
+    @FXML CheckBox polyCheckBox;
+    @FXML CheckBox gridCheckBox;
 
     @FXML protected AnchorPane timeSeriesPane;
 
@@ -64,19 +67,20 @@ public class TimeSeriesViewController {
 
 //        timeSeriesChart.drawEachNthDataPointProperty().bind(detailSlider.valueProperty());
 
-        sharedData.highlightedCellProperty().addListener((ov, t, t1) -> timeSeriesChart.drawContents());
+        // TODO this should be updating some overlay that indicates the input time windows.
+//        sharedData.activeCorrelationMatrixRegionProperty().addListener((ov, t, t1) -> timeSeriesChart.drawChart());
         
         // listen to and report changes in zoom and pan 
-        sharedData.visibleTimeRangeProperty().bindBidirectional(timeSeriesChart.axesRangesProperty());
-        sharedData.visibleTimeRangeProperty().addListener((ov, t, t1) -> timeSeriesChart.drawContents());
+        sharedData.visibleTimeRangeProperty().bindBidirectional(timeSeriesChart.clipRegionDCProperty());
+        sharedData.visibleTimeRangeProperty().addListener((ov, t, t1) -> drawChart());
         
         // when a new correlation matrix has been computed, reset the view
         sharedData.correlationMatrixProperty().addListener((ov, t, t1) -> resetView());
 
         sharedData.experiment.dataModel.correlationSetAAggregator.binSizeProperty().addListener((observable, oldValue, newValue) -> {
-                levelOfDetailLabel.setText(
-                        newValue.intValue() == 1 ? "Showing full resolution." : "bin size: "+newValue.intValue()
-                );
+            levelOfDetailLabel.setText(
+                newValue.intValue() == 1 ? "Showing full resolution." : "bin size: "+newValue.intValue()
+            );
         });
 
     }
@@ -92,10 +96,7 @@ public class TimeSeriesViewController {
         AnchorPane.setLeftAnchor(timeSeriesChart, 20.);
 
         // auto adjust tick labels and detail slider
-        timeSeriesChart.xAxis.lowerBoundProperty().addListener(axisRangeChanged);
-        timeSeriesChart.xAxis.upperBoundProperty().addListener(axisRangeChanged);
-        timeSeriesChart.yAxis.lowerBoundProperty().addListener(axisRangeChanged);
-        timeSeriesChart.yAxis.upperBoundProperty().addListener(axisRangeChanged);
+        timeSeriesChart.clipRegionDCProperty().addListener(this::updateTickUnits);
 
         // axes configuration
         timeSeriesChart.xAxis.setTickLabelFormatter(new NumberStringConverter(new  DecimalFormat("####")));
@@ -109,22 +110,30 @@ public class TimeSeriesViewController {
         // level of detail slider
 //        detailSlider.valueProperty().addListener((ov, t, t1) -> {
 //            levelOfDetailLabel.setText("show every N-th point: "+Math.round((Double)t1));
-//            timeSeriesChart.drawContents();
+//            timeSeriesChart.drawChart();
 //        });
 
-        // transparency slider
-        transparencySlider.valueProperty().addListener((observable, oldValue, newValue) -> {
+        // binning slider
+        histogramResolutionSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
             float newTransparency = newValue.floatValue();
-            transparencyLabel.setText(String.format("render transparency: %.2f", newTransparency));
-            timeSeriesChart.transparency = newTransparency;
+            histogramResolutionLabel.setText(String.format("histogram resolution: %s", (int)newTransparency));
+            ((HistogramTimeSeriesChart) timeSeriesChart).setNumBins((int) newTransparency);
+            drawChart();
+        });
+
+        polyCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> ((HistogramTimeSeriesChart) timeSeriesChart).drawPoly = newValue);
+        gridCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> ((HistogramTimeSeriesChart) timeSeriesChart).drawGrid = newValue);
+
+        transferFunction.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
+            ((HistogramTimeSeriesChart) timeSeriesChart).useLinearTransfer = newValue == transferLinearToggle;
             timeSeriesChart.drawContents();
         });
 
     }
     
-    void updateTickUnits(){
-        double xRange = timeSeriesChart.xAxis.getUpperBound() - timeSeriesChart.xAxis.getLowerBound(),
-               yRange = timeSeriesChart.yAxis.getUpperBound() - timeSeriesChart.yAxis.getLowerBound();
+    void updateTickUnits(ObservableValue<? extends Bounds> observable, Bounds oldValue, Bounds newValue){
+        double xRange = timeSeriesChart.xAxis.getRange(),
+               yRange = timeSeriesChart.yAxis.getRange();
         
         // always display approximately the same number of ticks
         double xTickUnit = Math.max(1, xRange / 20),
@@ -133,16 +142,17 @@ public class TimeSeriesViewController {
         timeSeriesChart.yAxis.setTickUnit(yTickUnit);
     }
     
-    /** Adapts tick units and labels. Adapts level of detail slider */
-    private final ChangeListener<Number> axisRangeChanged = (ov, t, t1) -> updateTickUnits();
-
     public void resetView() {
         timeSeriesChart.resetView();
     }
 
 
-    public void drawContents() {
-        if(timeSeriesChart.getAxesRanges() == null) timeSeriesChart.resetView();
+    public void drawChart() {
+        if(timeSeriesChart.getClipRegionDC() == null) timeSeriesChart.resetView();
         timeSeriesChart.drawContents();
+    }
+
+    public void setDeferringDrawRequests(boolean deferringDrawRequests) {
+        timeSeriesChart.setDeferringDrawRequests(deferringDrawRequests);
     }
 }

@@ -5,6 +5,8 @@ import Data.SharedData;
 import Data.TimeSeries;
 import Data.Windowing.WindowMetadata;
 import javafx.embed.swing.JFXPanel;
+import javafx.geometry.BoundingBox;
+import javafx.geometry.Bounds;
 import org.junit.Test;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -148,6 +150,12 @@ public class CorrelogramLegendTest {
             System.out.println();
         }
 //        assertEquals(expResult, result);
+    }
+
+    @Test public void boundsWithNaNComponents(){
+        Bounds b = new BoundingBox(Double.NaN, Double.NaN - 10., 10. - Double.NaN, Double.NaN);
+        assert Double.isNaN(b.getWidth());
+        assert Double.isNaN(b.getHeight());
     }
 
 }

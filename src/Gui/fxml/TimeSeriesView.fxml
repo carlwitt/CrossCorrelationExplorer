@@ -13,9 +13,18 @@
 <AnchorPane fx:id="timeSeriesPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="50.0" prefHeight="326.9999000000025" prefWidth="1022.0" style="-fx-background-color: white;" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.TimeSeriesViewController">
   <Rectangle arcHeight="5.0" arcWidth="5.0" fill="GAINSBORO" height="1240.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" width="20.0" AnchorPane.bottomAnchor="203.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0" />
   <Text rotate="270.0" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-background-color: gainsboro;" text="Time Series View" AnchorPane.bottomAnchor="261.26" AnchorPane.leftAnchor="-43.0" AnchorPane.topAnchor="50.43" />
-  <HBox id="HBox" alignment="CENTER" maxHeight="20.0" maxWidth="400.0" spacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="25.0">
-    <Label fx:id="transparencyLabel" text="render transparency: 0.05" />
-    <Slider fx:id="transparencySlider" blockIncrement="0.01" majorTickUnit="0.25" max="1.0" min="0.01" value="0.05" />
+  <HBox id="HBox" alignment="CENTER" maxHeight="20.0" maxWidth="657.0" prefWidth="657.0" spacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="25.0">
+    <Label fx:id="histogramResolutionLabel" text="histogram resolution: 16" />
+    <Slider fx:id="histogramResolutionSlider" blockIncrement="1.0" majorTickUnit="1.0" max="64.0" min="1.0" minorTickCount="1" orientation="HORIZONTAL" showTickLabels="false" showTickMarks="false" snapToTicks="true" value="16.0" />
+    <Label id="transparencyLabel" text="transfer" />
+    <RadioButton fx:id="transferLinearToggle" mnemonicParsing="false" selected="true" text="lin">
+      <toggleGroup>
+        <ToggleGroup fx:id="transferFunction" />
+      </toggleGroup>
+    </RadioButton>
+    <RadioButton fx:id="transferLogarithmicToggle" mnemonicParsing="false" text="log" toggleGroup="$transferFunction" />
+    <CheckBox id="gridBoxCheckBox" fx:id="polyCheckBox" mnemonicParsing="false" text="poly" />
+    <CheckBox id="gridBoxCheckBox" fx:id="gridCheckBox" indeterminate="false" mnemonicParsing="false" selected="true" text="grid" />
   </HBox>
   <HBox id="HBox" alignment="CENTER" maxHeight="20.0" maxWidth="400.0" spacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="4.0">
     <Label fx:id="levelOfDetailLabel" text="Showing full resolution." visible="true" />

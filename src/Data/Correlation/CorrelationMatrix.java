@@ -2,7 +2,6 @@ package Data.Correlation;
 
 import Data.TimeSeries;
 import Data.Windowing.WindowMetadata;
-import Visualization.Correlogram;
 import com.google.common.base.Joiner;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
@@ -41,7 +40,6 @@ public class CorrelationMatrix {
      */
     public final static int MEAN = 0, STD_DEV = 1, MEDIAN = 2, IQR = 3, POSITIVE_SIGNIFICANT = 4, NEGATIVE_SIGNIFICANT = 5, ABSOLUTE_SIGNIFICANT = 6;
     public final static int NUM_STATS = 7;                     // how many statistics are measured
-    public static final String[] statisticsLabels = new String[]{"mean", "standard deviation", "median", "interquartile range", "% positive significant", "% negative significant", "% significant"};
 
     /** meta statistic indices for minimum and maximum see {@link #getExtremum(int, int)}  */
     protected final static int MINIMUM = 0, MAXIMUM = 1;
@@ -110,15 +108,13 @@ public class CorrelationMatrix {
 
 
     /**
-     * Fills the columns data structure.
-     * @param reportProgress an optional callback to report progress to the GUI. Used by the compute service to pass the current base window index in, ]
+     * Fills the columns data structure. Horizontally partitions the correlation matrix. Each thread is assigned a subsequence of columns to compute.
+     * @param reportProgress an optional callback to report progress to the GUI. Used by the compute service to pass the current base window index
      *                       which causes prediction of the remaining time and makes the result available via the service reportProgress() etc. methods.
      */
     void computeParallel(Consumer<Integer> reportProgress) {
 
         // all time series in set A and set B are expected to be of equal length
-        int timeSeriesLength = metadata.setA.get(0).getSize();
-
         precomputeTerms();
 
         List<Callable<CorrelationMatrix>> threads = new ArrayList<>(numThreads);
@@ -139,9 +135,8 @@ public class CorrelationMatrix {
         final ExecutorService service = Executors.newFixedThreadPool(numThreads);
         try {
             List<Future<CorrelationMatrix>> results = service.invokeAll(threads);
-            for(Future<CorrelationMatrix> f : results)
-                for(CorrelationColumn column : f.get().columns)
-                    this.append(column);
+            // append columns to the matrix in order of computation
+            for(Future<CorrelationMatrix> f : results) f.get().columns.forEach(this::append);
         } catch (InterruptedException | ExecutionException e) {
             System.out.println(String.format("Computation aborted. Shutting down execution pool."));
             service.shutdownNow();
@@ -220,78 +215,6 @@ public class CorrelationMatrix {
 
     }
 
-    DescriptiveStatistics aggregateCorrelationStatistics = new DescriptiveStatistics();
-    /**
-     * Aggregates cells from a square region of the matrix by finding some statistics on them.
-     * @param region the object to take the paramters from and to store the results to
-     * @param matrixFilterRanges specification of the current matrix filter (see {@link Data.SharedData#getMatrixFilterRanges()})
-     */
-    public void aggregate(Correlogram.MatrixRegionAggregation region, double[][] matrixFilterRanges) {
-
-        aggregateCorrelationStatistics.clear();
-
-        // clip start and end to bounds
-        int maxColumnIdx = getSize() - 1;
-        int maxRowIdx = metadata.getNumberOfDifferentTimeLags() - 1;
-        int firstColumnIdx = Math.max(0, Math.min(region.column, maxColumnIdx));
-        int firstRowIdx = Math.max(0, Math.min(region.row, maxRowIdx));
-        int lastColumnIdx = Math.min(firstColumnIdx + region.size, maxColumnIdx);
-        int lastRowIdx = Math.min(firstRowIdx + region.size, maxRowIdx);
-
-        region.width = lastColumnIdx - firstColumnIdx + 1;
-        region.height = lastRowIdx - firstRowIdx + 1;
-
-        double minUncertainty = Double.POSITIVE_INFINITY, averageUncertainty = 0, maxUncertainty = Double.NEGATIVE_INFINITY;
-        int notNaNCorrelations = 0, notNaNUncertainties = 0;
-
-        for (int i = firstColumnIdx; i <= lastColumnIdx; i++) {
-            CorrelationColumn correlationColumn = getColumn(i);
-
-            evaluateCell:
-            for (int j = firstRowIdx; j <= lastRowIdx; j++) {
-
-                // check matrix filters
-                for (int STAT = 0; STAT < CorrelationMatrix.NUM_STATS; STAT++) {
-                    if(matrixFilterRanges[STAT] == null) continue;
-                    if(correlationColumn.data[STAT][j] < matrixFilterRanges[STAT][0] ||
-                            correlationColumn.data[STAT][j] > matrixFilterRanges[STAT][1])
-                        continue evaluateCell;
-                }
-
-
-                double correlation = correlationColumn.data[region.CORRELATION_DIM][j];
-                double uncertainty = correlationColumn.data[region.UNCERTAINTY_DIM][j];
-                if( ! Double.isNaN(correlation)){
-                    aggregateCorrelationStatistics.addValue(correlation);
-                    notNaNCorrelations++;
-                }
-                if( ! Double.isNaN(uncertainty)){
-                    minUncertainty = Math.min(minUncertainty, uncertainty);
-                    maxUncertainty = Math.max(maxUncertainty, uncertainty);
-                    averageUncertainty += uncertainty;
-                    notNaNUncertainties++;
-
-                    assert Double.isNaN(minUncertainty) || minUncertainty >= 0 : String.format("Negative uncertainty: %s in column \n%s",minUncertainty, correlationColumn);
-                    assert Double.isNaN(maxUncertainty) || maxUncertainty >= 0 : String.format("Negative max uncertainty: %s", maxUncertainty);
-                }
-
-            }
-        }
-
-        region.minCorrelation = notNaNCorrelations > 0 ? aggregateCorrelationStatistics.getMin() : Double.NaN;
-        region.averageCorrelation = notNaNCorrelations > 0 ? aggregateCorrelationStatistics.getMean() : Double.NaN;
-        region.maxCorrelation = notNaNCorrelations > 0 ? aggregateCorrelationStatistics.getMax() : Double.NaN;
-        region.firstQuartileCorrelation = notNaNCorrelations > 0 ? aggregateCorrelationStatistics.getPercentile(25) : Double.NaN;
-        region.thirdQuartileCorrelation = notNaNCorrelations > 0 ? aggregateCorrelationStatistics.getPercentile(75) : Double.NaN;
-
-        region.minUncertainty = notNaNUncertainties > 0 ? minUncertainty : Double.NaN;
-        region.averageUncertainty = notNaNUncertainties > 0 ? averageUncertainty / notNaNUncertainties : Double.NaN;
-        region.maxUncertainty = notNaNUncertainties > 0 ? maxUncertainty : Double.NaN;
-
-        assert Double.isNaN(region.averageUncertainty) || region.averageUncertainty <= region.maxUncertainty : String.format("Average uncertainty %s larger than max uncertainty %s",region.averageUncertainty,region.maxUncertainty);
-
-    }
-
     private class PartialMatrixComputer implements Callable<CorrelationMatrix>{
 
         CorrelationMatrix partialMatrix = new CorrelationMatrix(metadata); // each threads own results (a subsequence of the matrixs columns)
@@ -342,12 +265,14 @@ public class CorrelationMatrix {
                     descriptiveStatistics.clear();
 
 
-                    if (lag < 0) {       // process negative time lags (shift time series A to the right ~ find influences of B on A)
-                        windowAStartIdx = baseWindowStartIdx + lag;
-                        windowBStartIdx = baseWindowStartIdx;
-                    } else {             // process positive time lags (shift time series B to the right ~ find influences of A on B)
+                    if (lag >= 0) {
+                        // process positive time lags (look at past events in time series B ~ find influences of B on A)
                         windowAStartIdx = baseWindowStartIdx;
                         windowBStartIdx = baseWindowStartIdx - lag;
+                    } else {
+                        // process negative time lags (look for occurrences of a pattern in time series B in the past of time series A ~ find influences of A on B)
+                        windowAStartIdx = baseWindowStartIdx + lag;
+                        windowBStartIdx = baseWindowStartIdx;
                     }
 
                     List<TimeSeries> setA = metadata.setA;
@@ -500,6 +425,10 @@ public class CorrelationMatrix {
             };
         }
     }
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // DATA TYPES
+    // -----------------------------------------------------------------------------------------------------------------
 
     // -----------------------------------------------------------------------------------------------------------------
     // Column Data Structure
@@ -673,7 +602,7 @@ public class CorrelationMatrix {
         }
     }
 
-    public List<CorrelationColumn> getResultItems() { return columns; }
+    public List<CorrelationColumn> getColumns() { return columns; }
     public CorrelationColumn getColumn(int columnIndex) { return columns.get(columnIndex); }
 
 
@@ -682,7 +611,7 @@ public class CorrelationMatrix {
     // -----------------------------------------------------------------------------------------------------------------
 
     /** @return the number of columns (=windows) in the matrix. */
-    public int getSize() { return columns.size(); }
+    public int getSize() { assert metadata.numBaseWindows == columns.size(); return columns.size(); }
 
     /** @return the index of the first time series value where the first column (time window) starts. */
     int getStartOffsetInTimeSeries(){

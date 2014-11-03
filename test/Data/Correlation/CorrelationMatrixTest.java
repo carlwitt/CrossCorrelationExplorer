@@ -6,7 +6,9 @@ import Data.Windowing.WindowMetadata;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -164,5 +166,44 @@ public class CorrelationMatrixTest {
         long before = System.currentTimeMillis();
         for (int i = 0; i < sizes[2]; i++) for (int j = 0; j < sizes[1]; j++) for (int k = 0; k < sizes[0]; k++) sum += randoms[k][j][i];
         System.out.println(String.format("sum: %s (%s ms)", sum, System.currentTimeMillis() - before));
+    }
+
+    //------------------------------------------------------------------------------------------------------
+    // testing the java Arrays.parallel_ methods didn't yield positive results.
+    // seems as if traditional loops are much faster than parallelism even for very large arrays (100 million entries)
+    // speedups of around 2x-3x (probably ~ cores - 1.5) are possible if the operation on each array element is expensive.
+    // in these cases, the notation is much shorter than initializing threads, splitting array ranges etc...
+    //------------------------------------------------------------------------------------------------------
+    private double[] randomDoubleArray(){
+        Random random = new Random(1l);
+        double[] cValues = new double[100000];
+        for (int i = 0; i < cValues.length; i++) cValues[i] = random.nextDouble();
+        return cValues;
+    }
+    @Test public void testParallelArray(){
+        double[] cValues = randomDoubleArray();
+        long before = System.currentTimeMillis();
+        Arrays.parallelSetAll(cValues, value -> {
+            double sum = 0;
+            for (int i = 0; i < value; i++) {
+                sum += i;
+            }
+            return sum;
+        });
+        System.out.println(String.format("System.currentTimeMillis() - before: %s", System.currentTimeMillis() - before));
+        System.out.println(String.format("cValues[cValues.length-1]: %s", cValues[cValues.length - 1]));
+    }
+    @Test public void testSerialArray(){
+        double[] cValues = randomDoubleArray();
+        long before = System.currentTimeMillis();
+        for (int i = 0; i < cValues.length; i++) {
+            double sum = 0;
+            for (int j = 0; j < i; j++) {
+                sum += j;
+            }
+            cValues[i] = sum;
+        }
+        System.out.println(String.format("System.currentTimeMillis() - before: %s", System.currentTimeMillis() - before));
+        System.out.println(String.format("cValues[cValues.length-1]: %s", cValues[cValues.length - 1]));
     }
 }

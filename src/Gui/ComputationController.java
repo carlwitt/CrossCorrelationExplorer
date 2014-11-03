@@ -20,7 +20,10 @@ import org.controlsfx.dialog.Dialogs;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.ResourceBundle;
 
 /**
  *
@@ -226,112 +229,92 @@ public class ComputationController implements Initializable {
         significanceLevelText.setText(""+CorrelationMatrix.getSignificanceLevel(metadata));
 
         // restore time series selection
-        setASelector.removeAll();
-        setBSelector.removeAll();
-        setASelector.addGiven(metadata.setA);     // restore the logical selection
-        setBSelector.addGiven(metadata.setB);
-        setASelector.selectAll(metadata.setA);      // restore the check marks
-        setBSelector.selectAll(metadata.setB);
-        setASelector.flushAddBuffer();
-        setBSelector.flushAddBuffer();
+        setASelector.setSample(metadata.setA);
+        setBSelector.setSample(metadata.setB);
     }
 
     /**
      * Handles the logic for adding and removing time series from the computation parameters.
      * Is put in a separate class because the entire thing is needed for both input files separately.
+     * TODO: the entire thing could be generified and handle button creation on its own as well. ideally the entire thing could be programmed as a custom control.
      */
     private class TimeSeriesSelector{
 
-        final List<TimeSeries> baseSet, targetSet;
+        /** The domain from which time series can be selected. */
+        final List<TimeSeries> domain;
+        /** The list gathering the selected elements. */
+        final List<TimeSeries> sample;
 
         final CheckListView<TimeSeries> listView;
+        /** This can be used to update checkboxes without having to process the according selection changed event (and making unwanted changes to the sample). */
         boolean listeningToChanges = true;
 
-        final Button addAll;
-        final Button removeAll;
-        final Button addRandom;
-        final Button invertSelected;
+        final Button addAll, removeAll, addRandom, invertSelected;
 
         final RandomDataGenerator rdg = new RandomDataGenerator();
 
         /**
-         * @param baseSet   list of time series to select from
-         * @param targetSet list of time series that represents the selection
+         * @param domain   list of time series to select from
+         * @param sample    list of time series that represents the selection
          * @param addAll    buttons to add all time series to selection
          * @param removeAll buttons to remove all time series from selection
          * @param addRandom buttons to add a number of random time series to selection
          */
-        private TimeSeriesSelector(ObservableList<TimeSeries> baseSet, ObservableList<TimeSeries> targetSet, Button addAll, Button removeAll, Button addRandom, Button invertSelected) {
+        private TimeSeriesSelector(ObservableList<TimeSeries> domain, ObservableList<TimeSeries> sample, Button addAll, Button removeAll, Button addRandom, Button invertSelected) {
 
-            this.baseSet = baseSet;
-            this.targetSet = targetSet;
+            this.domain = domain;
+            this.sample = sample;
 
             this.addAll = addAll;
             this.addRandom = addRandom;
             this.removeAll = removeAll;
             this.invertSelected = invertSelected;
 
-            addAll.setOnAction(event -> addAll());
-            removeAll.setOnAction(event -> unselectAll());
-            addRandom.setOnAction(event -> addRandom());
-            invertSelected.setOnAction(event -> invertSelected());
+            addAll.setOnAction(event -> setSampleToDomain());
+            removeAll.setOnAction(event -> clearSample());
+            addRandom.setOnAction(event -> randomExtendSample());
+            invertSelected.setOnAction(event -> invertCheckBoxes());
 
-            this.listView = new CheckListView<>(baseSet);
+            this.listView = new CheckListView<>(domain);
             this.listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
-//            this.listView.
-
-            listView.getCheckModel().getSelectedItems().addListener((ListChangeListener<TimeSeries>) c -> {
-                // trying to access the change (and only the change) directly gives only null and -1 values when selecting new time series
-                if(!listeningToChanges)return;
-                removeAll();
-                for(Integer selectedIdx : listView.getCheckModel().getSelectedIndices())
-                    addLater(listView.getItems().get(selectedIdx));
-                flushAddBuffer();
-            });
+            listView.getCheckModel().getSelectedItems().addListener(this::checkBoxClicked);
         }
 
-        final List<TimeSeries> addBuffer = new ArrayList<>();
-//        private void add(TimeSeries ts){ if(! targetSet.contains(ts)) targetSet.add(ts); }
-        private void addAll(){
-            targetSet.clear();
-            targetSet.addAll(baseSet);
-            listView.getCheckModel().selectAll();
+        public void checkBoxClicked(ListChangeListener.Change<? extends TimeSeries> c) {
+            // evaluation change data would be more efficient but the data is unreliable and quirky. (E.g. null and -1 values when selecting a new single time series)
+            if(!listeningToChanges) return;
+            updateSample();
         }
-        private void addGiven(List<TimeSeries> ts){ ts.forEach(this::addLater); }
-        private void addLater(TimeSeries ts){ if(! (addBuffer.contains(ts) || targetSet.contains(ts))) addBuffer.add(ts); }
-        private void flushAddBuffer(){ targetSet.addAll(addBuffer); addBuffer.clear(); }
 
-//        final List<TimeSeries> removeBuffer = new ArrayList<>();
-        private void removeAll(){ targetSet.clear(); }
-//        private void remove(TimeSeries ts){ targetSet.remove(ts); }
-//        private void removeLater(TimeSeries ts){ removeBuffer.add(ts); }
-//        private void flushRemoveBuffer(){
-//            targetSet.removeAll(removeBuffer);
-//        }
+        private void setSample(List<TimeSeries> ts){
+            sample.clear();
+            sample.addAll(ts);
+            updateCheckboxes();
+        }
 
-//        private void addSelected(){
-//            List<TimeSeries> ts = listView.getItems();
-//            for(Integer selectedIndex : listView.getSelectionModel().getSelectedIndices()){
-//                listView.getCheckModel().select(selectedIndex);
-//            }
-//        }
-//        private void removeSelected(){
-//            List<TimeSeries> ts = listView.getItems();
-//            for(Integer selectedIndex : listView.getSelectionModel().getSelectedIndices())
-//                listView.getCheckModel().clearSelection(selectedIndex);
-//        }
-        private void addRandom(){
+        private void setSampleToDomain(){
+            sample.clear();
+            sample.addAll(domain);
+            updateCheckboxes();
+        }
+
+        public void clearSample() {
+            sample.clear();
+            updateCheckboxes();
+        }
+
+        private void randomExtendSample(){
 
             // ask how many items to add
             Optional<String> response = Dialogs.create()
                     .title("Add the Following Number of Random Time Series to the Selection")
                     .showTextInput("200");
 
-            if(! response.isPresent()) return;
-
+            // abort if the dialog was not confirmed or the input is not parseable
+            if(! response.isPresent() ) return;
             int requestedToAdd;
-            try{requestedToAdd = Integer.parseInt(response.get());}
+            try{ requestedToAdd = Integer.parseInt(response.get()); }
             catch(Exception e){ return; }
 
             // compute how many items can be added
@@ -348,17 +331,33 @@ public class ComputationController implements Initializable {
             for (int i = 0; i < numItems; i++)
                 if( ! listView.getCheckModel().isSelected(i)) uncheckedIndices[j++] = i;
 
-//            List<TimeSeries> ts = listView.getItems();
             // generate a random sample of the unchecked indices and check them
             for(Object idx : rdg.nextSample(Arrays.asList(uncheckedIndices),toAdd)){
-//                addLater(ts.get((Integer)idx));
                 listView.getCheckModel().select((Integer) idx);
             }
-//            flushAddBuffer();
+
+        }
+
+        /** Sets the check box states according to the current sample. */
+        private void updateCheckboxes() {
+            listeningToChanges = false;
+            MultipleSelectionModel<TimeSeries> checkModel = listView.getCheckModel();
+            checkModel.clearSelection();
+            // selectIndices() seems to be a bit faster than multiple calls to select()
+            checkModel.selectIndices(-1, sample.stream().mapToInt(value -> value.getId() - 1).toArray());
+//            sample.stream().forEach(timeSeries -> checkModel.select(timeSeries.getId() - 1));
+            listeningToChanges = true;
+        }
+
+        /** Fills the sample list according to the current check box states. */
+        private void updateSample() {
+            MultipleSelectionModel<TimeSeries> checkModel = listView.getCheckModel();
+            sample.clear();
+            sample.addAll(checkModel.getSelectedItems());
         }
 
         /** Goes through the selection and unchecks checked items and vice versa. */
-        private void invertSelected() {
+        private void invertCheckBoxes() {
 
             MultipleSelectionModel<TimeSeries> checkModel = listView.getCheckModel();
 
@@ -370,18 +369,8 @@ public class ComputationController implements Initializable {
                 }
             }
 
-        }
+            updateSample();
 
-        public void selectAll(List<TimeSeries> set) {
-            listeningToChanges = false;
-            listView.getCheckModel().clearSelection();
-            set.forEach(timeSeries -> listView.getCheckModel().select(timeSeries.getId()-1));
-            listeningToChanges = true;
-        }
-        public void unselectAll() {
-            listeningToChanges = false;
-            listView.getCheckModel().clearSelection();
-            listeningToChanges = true;
         }
     }
 

@@ -13,7 +13,7 @@ import static org.junit.Assert.assertEquals;
  * @author Carl Witt
  */
 public class ComplexSequenceTest {
-    
+
     final ComplexSequence decRe = ComplexSequence.create(new double[]{6,5,4,3,2,1}, new double[6]);
     final ComplexSequence incIm = ComplexSequence.create(new double[6], new double[]{-1,0,1,2,3,4});
     final ComplexSequence single = ComplexSequence.create(new double[]{-11}, new double[]{11});

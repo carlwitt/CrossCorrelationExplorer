@@ -3,7 +3,9 @@ package Gui;
 import Data.Correlation.CorrelationMatrix;
 import Data.Correlation.CorrelationSignificance;
 import Data.SharedData;
+import Data.Statistics.AggregatedCorrelationMatrix;
 import Visualization.Correlogram;
+import Visualization.DeferredDrawing;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
@@ -11,12 +13,11 @@ import javafx.scene.control.Slider;
 import javafx.scene.web.WebView;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
-import java.awt.*;
 import java.net.URL;
 import java.util.ResourceBundle;
 
 //TODO check for divergent values between computed matrix and on the fly computation.
-public class CellDistributionViewController implements Initializable {
+public class CellDistributionViewController implements Initializable, DeferredDrawing {
 
     SharedData sharedData;
     private final DescriptiveStatistics descriptiveStatistics = new DescriptiveStatistics();
@@ -39,7 +40,7 @@ public class CellDistributionViewController implements Initializable {
             if(newValue == null) return;
             numBins = newValue.intValue();
             numberOfBinsLabel.setText("Number of Bins: " + numBins);
-            visualizeCellDistribution(sharedData.getHighlightedCell());
+            visualizeCellDistribution(sharedData.getActiveCorrelationMatrixRegion());
         });
 
     }
@@ -48,7 +49,7 @@ public class CellDistributionViewController implements Initializable {
         this.sharedData = sharedData;
 
         // redraw histogram on mouse move
-        sharedData.highlightedCellProperty().addListener((observable, oldValue, newHighlightedCell) -> visualizeCellDistribution((Point) newHighlightedCell));
+        sharedData.activeCorrelationMatrixRegionProperty().addListener((observable, oldValue, newValue) -> drawContents());
 
         // compute new critical correlation value on matrix change
         sharedData.correlationMatrixProperty().addListener((observable, oldValue, newValue) -> {
@@ -61,16 +62,18 @@ public class CellDistributionViewController implements Initializable {
     double criticalCorrelationValue = 1.;
 
     /**
-     * Retrieves the distribution within the given cell and updates the histogram plot.
-     * @param activeCell
+     * Retrieves the distribution within the given active matrix region and updates the histogram plot.
      */
-    protected void visualizeCellDistribution(Point activeCell) {
+    protected void visualizeCellDistribution(AggregatedCorrelationMatrix.MatrixRegionData activeRegion) {
 
+        //TODO switch to precomputed histogram data!
         CorrelationMatrix correlationMatrix = sharedData.getCorrelationMatrix();
-        if(activeCell.x >= correlationMatrix.getSize()) return;
+        if(correlationMatrix == null || activeRegion == null) return;
 
-        int columnIndex = activeCell.x;
-        int lagIndex = activeCell.y;
+        if(activeRegion.column >= correlationMatrix.getSize()) return;
+
+        int columnIndex = activeRegion.column;
+        int lagIndex = activeRegion.row;
 
         if(lagIndex >= 0 && lagIndex < Integer.MAX_VALUE){
             descriptiveStatistics.clear();
@@ -79,13 +82,7 @@ public class CellDistributionViewController implements Initializable {
                 if( ! Double.isNaN(r)) descriptiveStatistics.addValue(r);
 
             webView.getEngine().executeScript(String.format("update(%s);", calcHistogramJSON(descriptiveStatistics, numBins)));
-//
-//            System.out.println(String.format("median %s iqr %s windowStartIndex %s timeLag %s nans %s",
-//                    descriptiveStatistics.getPercentile(50),
-//                    descriptiveStatistics.getPercentile(75)-descriptiveStatistics.getPercentile(25),
-//                    activeTimeWindow.windowStartIndex,
-//                    timeLag,
-//                    nans));
+
         }
     }
 
@@ -98,15 +95,11 @@ public class CellDistributionViewController implements Initializable {
         double max =  1; //stats.getMax();
         final double binSize = (max - min)/numBins;
 
-        for (double d : stats.getValues()) {
+        double[] values = stats.getValues();
+        for (double d : values) {
             int bin = (int) ((d - min) / binSize);
-//            assert bin >= 0 && bin < numBins : "Error on histogram calculation";
-//            binCounts[bin] += 1;
-            if (bin < 0) { /* this data is smaller than min */ }
-            else if (bin >= numBins) { /* this data point is bigger than max */ }
-            else {
-               binCounts[bin] += 1;
-            }
+            assert bin >= 0 && bin <= numBins : String.format("Invalid bin idx: %s not in [%s, %s] value %s (min %s)", bin, 0, numBins, d, min);
+            binCounts[bin == numBins ? numBins - 1 : bin] += 1;
         }
 
         for (int i = 0; i < binCounts.length; i++) {
@@ -117,6 +110,24 @@ public class CellDistributionViewController implements Initializable {
         builder.append("]");
 //        System.out.println(String.format("{data: %s, criticalCorrelationValue: %s}", builder.toString(), criticalCorrelationValue));
         return String.format("{bins: %s, criticalCorrelationValue: %s}", builder.toString(), criticalCorrelationValue);
+
+    }
+
+    @Override public void drawContents() {
+        if(isDeferringDrawRequests()) return;
+        visualizeCellDistribution(sharedData.getActiveCorrelationMatrixRegion());
+    }
+
+    boolean isDeferringDrawRequests = false;
+    @Override public boolean isDeferringDrawRequests() { return isDeferringDrawRequests; }
+
+    @Override public void setDeferringDrawRequests(boolean deferDrawRequests) {
+        if(isDeferringDrawRequests() && ! deferDrawRequests){
+            isDeferringDrawRequests = false;
+            drawContents();
+        } else {
+            isDeferringDrawRequests = deferDrawRequests;
+        }
 
     }
 }

@@ -13,7 +13,7 @@ import java.util.Vector;
  * Inspected project phase 2 (16.5.2014).
  * @author Carl Witt
  */
-public class MultiDimensionalPaintScale 
+public class MultiDimensionalPaintScale
 {
     
     /**

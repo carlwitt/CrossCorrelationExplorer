@@ -10,7 +10,8 @@ import com.sun.javafx.tk.FontLoader;
 import javafx.geometry.Orientation;
 import javafx.scene.text.Font;
 import javafx.util.converter.NumberStringConverter;
-import org.junit.*;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -25,27 +26,12 @@ import static org.junit.Assert.assertEquals;
 public class NumberAxisTest {
     
     NumberAxis instance;
-    
-    public NumberAxisTest() {
-    }
-    
-    @BeforeClass
-    public static void setUpClass() {
-    }
-    
-    @AfterClass
-    public static void tearDownClass() {
-    }
-    
-    @Before
-    public void setUp() {
+
+    // TODO with a scroll bar, the axis cannot be instantiated in tests
+    @Before public void setUp() {
         instance = new NumberAxis(Orientation.HORIZONTAL);
     }
     
-    @After
-    public void tearDown() {
-    }
-
     @Test public void testSRAlgorithm(){
         assertEquals(200d, instance.tickUnit(5, 99d, 799d),1e-10);
         assertEquals(500d, instance.tickUnit(2, 0d, 1000d), 1e-10);

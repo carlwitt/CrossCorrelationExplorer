@@ -31,6 +31,7 @@ import java.text.DecimalFormat;
 public class CorrelogramController {
 
 
+    public static final String[] statisticsLabels = new String[]{"mean", "standard deviation", "median", "interquartile range", "% positive significant", "% negative significant", "% significant"};
     /** Data that is shared between views to implement linked views. */
     private SharedData sharedData;
 
@@ -150,7 +151,7 @@ public class CorrelogramController {
         legend.setSharedData(sharedData);
         
         // report navigation in the correlogram to the time series view (via the shared data)
-        correlogram.axesRangesProperty().addListener(this::pushCorrelogramNavigation);
+        correlogram.clipRegionDCProperty().addListener(this::pushCorrelogramNavigation);
         
 //        listen to navigation in the time series view (via shared data)
         sharedData.visibleTimeRangeProperty().addListener((ov, t, newBounds) -> {
@@ -158,8 +159,7 @@ public class CorrelogramController {
                 if(correlogram.aspectRatioFixed())
                     correlogram.adaptYAxis(newBounds);
                 else {
-                    correlogram.xAxis.setLowerBound(newBounds.getMinX());
-                    correlogram.xAxis.setUpperBound(newBounds.getMaxX());
+                    correlogram.xAxis.setAxisBoundsDC(new BoundingBox(newBounds.getMinX(), 0, newBounds.getWidth(), 0));
                 }
                 correlogram.drawContents();
             }
@@ -185,7 +185,7 @@ public class CorrelogramController {
     public void resetView() {
         correlogram.resetView();
         correlogram.drawContents();
-//        correlogram.setAxesRanges(new Rectangle2D(correlogram.xAxis.getLowerBound(), correlogram.yAxis.getLowerBound(), correlogram.xAxis.getRange(), correlogram.yAxis.getRange()));
+//        correlogram.setClipRegionDC(new Rectangle2D(correlogram.xAxis.getLowerBound(), correlogram.yAxis.getLowerBound(), correlogram.xAxis.getRange(), correlogram.yAxis.getRange()));
         legend.resetView();
         legend.drawContents();
 

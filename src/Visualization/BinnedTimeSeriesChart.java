@@ -30,6 +30,11 @@ public class BinnedTimeSeriesChart extends TimeSeriesChart {
 
     @Override public void drawContents() {
 
+        if(isDeferringDrawRequests){
+            redrawPending = true;
+            return;
+        }
+
         if(sharedData == null || sharedData.experiment == null || sharedData.experiment.dataModel.correlationSetA.isEmpty() && sharedData.experiment.dataModel.correlationSetB.isEmpty()) return;
 
         GraphicsContext gc = chartCanvas.getGraphicsContext2D();
@@ -48,7 +53,7 @@ public class BinnedTimeSeriesChart extends TimeSeriesChart {
 
         // determine bin size from screen space
         int numDataPointsInRange = dataModel.getNumDataPointsInRange(0, xAxis.getLowerBound(), xAxis.getUpperBound());
-        int optimalBinSize = (int) Math.max(1, Math.ceil(1. * numDataPointsInRange / getWidth()));
+        int optimalBinSize = (int) Math.max(1, Math.ceil(10. * numDataPointsInRange / getWidth()));
         aggregators[0].setBinSize(optimalBinSize);
         aggregators[1].setBinSize(optimalBinSize);
 
@@ -93,6 +98,8 @@ public class BinnedTimeSeriesChart extends TimeSeriesChart {
 
         xAxis.drawContents();
         yAxis.drawContents();
+
+        redrawPending = false;
     }
 
 
