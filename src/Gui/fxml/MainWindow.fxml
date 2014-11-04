@@ -31,7 +31,7 @@
         <Tab closable="true" text="Time Series">
           <fx:include fx:id="timeSeriesView" source="TimeSeriesView.fxml" />
         </Tab>
-        <Tab text="Matrix Filter">
+        <Tab style="" text="Matrix Filter">
           <fx:include fx:id="matrixFilter" source="MatrixFilterTab.fxml" />
         </Tab>
       </TabPane>

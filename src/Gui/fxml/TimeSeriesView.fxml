@@ -4,27 +4,78 @@
     but it is necessary because the fx:controller attribute can be used only on the root element of a file. -->
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.CubicCurve?>
+<?import javafx.scene.shape.Line?>
 <?import javafx.scene.shape.Rectangle?>
+<?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
 <AnchorPane fx:id="timeSeriesPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="50.0" prefHeight="326.9999000000025" prefWidth="1022.0" style="-fx-background-color: white;" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.TimeSeriesViewController">
   <Rectangle arcHeight="5.0" arcWidth="5.0" fill="GAINSBORO" height="1240.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" width="20.0" AnchorPane.bottomAnchor="203.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0" />
   <Text rotate="270.0" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-background-color: gainsboro;" text="Time Series View" AnchorPane.bottomAnchor="261.26" AnchorPane.leftAnchor="-43.0" AnchorPane.topAnchor="50.43" />
-  <HBox id="HBox" alignment="CENTER" maxHeight="20.0" maxWidth="657.0" prefWidth="657.0" spacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="25.0">
+  <HBox id="HBox" alignment="CENTER" maxHeight="20.0" maxWidth="843.0" prefWidth="812.0" spacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="25.0">
     <Label fx:id="histogramResolutionLabel" text="histogram resolution: 16" />
     <Slider fx:id="histogramResolutionSlider" blockIncrement="1.0" majorTickUnit="1.0" max="64.0" min="1.0" minorTickCount="1" orientation="HORIZONTAL" showTickLabels="false" showTickMarks="false" snapToTicks="true" value="16.0" />
-    <Label id="transparencyLabel" text="transfer" />
-    <RadioButton fx:id="transferLinearToggle" mnemonicParsing="false" selected="true" text="lin">
-      <toggleGroup>
-        <ToggleGroup fx:id="transferFunction" />
-      </toggleGroup>
-    </RadioButton>
-    <RadioButton fx:id="transferLogarithmicToggle" mnemonicParsing="false" text="log" toggleGroup="$transferFunction" />
-    <CheckBox id="gridBoxCheckBox" fx:id="polyCheckBox" mnemonicParsing="false" text="poly" />
+    <MenuButton maxHeight="20.0" mnemonicParsing="false" text="Transfer Function">
+      <font>
+        <Font size="9.0" />
+      </font>
+      <items>
+        <RadioMenuItem mnemonicParsing="false" selected="true" text="linear" fx:id="transferLinearToggle">
+          <graphic>
+            <AnchorPane id="AnchorPane" layoutX="409.0" layoutY="88.0">
+              <children>
+                <LineChart id="LineChartNxN" alternativeRowFillVisible="false" animated="false" createSymbols="false" horizontalGridLinesVisible="false" horizontalZeroLineVisible="true" layoutX="0.0" layoutY="0.0" legendVisible="false" minWidth="182.0" prefHeight="200.0" prefWidth="218.0" verticalGridLinesVisible="false">
+                  <xAxis>
+                    <NumberAxis animated="false" autoRanging="false" label="frequency" minorTickCount="1" side="BOTTOM" tickLabelsVisible="true" tickUnit="0.5" upperBound="1.0" />
+                  </xAxis>
+                  <yAxis>
+                    <NumberAxis autoRanging="false" label="opacity" minorTickCount="1" prefHeight="131.0" prefWidth="58.0" side="LEFT" tickUnit="0.5" upperBound="1.0" />
+                  </yAxis>
+                </LineChart>
+                <Line endX="166.0" endY="-136.0" layoutX="37.0" layoutY="152.0" startX="37.0" startY="-6.0" />
+              </children>
+            </AnchorPane>
+          </graphic>
+          <toggleGroup>
+            <ToggleGroup fx:id="transferFunction" />
+          </toggleGroup>
+        </RadioMenuItem>
+        <RadioMenuItem mnemonicParsing="false" text="quadratic with offset" toggleGroup="$transferFunction">
+          <graphic>
+            <AnchorPane id="AnchorPane" layoutX="402.0" layoutY="63.0">
+              <children>
+                <LineChart id="LineChartNxN" alternativeRowFillVisible="false" animated="false" createSymbols="false" horizontalGridLinesVisible="false" horizontalZeroLineVisible="true" layoutX="0.0" layoutY="0.0" legendVisible="false" minWidth="182.0" prefHeight="200.0" prefWidth="218.0" verticalGridLinesVisible="false">
+                  <xAxis>
+                    <NumberAxis animated="false" autoRanging="false" label="frequency" minorTickCount="1" side="BOTTOM" tickLabelsVisible="true" tickUnit="0.5" upperBound="1.0" />
+                  </xAxis>
+                  <yAxis>
+                    <NumberAxis autoRanging="false" label="opacity" minorTickCount="1" prefHeight="131.0" prefWidth="58.0" side="LEFT" tickUnit="0.5" upperBound="1.0" />
+                  </yAxis>
+                </LineChart>
+                <CubicCurve controlX1="-42.0" controlX2="5.0" controlY1="-7.999900817871094" controlY2="-48.999900817871094" endX="29.681861877441406" endY="-118.4678726196289" fill="#2a90ff00" layoutX="172.0" layoutY="134.0" smooth="true" startX="-98.0" startY="-7.0" stroke="BLACK" />
+              </children>
+            </AnchorPane>
+          </graphic>
+        </RadioMenuItem>
+      </items>
+    </MenuButton>
+    <CheckBox id="gridBoxCheckBox" fx:id="polyCheckBox" mnemonicParsing="false" text="polygons">
+      <HBox.margin>
+        <Insets left="20.0" fx:id="x1" />
+      </HBox.margin>
+    </CheckBox>
     <CheckBox id="gridBoxCheckBox" fx:id="gridCheckBox" indeterminate="false" mnemonicParsing="false" selected="true" text="grid" />
+    <CheckBox fx:id="ensemble1CheckBox" mnemonicParsing="false" selected="true" text="Ensemble 1" textFill="#00cc21" HBox.margin="$x1" />
+    <CheckBox fx:id="ensemble2CheckBox" mnemonicParsing="false" selected="true" text="Ensemble 2" textFill="#0066ff">
+      <HBox.margin>
+        <Insets />
+      </HBox.margin>
+    </CheckBox>
   </HBox>
   <HBox id="HBox" alignment="CENTER" maxHeight="20.0" maxWidth="400.0" spacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="4.0">
     <Label fx:id="levelOfDetailLabel" text="Showing full resolution." visible="true" />
@@ -39,14 +90,5 @@
       <Tooltip text="Reset view" />
     </tooltip>
   </Button>
-  <HBox alignment="TOP_CENTER" prefHeight="-1.0" prefWidth="-1.0" AnchorPane.rightAnchor="5.0" AnchorPane.topAnchor="5.0">
-    <children>
-      <CheckBox fx:id="ensemble1CheckBox" mnemonicParsing="false" selected="true" text="Ensemble 1" />
-      <CheckBox fx:id="ensemble2CheckBox" mnemonicParsing="false" selected="true" text="Ensemble 2">
-        <HBox.margin>
-          <Insets left="5.0" />
-        </HBox.margin>
-      </CheckBox>
-    </children>
-  </HBox>
+  <HBox alignment="TOP_CENTER" prefHeight="-1.0" prefWidth="-1.0" AnchorPane.rightAnchor="5.0" AnchorPane.topAnchor="5.0" />
 </AnchorPane>

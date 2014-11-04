@@ -1,5 +1,7 @@
 package Gui;
 
+import Data.Correlation.CorrelationMatrix;
+import Data.DataModel;
 import Data.SharedData;
 import Data.TimeSeries;
 import Visualization.HistogramTimeSeriesChart;
@@ -14,6 +16,7 @@ import javafx.util.converter.NumberStringConverter;
 
 import java.text.DecimalFormat;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  *
@@ -34,11 +37,12 @@ public class TimeSeriesViewController {
     @FXML protected Label levelOfDetailLabel;
     @FXML protected Slider histogramResolutionSlider;
     @FXML protected Label histogramResolutionLabel;
-    @FXML ToggleGroup transferFunction;
     @FXML CheckBox ensemble1CheckBox;
     @FXML CheckBox ensemble2CheckBox;
-    @FXML ToggleButton transferLogarithmicToggle;
-    @FXML ToggleButton transferLinearToggle;
+
+    @FXML ToggleGroup transferFunction;
+    @FXML Toggle transferLinearToggle;
+
     @FXML CheckBox polyCheckBox;
     @FXML CheckBox gridCheckBox;
 
@@ -46,44 +50,6 @@ public class TimeSeriesViewController {
 
     /** The color for ensemble 1 (green) and ensemble 2 (blue). */
     public static final Color[] ensembleColors = new Color[]{Color.web("#00cc52"), Color.web("#4333ff")};
-
-    public void setSharedData(final SharedData sharedData){
-        this.sharedData = sharedData;
-        
-        seriesSets.put(new Color(0, 0, 0, 0.5), sharedData.previewTimeSeries);
-        seriesSets.put(ensembleColors[0], sharedData.experiment.dataModel.correlationSetA);
-        seriesSets.put(ensembleColors[1], sharedData.experiment.dataModel.correlationSetB);
-        
-        timeSeriesChart.setSharedData(sharedData);
-        timeSeriesChart.seriesSets = seriesSets;
-
-        // axes scroll bars
-        Bounds dataBounds = sharedData.experiment.dataModel.getDataBounds();
-        if(dataBounds != null){
-            timeSeriesChart.xAxis.setScrollBarBoundsDC(dataBounds);
-            timeSeriesChart.yAxis.setScrollBarBoundsDC(dataBounds);
-        }
-
-
-//        timeSeriesChart.drawEachNthDataPointProperty().bind(detailSlider.valueProperty());
-
-        // TODO this should be updating some overlay that indicates the input time windows.
-//        sharedData.activeCorrelationMatrixRegionProperty().addListener((ov, t, t1) -> timeSeriesChart.drawChart());
-        
-        // listen to and report changes in zoom and pan 
-        sharedData.visibleTimeRangeProperty().bindBidirectional(timeSeriesChart.clipRegionDCProperty());
-        sharedData.visibleTimeRangeProperty().addListener((ov, t, t1) -> drawChart());
-        
-        // when a new correlation matrix has been computed, reset the view
-        sharedData.correlationMatrixProperty().addListener((ov, t, t1) -> resetView());
-
-        sharedData.experiment.dataModel.correlationSetAAggregator.binSizeProperty().addListener((observable, oldValue, newValue) -> {
-            levelOfDetailLabel.setText(
-                newValue.intValue() == 1 ? "Showing full resolution." : "bin size: "+newValue.intValue()
-            );
-        });
-
-    }
 
     public void initialize(){
 
@@ -99,7 +65,7 @@ public class TimeSeriesViewController {
         timeSeriesChart.clipRegionDCProperty().addListener(this::updateTickUnits);
 
         // axes configuration
-        timeSeriesChart.xAxis.setTickLabelFormatter(new NumberStringConverter(new  DecimalFormat("####")));
+        timeSeriesChart.xAxis.setTickLabelFormatter(new NumberStringConverter(new DecimalFormat("####")));
         timeSeriesChart.xAxis.setLabel("Year");
         timeSeriesChart.yAxis.setLabel("Temperature ˚C");
 
@@ -107,13 +73,7 @@ public class TimeSeriesViewController {
         timeSeriesChart.drawEnsemble1Property().bind(ensemble1CheckBox.selectedProperty());
         timeSeriesChart.drawEnsemble2Property().bind(ensemble2CheckBox.selectedProperty());
 
-        // level of detail slider
-//        detailSlider.valueProperty().addListener((ov, t, t1) -> {
-//            levelOfDetailLabel.setText("show every N-th point: "+Math.round((Double)t1));
-//            timeSeriesChart.drawChart();
-//        });
-
-        // binning slider
+        // histogram resolution slider
         histogramResolutionSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
             float newTransparency = newValue.floatValue();
             histogramResolutionLabel.setText(String.format("histogram resolution: %s", (int)newTransparency));
@@ -121,16 +81,86 @@ public class TimeSeriesViewController {
             drawChart();
         });
 
-        polyCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> ((HistogramTimeSeriesChart) timeSeriesChart).drawPoly = newValue);
-        gridCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> ((HistogramTimeSeriesChart) timeSeriesChart).drawGrid = newValue);
+        // line and polygon draw options
+        polyCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            ((HistogramTimeSeriesChart) timeSeriesChart).drawPoly = newValue;
+            timeSeriesChart.drawContents();
+        });
+        gridCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            ((HistogramTimeSeriesChart) timeSeriesChart).drawGrid = newValue;
+            timeSeriesChart.drawContents();
+        });
 
+        // transfer function toggle
         transferFunction.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
             ((HistogramTimeSeriesChart) timeSeriesChart).useLinearTransfer = newValue == transferLinearToggle;
             timeSeriesChart.drawContents();
         });
 
     }
-    
+
+    public void setSharedData(final SharedData sharedData){
+        this.sharedData = sharedData;
+
+        timeSeriesChart.setSharedData(sharedData);
+
+        // define the two time series sets with their respective colors
+        seriesSets.put(new Color(0, 0, 0, 0.5), sharedData.previewTimeSeries);
+        seriesSets.put(ensembleColors[0], sharedData.experiment.dataModel.correlationSetA);
+        seriesSets.put(ensembleColors[1], sharedData.experiment.dataModel.correlationSetB);
+        timeSeriesChart.seriesSets = seriesSets;
+
+        // when a new correlation matrix has been computed, reset the view
+        sharedData.correlationMatrixProperty().addListener((ov, t, newMatrix) -> {
+            setScrollBarRangesToDataBounds(newMatrix);
+            resetView();
+        });
+
+        // when the ensemble selection changes, update the data bounds
+        ensemble1CheckBox.selectedProperty().addListener((ov, old, newState) -> setScrollBarRangesToDataBounds(sharedData.getCorrelationMatrix()));
+        ensemble2CheckBox.selectedProperty().addListener((ov, old, newState) -> setScrollBarRangesToDataBounds(sharedData.getCorrelationMatrix()));
+
+
+        // TODO this should be updating some overlay that indicates the input time windows.
+//        sharedData.activeCorrelationMatrixRegionProperty().addListener((ov, t, t1) -> timeSeriesChart.drawChart());
+
+        // listen to and report changes in zoom and pan
+        sharedData.visibleTimeRangeProperty().bindBidirectional(timeSeriesChart.clipRegionDCProperty());
+
+        // adapt text of the group size label to the currently used group size
+        sharedData.experiment.dataModel.correlationSetAAggregator.groupSizeProperty().addListener((observable, oldValue, newValue) -> {
+            levelOfDetailLabel.setText(
+                    newValue.intValue() == 1 ? "Showing full resolution." : "group size: " + newValue.intValue()
+            );
+        });
+
+        // enable controls only if a correlation matrix is selected
+        timeSeriesPane.disableProperty().bind(sharedData.correlationMatrixProperty().isNull());
+    }
+
+    private void setScrollBarRangesToDataBounds(CorrelationMatrix matrix) {
+
+        if(matrix == null){
+            System.out.println(String.format("return"));
+            return;
+        }
+        assert matrix.metadata != null;
+
+        Bounds dataBounds;
+        // if both or none is selected, use the bounds for both ensembles
+        if (ensemble1CheckBox.isSelected() == ensemble2CheckBox.isSelected()) {
+            dataBounds = DataModel.getDataBounds(matrix.metadata.setA, matrix.metadata.setB);
+            // otherwise use the data bounds of the selected ensemble
+        } else {
+            List<TimeSeries> activeEnsemble = ensemble1CheckBox.isSelected() ? matrix.metadata.setA : matrix.metadata.setB;
+            dataBounds = DataModel.getDataBounds(activeEnsemble);
+        }
+        if(dataBounds != null){
+            timeSeriesChart.xAxis.setScrollBarBoundsDC(dataBounds);
+            timeSeriesChart.yAxis.setScrollBarBoundsDC(dataBounds);
+        }
+    }
+
     void updateTickUnits(ObservableValue<? extends Bounds> observable, Bounds oldValue, Bounds newValue){
         double xRange = timeSeriesChart.xAxis.getRange(),
                yRange = timeSeriesChart.yAxis.getRange();
@@ -141,7 +171,8 @@ public class TimeSeriesViewController {
         timeSeriesChart.xAxis.setTickUnit(xTickUnit);
         timeSeriesChart.yAxis.setTickUnit(yTickUnit);
     }
-    
+
+    // Is also wired to the reset button
     public void resetView() {
         timeSeriesChart.resetView();
     }

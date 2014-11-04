@@ -1,12 +1,12 @@
 package Gui;
 
-import Data.DataModel;
 import Data.Experiment;
 import Data.IO.FileModel;
 import Data.IO.LineParser;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.concurrent.Task;
+import javafx.concurrent.Worker;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
@@ -40,10 +40,9 @@ public class StartUpWizardController extends WindowController implements Initial
     // business logic data
     // -------------------------------------------------------------------------
     
-    DataModel dataModel;
     private FileSelector experimentFileSelector;
-    private SVFileSelector ts1Selector;
-    private SVFileSelector ts2Selector;
+    private SeparatedValueFileSelector ts1Selector;
+    private SeparatedValueFileSelector ts2Selector;
 
     // -------------------------------------------------------------------------
     // injected control elements
@@ -64,7 +63,7 @@ public class StartUpWizardController extends WindowController implements Initial
     @FXML private TextField file2CharacterSeparatorText;
     @FXML private TextField file2FixedWidthSeparatorText;
     @FXML private RadioMenuItem file2TabSeparatorRadio;
-
+    @FXML private ProgressIndicator parserProgressIndicator;
     @FXML private Button experimentFileSelectButton;
 
     @FXML private Button loadButton;
@@ -80,8 +79,8 @@ public class StartUpWizardController extends WindowController implements Initial
 
         // pass GUI elements to file selector logic objects
         experimentFileSelector = new FileSelector(experimentFileSelectButton);
-        ts1Selector = new SVFileSelector(tsFile1SelectButton, file1Separator, file1FixedWidthSeparatorText, file1CharacterSeparatorText, file1CharacterSeparatorRadio, file1FixedWidthSeparatorRadio, file1TabSeparatorRadio);
-        ts2Selector = new SVFileSelector(tsFile2SelectButton, file2Separator, file2FixedWidthSeparatorText, file2CharacterSeparatorText, file2CharacterSeparatorRadio, file2FixedWidthSeparatorRadio, file2TabSeparatorRadio);
+        ts1Selector = new SeparatedValueFileSelector(tsFile1SelectButton, file1Separator, file1FixedWidthSeparatorText, file1CharacterSeparatorText, file1CharacterSeparatorRadio, file1FixedWidthSeparatorRadio, file1TabSeparatorRadio);
+        ts2Selector = new SeparatedValueFileSelector(tsFile2SelectButton, file2Separator, file2FixedWidthSeparatorText, file2CharacterSeparatorText, file2CharacterSeparatorRadio, file2FixedWidthSeparatorRadio, file2TabSeparatorRadio);
 
         // create button disable logic
         ts1Selector.getFileProperty().addListener((observable, oldValue, newValue) -> createButton.setDisable(newValue == null || ts2Selector.getFile() == null));
@@ -135,8 +134,16 @@ public class StartUpWizardController extends WindowController implements Initial
             return new Experiment(ts1Selector.fileModel, ts2Selector.fileModel);
         }};
 
-        Dialogs.create().title("Parsing input time series files.").masthead(null).showWorkerProgress(loadExperiment);
+
         new Thread(loadExperiment).start();
+
+        loadExperiment.setOnFailed(event -> {
+//            Dialogs.create().title("P1231123iles.").masthead(null).showWorkerProgress(loadExperiment);
+            Dialogs.create().title("Failed parsing input time series files.").masthead(event.getSource().getException().getLocalizedMessage()).showError();
+
+        });
+
+        parserProgressIndicator.visibleProperty().bind(loadExperiment.stateProperty().isEqualTo(Worker.State.RUNNING));
 
         loadExperiment.setOnSucceeded(event -> {
             try { mainWindowController.setExperiment(loadExperiment.get()); }
@@ -216,11 +223,11 @@ public class StartUpWizardController extends WindowController implements Initial
     }
 
     /** Initializes given controls with separated value file selector behavior (show select dialog on click, bind selected file to button label.)*/
-    private class SVFileSelector extends FileSelector {
+    private class SeparatedValueFileSelector extends FileSelector {
 
         public final FileModel fileModel = new FileModel(null, new LineParser(16));
 
-        public SVFileSelector(Button loadButton, ToggleGroup separatorSelection, TextField fixedWidthSeparatorText, TextField characterSeparatorText, Toggle characterSeparatorRadio, Toggle fixedWidthSeparatorRadio, Toggle tabSeparatorRadio){//, TextField separatorCharacterTextField
+        public SeparatedValueFileSelector(Button loadButton, ToggleGroup separatorSelection, TextField fixedWidthSeparatorText, TextField characterSeparatorText, Toggle characterSeparatorRadio, Toggle fixedWidthSeparatorRadio, Toggle tabSeparatorRadio){//, TextField separatorCharacterTextField
             super(loadButton);
 
             fileChooser.setSelectedExtensionFilter(new FileChooser.ExtensionFilter("NetCDF Files", ".nc"));

@@ -1,5 +1,6 @@
 package Data;
 
+import Global.Util;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
@@ -190,13 +191,29 @@ public class DataModel {
     /**
      * @return null if no time series are present. the minimum and maximum x and y values of all time series in all ensembles otherwise.
      */
-    public Bounds getDataBounds() {
-        assert getNumberOfEnsembles() == 2 : "Method not adapted to more than two ensembles.";
-        if(getNumberOfTimeSeries() == 0) return null;
-        double minX = Math.min(getMinX(0), getMinX(1));
-        double maxX = Math.max(getMaxX(0), getMaxX(1));
-        double minY = Math.min(getMinY(0), getMinY(1));
-        double maxY = Math.max(getMaxY(0), getMaxY(1));
+    public static Bounds getDataBounds(List<TimeSeries> ensemble1, List<TimeSeries> ensemble2) {
+
+        if(ensemble1.isEmpty() && ensemble2.isEmpty()) return null;
+
+        if(ensemble1.isEmpty()) return getDataBounds(ensemble2);
+        if(ensemble2.isEmpty()) return getDataBounds(ensemble1);
+
+        return Util.union(getDataBounds(ensemble1), getDataBounds(ensemble2));
+
+    }
+
+    /**
+     * @return null if no time series are present. the minimum and maximum x and y values of all time series in all ensembles otherwise.
+     */
+    public static Bounds getDataBounds(List<TimeSeries> ensemble) {
+
+        if(ensemble.size() == 0) return null;
+
+        double minX = ensemble.stream().map(TimeSeries::getMinX).reduce(Math::min).get();
+        double maxX = ensemble.stream().map(TimeSeries::getMaxX).reduce(Math::max).get();
+        double minY = ensemble.stream().map(TimeSeries::getMinY).reduce(Math::min).get();
+        double maxY = ensemble.stream().map(TimeSeries::getMaxY).reduce(Math::max).get();
+
         return new BoundingBox(minX, minY, maxX-minX, maxY-minY);
     }
 }

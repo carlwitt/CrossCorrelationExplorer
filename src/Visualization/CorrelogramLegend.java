@@ -2,7 +2,6 @@ package Visualization;
 
 import Data.Correlation.CorrelationMatrix;
 import Data.SharedData;
-import Data.Statistics.AggregatedCorrelationMatrix;
 import Gui.CorrelogramController;
 import com.sun.javafx.tk.FontLoader;
 import javafx.geometry.BoundingBox;
@@ -19,6 +18,7 @@ import javafx.util.converter.NumberStringConverter;
 import java.util.Locale;
 
 import static Data.Correlation.CorrelationMatrix.*;
+import static Data.Statistics.AggregatedCorrelationMatrix.MatrixRegionData;
 import static Visualization.Correlogram.UNCERTAINTY_VISUALIZATION;
 
 /**
@@ -36,13 +36,13 @@ public class CorrelogramLegend extends CanvasChart {
     /** The correlogram for which this is the legend. */
     private final Correlogram correlogram;
 
-    /** The representative values rendered in the legend. The third dimension contains the values for the input statistics. */
-    private double[/*row*/][/*col*/][/*direction*/] values;
+    /** The sampled values (value range sample) rendered in the legend.
+     * The first dimensions refers to the row, the second dimension to the col and
+     * the third dimension contains the values for the input statistics. */
+    private double[][][] values;
 
     /** Constants for addressing the two dimensions of the legend. */
     final static int VERTICAL = 0, HORIZONTAL = 1;
-    private final static int MINIMUM = 0;
-    private final static int MAXIMUM = 1;
 
     /** Whether to render an overlay scatter plot that shows the distribution of the matrix values. */
     private boolean drawScatterPlot = false;
@@ -74,7 +74,7 @@ public class CorrelogramLegend extends CanvasChart {
         this.paintScale = paintScale;
 
         // configure data source and axis labels
-        updateRenderMode();
+        updateRenderMode(correlogram.renderMode);
 
         // the labels are placed manually at the middle of the blocks
         xAxis.setTickPositionType(NumberAxis.TICK_GENERATION_METHOD.MANUAL);
@@ -128,10 +128,10 @@ public class CorrelogramLegend extends CanvasChart {
      * The reason why the correlogram doesn't do it, is that correlogams without legend might be o.k. in another context,
      * so the correlogram shouldn't have to know anything about its legend.
      */
-    public void updateRenderMode() {
+    public void updateRenderMode(Correlogram.RENDER_MODE renderMode) {
 
         // update data source
-        switch (correlogram.renderMode){
+        switch (renderMode){
             case MEAN_STD_DEV:
                 sourceStatistic[HORIZONTAL] = MEAN;
                 sourceStatistic[VERTICAL] = STD_DEV;
@@ -162,7 +162,11 @@ public class CorrelogramLegend extends CanvasChart {
         // update axis labels
         String xAxisLabel = CorrelogramController.statisticsLabels[sourceStatistic[HORIZONTAL]];
         // if the data source involves significance, add the significance level to the axis label
-        if(sharedData != null && (sourceStatistic[HORIZONTAL]==CorrelationMatrix.NEGATIVE_SIGNIFICANT || sourceStatistic[HORIZONTAL]==CorrelationMatrix.ABSOLUTE_SIGNIFICANT || sourceStatistic[HORIZONTAL]==CorrelationMatrix.POSITIVE_SIGNIFICANT))
+        if(sharedData != null
+            && sharedData.getCorrelationMatrix() != null
+            && (sourceStatistic[HORIZONTAL]==CorrelationMatrix.NEGATIVE_SIGNIFICANT
+                    || sourceStatistic[HORIZONTAL]==CorrelationMatrix.ABSOLUTE_SIGNIFICANT
+                    || sourceStatistic[HORIZONTAL]==CorrelationMatrix.POSITIVE_SIGNIFICANT))
             xAxisLabel += String.format(" (p = %s)", CorrelationMatrix.getSignificanceLevel(sharedData.getCorrelationMatrix().metadata));
         xAxis.setLabel(xAxisLabel);
         yAxis.setLabel(sourceStatistic[VERTICAL] == null ? "" : CorrelogramController.statisticsLabels[sourceStatistic[VERTICAL]]);
@@ -329,7 +333,7 @@ public class CorrelogramLegend extends CanvasChart {
         // cross size in pixels
         double crossSize = 5;
 
-        AggregatedCorrelationMatrix.MatrixRegionData matrixRegionData = sharedData.getActiveCorrelationMatrixRegion();
+        MatrixRegionData matrixRegionData = sharedData.getActiveCorrelationMatrixRegion();
 
         // handle no data: return
         if(matrixRegionData == null) return;
@@ -381,7 +385,7 @@ public class CorrelogramLegend extends CanvasChart {
 
     private void drawLegendTipAggregated(GraphicsContext gc, Affine dataToScreen) {
 
-        AggregatedCorrelationMatrix.MatrixRegionData matrixRegionData = sharedData.getActiveCorrelationMatrixRegion();
+        MatrixRegionData matrixRegionData = sharedData.getActiveCorrelationMatrixRegion();
 
         // handle no data: return
         if(matrixRegionData == null) return;
@@ -450,8 +454,8 @@ public class CorrelogramLegend extends CanvasChart {
                         continue plotCell; // filtered cell isn't plotted
                 }
 
-                pointCoordinates[0] = column.data[matrixRegionData.CORRELATION_DIM][j];
-                pointCoordinates[1] = column.data[matrixRegionData.UNCERTAINTY_DIM][j];
+                pointCoordinates[0] = CorrelationMatrix.isValidStatistic(matrixRegionData.CORRELATION_DIM) ? column.data[matrixRegionData.CORRELATION_DIM][j] : 0;
+                pointCoordinates[1] = CorrelationMatrix.isValidStatistic(matrixRegionData.UNCERTAINTY_DIM) ? column.data[matrixRegionData.UNCERTAINTY_DIM][j] : 0;
                 dataToScreen.transform2DPoints(pointCoordinates, 0, pointCoordinates, 0, 1);
                 gc.strokeRect(pointCoordinates[0]-0.5, pointCoordinates[1]-0.5, 1, 1);
             }
@@ -562,9 +566,8 @@ public class CorrelogramLegend extends CanvasChart {
     }
 
     /**
-     * determines the range of values that the legend covers.
-     * @return the extreme values in each dimension. the first dimension refers to the direction, index with {@link #VERTICAL}, {@link #HORIZONTAL}.
-     * The second dimension refers to minimum maximum, index with {@link #MINIMUM}, {@link #MAXIMUM}.
+     * Determines the range of values that the legend must cover.
+     * @return the bounds of the values in the two source dimensions.
      */
     Bounds getValueRanges(CorrelationMatrix m) {
 

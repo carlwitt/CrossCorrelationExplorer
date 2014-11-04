@@ -1,6 +1,7 @@
 package Data;
 
 import Data.Correlation.CorrelationMatrix;
+import Data.Statistics.AggregatedCorrelationMatrix;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleObjectProperty;
@@ -50,8 +51,8 @@ public class SharedData extends Observable {
 
     /** Specifies the region in the correlation matrix which is currently selected by the user.
      * A null value specifies that no selection is present. */
-    private final ObjectProperty<MatrixRegionData> activeCorrelationMatrixRegion = new SimpleObjectProperty<>(null);
-    public ObjectProperty<MatrixRegionData> activeCorrelationMatrixRegionProperty() { return activeCorrelationMatrixRegion; }
+    private final ObjectProperty<AggregatedCorrelationMatrix.MatrixRegionData> activeCorrelationMatrixRegion = new SimpleObjectProperty<>(null);
+    public ObjectProperty<AggregatedCorrelationMatrix.MatrixRegionData> activeCorrelationMatrixRegionProperty() { return activeCorrelationMatrixRegion; }
     public MatrixRegionData getActiveCorrelationMatrixRegion() { return activeCorrelationMatrixRegion.get(); }
     public void setActiveCorrelationMatrixRegion(MatrixRegionData value) { activeCorrelationMatrixRegion.set(value); }
 

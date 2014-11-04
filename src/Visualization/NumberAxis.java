@@ -111,6 +111,7 @@ public class NumberAxis extends StackPane {
 
         this.isHorizontal = orientation == Orientation.HORIZONTAL;
         scrollBar.setOrientation(orientation);
+        scrollBar.setVisible(false);
         if(!isHorizontal) scrollBar.setRotate(180); // since the axis values increase from the screen bottom to the screen top, the scrollbar values should do so, too
 
 //        update scroll bar when the scroll bar bounds change
@@ -148,7 +149,7 @@ public class NumberAxis extends StackPane {
             double visibleAmount = 100. * getRange() / fullRange;
             scrollBar.setVisibleAmount(visibleAmount);
 
-            boolean scrollbarNecessary = visibleAmount > 0.1 && visibleAmount < 99.9;
+            boolean scrollbarNecessary = visibleAmount < 99.9;
             scrollBar.setVisible(scrollbarNecessary);
 
             if(scrollbarNecessary){

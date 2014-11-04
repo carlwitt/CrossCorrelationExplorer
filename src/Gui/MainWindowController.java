@@ -127,12 +127,12 @@ public class MainWindowController extends WindowController implements Initializa
     }
 
     public void quit(){
-
+        org.controlsfx.dialog.
         Dialogs confirmDialog = Dialogs.create().title("There are unsaved changes. Save before exit?");
         if(experiment.isChanged()){
             Action userChoice = confirmDialog.showConfirm();
-            if(userChoice == Dialog.Actions.OK) save();             // exit below (on Actions.NO exit without saving)
-            else if(userChoice == Dialog.Actions.CANCEL) return;    // don't exit
+            if(userChoice == Dialog.ACTION_OK) save();             // exit below (on Actions.NO exit without saving)
+            else if(userChoice == Dialog.ACTION_CANCEL) return;    // don't exit
         }
 
         System.exit(0);

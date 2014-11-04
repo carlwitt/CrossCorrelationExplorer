@@ -12,6 +12,7 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Pane;
 import org.controlsfx.control.RangeSlider;
 
 import java.net.URL;
@@ -32,6 +33,7 @@ public class MatrixFilterController implements Initializable{
     @FXML private Button updateButton;
     @FXML private CheckBox autoUpdateCheckBox;
     @FXML private GridPane sliderGrid;
+    @FXML private Pane matrixFilterRoot;
 
     RangeSlider[] sliders = new RangeSlider[CorrelationMatrix.NUM_STATS];
     Label[] lowValueLabels = new Label[CorrelationMatrix.NUM_STATS];    // the labels reflect the current slider positions.
@@ -86,37 +88,49 @@ public class MatrixFilterController implements Initializable{
         this.sharedData = sharedData;
 
         // when the correlation matrix changes, update the slider bounds
-        sharedData.correlationMatrixProperty().addListener((observable, oldValue, newMatrix) -> {
+        sharedData.correlationMatrixProperty().addListener(this::adaptSliderRangesToMatrix);
 
-            for (int STAT = 0; STAT < sliders.length; STAT++) {
+        matrixFilterRoot.disableProperty().bind(sharedData.correlationMatrixProperty().isNull());
 
-                double newMin = newMatrix.getMin(STAT);
-                double newMax = newMatrix.getMax(STAT);
+    }
 
-                // TODO update ControlsFX and simplify code
-                // if the range is too small, the range slider control causes a stack overflow! (was reported and is fixed in the next version)
-                if(Math.abs(newMax - newMin) > 1e-10){
+    /** Sets the minima and the maxima of the sliders to the minimum/maximum values found in that statistic of the matrix.
+     * Resets the sliders.
+     */
+    private void adaptSliderRangesToMatrix(ObservableValue<? extends CorrelationMatrix> observable, CorrelationMatrix oldValue, CorrelationMatrix newMatrix){
 
-                    sliders[STAT].setMin(newMin);
-                    sliders[STAT].setMax(newMax);
+        boolean previousState = autoUpdateCheckBox.isSelected();
+        autoUpdateCheckBox.setSelected(false);
 
-                    sliders[STAT].setVisible(true);
-                    lowValueLabels[STAT].setVisible(true);
-                    highValueLabels[STAT].setVisible(true);
+        for (int STAT = 0; STAT < sliders.length; STAT++) {
 
-                } else {
-                    sliders[STAT].setVisible(false);
-                    lowValueLabels[STAT].setVisible(false);
-                    highValueLabels[STAT].setVisible(false);
-                }
+            double newMin = newMatrix.getMin(STAT);
+            double newMax = newMatrix.getMax(STAT);
 
+            // TODO update ControlsFX and simplify code
+            // if the range is too small, the range slider control causes a stack overflow! (was reported and is fixed in the next version)
+            if(Math.abs(newMax - newMin) > 1e-10){
+
+                sliders[STAT].setMin(newMin);
+                sliders[STAT].setMax(newMax);
+
+                sliders[STAT].setVisible(true);
+                lowValueLabels[STAT].setVisible(true);
+                highValueLabels[STAT].setVisible(true);
+
+            } else {
+                sliders[STAT].setVisible(false);
+                lowValueLabels[STAT].setVisible(false);
+                highValueLabels[STAT].setVisible(false);
             }
 
-            // when selecting a new correlogram, reset sliders to make sure that the entire correlogram is visible.
-            resetSliders(null);
+        }
 
-        });
+        // restore previous auto update state
+        autoUpdateCheckBox.setSelected(previousState);
 
+        // when selecting a new correlogram, reset sliders to make sure that the entire correlogram is visible.
+        resetSliders(null);
     }
 
     /**
@@ -140,10 +154,8 @@ public class MatrixFilterController implements Initializable{
             if(sliders[i].isVisible()){
                 newFilterRanges[i][0] = sliders[i].getLowValue();
                 newFilterRanges[i][1] = sliders[i].getHighValue();
-//                System.out.println(String.format("%s: [%s, %s]", CorrelationMatrix.statisticsLabels[i], newFilterRanges[i][0], newFilterRanges[i][1]));
             } else {
-                newFilterRanges[i] = null;///[0] = matrix.getMin(i);
-//                newFilterRanges[i][1] = matrix.getMax(i);
+                newFilterRanges[i] = null;
             }
 
         }
@@ -153,9 +165,9 @@ public class MatrixFilterController implements Initializable{
 
     public void resetSliders(ActionEvent e){
 
-//        // temporarily disable the auto update to avoid a chain of update requests
-//        boolean previousState = autoUpdateCheckBox.isSelected();
-//        autoUpdateCheckBox.setSelected(false);
+        // temporarily disable the auto update to avoid a chain of update requests
+        boolean previousState = autoUpdateCheckBox.isSelected();
+        autoUpdateCheckBox.setSelected(false);
 
         // reset slider values
         for(RangeSlider slider : sliders){
@@ -163,12 +175,8 @@ public class MatrixFilterController implements Initializable{
             slider.setHighValue(slider.getMax());
         }
 
-        publishChanges(null);
-
-//        // restore previous auto update state
-//        autoUpdateCheckBox.setSelected(previousState);
-//        // trigger the pending update if auto update was enabled previously
-//        sliderChanged(null, null, null);
+        // restore previous auto update state
+        autoUpdateCheckBox.setSelected(previousState);
 
     }
 

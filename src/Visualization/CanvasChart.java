@@ -91,8 +91,8 @@ abstract class CanvasChart extends AnchorPane {
         BidirectionalBinding.<Bounds,Bounds>bindBidirectional(clipRegionDCProperty(), xAxis.axisBoundsDCProperty(), this::updateAxesRanges, this::updateClipRegionBounds);
         BidirectionalBinding.<Bounds,Bounds>bindBidirectional(clipRegionDCProperty(), yAxis.axisBoundsDCProperty(), this::updateAxesRanges, this::updateClipRegionBounds);
 
-        dataPointsPerPixelRatio.addListener((observable, oldValue, newValue) -> {
-            adaptYAxis(xAxis.getAxisBoundsDC());
+        dataPointsPerPixelRatio.addListener((observable, oldValue, newDataPointsPerPixelRatio) -> {
+            adaptYAxis(xAxis.getAxisBoundsDC(), newDataPointsPerPixelRatio.doubleValue());
             xAxis.drawContents();
             yAxis.drawContents();
             drawContents();
@@ -143,7 +143,7 @@ abstract class CanvasChart extends AnchorPane {
 
 //        xAxis.axisBoundsDCProperty().addListener((observable, oldValue, newValue) -> drawContents());
 //        yAxis.axisBoundsDCProperty().addListener((observable, oldValue, newValue) -> drawContents());
-        clipRegionDCProperty().addListener((observable, oldValue, newValue) -> drawContents());
+        clipRegionDCProperty().addListener((observable, oldValue, newValue) -> drawContents() );
 
         // init selection rectangle
         selectionRect.setMouseTransparent(true);
@@ -331,7 +331,7 @@ abstract class CanvasChart extends AnchorPane {
         yAxis.setWidth(margins[LEFT]);
         yAxis.setTranslateX(-margins[LEFT]);
 
-        if(aspectRatioFixed()) adaptYAxis(xAxis.getAxisBoundsDC());
+        if(aspectRatioFixed()) adaptYAxis(xAxis.getAxisBoundsDC(), getDataPointsPerPixelRatio());
 
         xAxis.drawContents();
         yAxis.drawContents();
@@ -351,13 +351,15 @@ abstract class CanvasChart extends AnchorPane {
      * Adapts the range of the y axis such that the {@link #dataPointsPerPixelRatio} is satisfied.
      * @param xAxisBounds the desired bounds of the x axis
      */
-    public void adaptYAxis(Bounds xAxisBounds) {
+    public void adaptYAxis(Bounds xAxisBounds, double dataPointsPerPixelRatio) {
+
+        if(Double.isNaN(dataPointsPerPixelRatio)) return;
         // using full width, reducing height to maintain quadratic-shape cells
         // formula derivation
         //      pixels per data point Y / pixels per data point X = ratio
         //   => (height/rangeY) / (width/rangeX) = ratio
         //      solve for rangeY
-        double newYRange = xAxisBounds.getWidth() * yAxis.getHeight() / xAxis.getWidth() / getDataPointsPerPixelRatio();
+        double newYRange = xAxisBounds.getWidth() * yAxis.getHeight() / xAxis.getWidth() / dataPointsPerPixelRatio;
         double diff = newYRange - yAxis.getRange();
         // extend bounds in both directions of the y axis equally.
         setClipRegionDC(new BoundingBox(xAxisBounds.getMinX(), yAxis.getLowerBound() - diff / 2, xAxisBounds.getWidth(), newYRange));

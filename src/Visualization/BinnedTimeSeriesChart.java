@@ -54,8 +54,8 @@ public class BinnedTimeSeriesChart extends TimeSeriesChart {
         // determine bin size from screen space
         int numDataPointsInRange = dataModel.getNumDataPointsInRange(0, xAxis.getLowerBound(), xAxis.getUpperBound());
         int optimalBinSize = (int) Math.max(1, Math.ceil(10. * numDataPointsInRange / getWidth()));
-        aggregators[0].setBinSize(optimalBinSize);
-        aggregators[1].setBinSize(optimalBinSize);
+        aggregators[0].setGroupSize(optimalBinSize);
+        aggregators[1].setGroupSize(optimalBinSize);
 
         for (int ensembleID = 0; ensembleID < aggregators.length; ensembleID++) {
 

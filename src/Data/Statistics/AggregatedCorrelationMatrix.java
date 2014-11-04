@@ -109,21 +109,26 @@ public class AggregatedCorrelationMatrix {
                 }
 
 
-                double correlation = correlationColumn.data[region.CORRELATION_DIM][j];
-                double uncertainty = correlationColumn.data[region.UNCERTAINTY_DIM][j];
-                if( ! Double.isNaN(correlation)){
-                    aggregateCorrelationStatistics.addValue(correlation);
-                    notNaNCorrelations++;
+                if(CorrelationMatrix.isValidStatistic(region.CORRELATION_DIM)){
+                    double correlation = correlationColumn.data[region.CORRELATION_DIM][j];
+                    if( ! Double.isNaN(correlation)){
+                        aggregateCorrelationStatistics.addValue(correlation);
+                        notNaNCorrelations++;
+                    }
                 }
-                if( ! Double.isNaN(uncertainty)){
-                    minUncertainty = Math.min(minUncertainty, uncertainty);
-                    maxUncertainty = Math.max(maxUncertainty, uncertainty);
-                    averageUncertainty += uncertainty;
-                    notNaNUncertainties++;
+                if(CorrelationMatrix.isValidStatistic(region.UNCERTAINTY_DIM)){
+                    double uncertainty = correlationColumn.data[region.UNCERTAINTY_DIM][j];
+                    if( ! Double.isNaN(uncertainty)){
+                        minUncertainty = Math.min(minUncertainty, uncertainty);
+                        maxUncertainty = Math.max(maxUncertainty, uncertainty);
+                        averageUncertainty += uncertainty;
+                        notNaNUncertainties++;
 
-                    assert Double.isNaN(minUncertainty) || minUncertainty >= 0 : String.format("Negative uncertainty: %s in column \n%s",minUncertainty, correlationColumn);
-                    assert Double.isNaN(maxUncertainty) || maxUncertainty >= 0 : String.format("Negative max uncertainty: %s", maxUncertainty);
+                        assert Double.isNaN(minUncertainty) || minUncertainty >= 0 : String.format("Negative uncertainty: %s in column \n%s",minUncertainty, correlationColumn);
+                        assert Double.isNaN(maxUncertainty) || maxUncertainty >= 0 : String.format("Negative max uncertainty: %s", maxUncertainty);
+                    }
                 }
+
 
             }
         }

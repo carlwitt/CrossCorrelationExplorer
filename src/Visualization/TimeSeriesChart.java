@@ -2,16 +2,14 @@ package Visualization;
 
 import Data.ComplexSequence;
 import Data.Correlation.CorrelationMatrix;
-import Data.DataModel;
 import Data.SharedData;
 import Data.TimeSeries;
+import Global.Util;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.ObservableList;
-import javafx.geometry.BoundingBox;
-import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
@@ -246,21 +244,21 @@ public class TimeSeriesChart extends CanvasChart implements DeferredDrawing {
 //    }
     
     public void resetView() {
-        DataModel dataModel = sharedData.experiment.dataModel;
-        double maxX = Math.max(dataModel.getMaxX(0), dataModel.getMaxX(1));
-        double minX = Math.min(dataModel.getMinX(0), dataModel.getMinX(1));
-        double xRange = maxX - minX;
-        double maxY = Math.max(dataModel.getMaxY(0), dataModel.getMaxY(1));
-        double minY = Math.min(dataModel.getMinY(0), dataModel.getMinY(1));
-        double yRange = maxY - minY;
-        if(xRange < 0 || yRange < 0){
-            xRange = 1;
-            yRange = 1;
-                    
-        }
-        Bounds newVisibleRange = new BoundingBox(minX, minY, xRange, yRange);
+//        DataModel dataModel = sharedData.experiment.dataModel;
+//        double maxX = Math.max(dataModel.getMaxX(0), dataModel.getMaxX(1));
+//        double minX = Math.min(dataModel.getMinX(0), dataModel.getMinX(1));
+//        double xRange = maxX - minX;
+//        double maxY = Math.max(dataModel.getMaxY(0), dataModel.getMaxY(1));
+//        double minY = Math.min(dataModel.getMinY(0), dataModel.getMinY(1));
+//        double yRange = maxY - minY;
+//        if(xRange < 0 || yRange < 0){
+//            xRange = 1;
+//            yRange = 1;
+//
+//        }
+//        Bounds newVisibleRange = new BoundingBox(minX, minY, xRange, yRange);
 
-        clipRegionDC.set(newVisibleRange);
+        clipRegionDC.set(Util.union(xAxis.getScrollBarBoundsDC(),yAxis.getScrollBarBoundsDC()));
         drawContents();
     }
 

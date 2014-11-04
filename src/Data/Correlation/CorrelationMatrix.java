@@ -611,7 +611,24 @@ public class CorrelationMatrix {
     // -----------------------------------------------------------------------------------------------------------------
 
     /** @return the number of columns (=windows) in the matrix. */
-    public int getSize() { assert metadata.numBaseWindows == columns.size(); return columns.size(); }
+    public int getSize() {
+        assert metadata.numBaseWindows == columns.size();
+        return columns.size();
+    }
+
+    public int getLastFilledColumnIndex(int STATISTIC){
+        // scan columns from back
+        for (int colIdx = columns.size()-1; colIdx >= 0; colIdx--) {
+            CorrelationColumn correlationColumn = columns.get(colIdx);
+            for (int rowIdx = 0; rowIdx < correlationColumn.getSize(); rowIdx++) {
+                // if column has a non nan value, this is the highest index column with a non nan value
+                if(! Double.isNaN(correlationColumn.data[STATISTIC][rowIdx])){
+                    return colIdx;
+                }
+            }
+        }
+        return -1;
+    }
 
     /** @return the index of the first time series value where the first column (time window) starts. */
     int getStartOffsetInTimeSeries(){
@@ -684,6 +701,13 @@ public class CorrelationMatrix {
             extrema[STATISTIC][MAXIMUM] = descriptiveStatistics.getMax();
         }
         return extrema[STATISTIC][MINMAX];
+    }
+
+    /**
+     * @return whether the given integer refers to an existing statistic, e.g. is one of {@link #MEAN}, {@link #MEDIAN}, etc.
+     */
+    public static boolean isValidStatistic(int SOURCE_STATISTIC){
+        return SOURCE_STATISTIC >= 0 && SOURCE_STATISTIC < NUM_STATS;
     }
 
     // -----------------------------------------------------------------------------------------------------------------

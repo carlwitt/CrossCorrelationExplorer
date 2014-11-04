@@ -155,7 +155,6 @@ public class FileModel {
                         // check that the x axis location difference is the same as between all other points
                         if(i>0) {
                             double currentXAxisSpacing = firstColumn[i]-firstColumn[i-1];
-                            System.out.println(String.format("currentXAxisSpacing: %s", currentXAxisSpacing));
                             if( Math.abs(currentXAxisSpacing - xAxisSpacing) > 1e-10){
                                throw new UnevenSpacingException(String.format("The spacing between consecutive data points must be constant. Found %s between data points %s and %s while assuming a general spacing of %s.",currentXAxisSpacing,i,i+1,xAxisSpacing));
                             }
@@ -213,8 +212,7 @@ public class FileModel {
             firstColumn[i] = rowValues[i][0];
             if(i>0) {
                 double currentXAxisSpacing = firstColumn[i]-firstColumn[i-1];
-                System.out.println(String.format("currentXAxisSpacing: %s", currentXAxisSpacing));
-                if( Math.abs(currentXAxisSpacing - xAxisSpacing) > 1e-10){
+                if( Math.abs(currentXAxisSpacing - xAxisSpacing) > 1e-3){
                     throw new UnevenSpacingException(String.format("The spacing between consecutive data points must be constant. Found %s between data points %s and %s while assuming a general spacing of %s.",currentXAxisSpacing,i,i+1,xAxisSpacing));
                 } else { xAxisSpacing = currentXAxisSpacing; }
             }

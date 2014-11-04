@@ -5,8 +5,8 @@
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Text?>
-<AnchorPane layoutX="0.0" layoutY="0.0" prefHeight="-1.0" prefWidth="-1.0" style="-fx-background-color: white;" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.CorrelogramController">
-  <VBox id="VBox" alignment="CENTER" maxWidth="20.0" minWidth="20.0" prefWidth="20.0" spacing="5.0" style="-fx-background-color: gainsboro;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
+<AnchorPane fx:id="correlogramRoot" disable="false" layoutX="0.0" layoutY="0.0" prefHeight="-1.0" prefWidth="-1.0" style="-fx-background-color: white;" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.CorrelogramController">
+  <VBox id="VBox" alignment="CENTER" disable="false" maxWidth="20.0" minWidth="20.0" prefWidth="20.0" spacing="5.0" style="-fx-background-color: gainsboro;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
     <Text fontSmoothingType="GRAY" rotate="270.0" smooth="true" strikethrough="false" strokeType="OUTSIDE" strokeWidth="0.0" text="Correlation View" translateX="0.0" translateY="45.0" VBox.vgrow="NEVER">
       <VBox.margin>
         <Insets top="2.0" />
@@ -42,7 +42,7 @@
         <ToggleGroup fx:id="uncertaintyVisualizationMethod" />
       </toggleGroup>
       <tooltip>
-        <Tooltip text="Toggle between uncertainty visualization methods color and column width." />
+        <Tooltip text="Toggle between uncertainty visualization methods color and hinton visualization." />
       </tooltip>
     </ToggleButton>
     <ToggleButton id="linkWithTimeSeriesViewToggle" fx:id="columnUncertaintyToggle" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" rotate="0.0" selected="false" text="" toggleGroup="$uncertaintyVisualizationMethod" translateX="0.0" translateY="0.0">
@@ -87,7 +87,7 @@
     </Button>
   </VBox>
   <VBox fx:id="correlogramView" maxWidth="1.7976931348623157E308" minWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-    <TabPane id="visualizationSwitcher" fx:id="visualizationSelector" maxHeight="27.0" minHeight="28.0" minWidth="300.0" prefHeight="27.0" prefWidth="1119.0" side="TOP" style="-fx-background-color: white;" styleClass="mainFxmlClass" tabClosingPolicy="UNAVAILABLE" tabMaxHeight="26.0" tabMinHeight="20.0" VBox.vgrow="NEVER">
+    <TabPane id="visualizationSwitcher" fx:id="visualizationSelector" disable="false" maxHeight="27.0" minHeight="28.0" minWidth="300.0" prefHeight="27.0" prefWidth="1119.0" side="TOP" style="-fx-background-color: white;" styleClass="mainFxmlClass" tabClosingPolicy="UNAVAILABLE" tabMaxHeight="26.0" tabMinHeight="20.0" VBox.vgrow="NEVER">
       <Tab closable="false" text="" />
       <Tab closable="false" text="" />
       <Tab closable="false" text="" />

@@ -3,52 +3,49 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<BorderPane id="BorderPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" prefHeight="-1.0" prefWidth="-1.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.MatrixFilterController">
-  <left>
-    <GridPane fx:id="sliderGrid" gridLinesVisible="false" hgap="5.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="-1.0" prefWidth="-1.0" vgap="2.0" BorderPane.alignment="CENTER">
-      <columnConstraints>
-        <ColumnConstraints halignment="RIGHT" hgrow="NEVER" maxWidth="370.0" minWidth="60.0" prefWidth="370.0" />
-        <ColumnConstraints fillWidth="true" hgrow="NEVER" maxWidth="60.0" minWidth="60.0" prefWidth="60.0" />
-        <ColumnConstraints fillWidth="true" hgrow="ALWAYS" maxWidth="1.7976931348623157E308" minWidth="10.0" prefWidth="400.0" />
-        <ColumnConstraints hgrow="NEVER" maxWidth="60.0" minWidth="60.0" prefWidth="60.0" />
-        <ColumnConstraints fillWidth="false" hgrow="NEVER" maxWidth="35.0" minWidth="35.0" prefWidth="35.0" />
-      </columnConstraints>
-      <Label text="Mean of Correlation Values" textAlignment="LEFT" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="0" />
-      <Label text="Standard Deviation" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="1" />
-      <Label text="Median" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="2" />
-      <Label text="Interquartile Range" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="3" />
-      <Label text="Percentage Significantly Positive Correlated Window Pairs" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="4" />
-      <Label text="Percentage Significantly Negative Correlated Window Pairs" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="5" />
-      <Label text="Percentage Significantly Correlated Window Pairs" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="6" />
-      <rowConstraints>
-        <RowConstraints maxHeight="25.0" minHeight="10.0" prefHeight="25.0" vgrow="SOMETIMES" />
-        <RowConstraints maxHeight="25.0" minHeight="10.0" prefHeight="25.0" vgrow="SOMETIMES" />
-        <RowConstraints maxHeight="25.0" minHeight="10.0" prefHeight="25.0" vgrow="SOMETIMES" />
-        <RowConstraints maxHeight="25.0" minHeight="10.0" prefHeight="25.0" vgrow="SOMETIMES" />
-        <RowConstraints maxHeight="25.0" minHeight="10.0" prefHeight="25.0" vgrow="SOMETIMES" />
-        <RowConstraints maxHeight="25.0" minHeight="10.0" prefHeight="25.0" vgrow="SOMETIMES" />
-        <RowConstraints maxHeight="25.0" minHeight="10.0" prefHeight="25.0" vgrow="SOMETIMES" />
-      </rowConstraints>
-      <BorderPane.margin>
-        <Insets />
-      </BorderPane.margin>
-    </GridPane>
-  </left>
-  <right>
-    <HBox prefHeight="-1.0" prefWidth="-1.0">
-      <padding>
-        <Insets bottom="2.0" top="5.0" />
-      </padding>
-      <VBox id="VBox" alignment="CENTER" spacing="5.0" HBox.hgrow="ALWAYS">
-        <Button fx:id="resetButton" focusTraversable="false" mnemonicParsing="false" onAction="#resetSliders" text="Reset Sliders" />
-        <Separator orientation="VERTICAL" prefHeight="10.0" visible="false" VBox.vgrow="ALWAYS" />
-        <Button fx:id="updateButton" contentDisplay="RIGHT" focusTraversable="false" mnemonicParsing="false" onAction="#publishChanges" text="Update" />
-        <CheckBox fx:id="autoUpdateCheckBox" allowIndeterminate="false" focusTraversable="false" indeterminate="false" mnemonicParsing="false" selected="true" text="auto update">
-          <tooltip>
-            <Tooltip text="When enabled, each slider directly updates the correlogram view." />
-          </tooltip>
-        </CheckBox>
-      </VBox>
-    </HBox>
-  </right>
-</BorderPane>
+<HBox fx:id="matrixFilterRoot" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="-Infinity" prefHeight="-1.0" prefWidth="-1.0" style="-fx-background-color: white;" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.MatrixFilterController">
+  <ScrollPane fitToHeight="false" fitToWidth="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" pannable="false" prefHeight="-1.0" prefViewportHeight="200.0" prefViewportWidth="200.0" prefWidth="-1.0" style="-fx-border-color: rgb(243,243,243);&#10;" HBox.hgrow="ALWAYS">
+    <AnchorPane id="Content" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="0.0" prefHeight="-1.0" prefWidth="-1.0" style="">
+      <GridPane fx:id="sliderGrid" gridLinesVisible="false" hgap="5.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" prefHeight="-1.0" prefWidth="-1.0" style="" vgap="2.0">
+        <Label text="Mean of Correlation Values" textAlignment="LEFT" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="0" />
+        <Label text="Standard Deviation" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="1" />
+        <Label text="Median" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="2" />
+        <Label text="Interquartile Range" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="3" />
+        <Label text="Percentage Significantly Positive Correlated Window Pairs" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="4" />
+        <Label text="Percentage Significantly Negative Correlated Window Pairs" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="5" />
+        <Label text="Percentage Significantly Correlated Window Pairs" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="6" />
+        <columnConstraints>
+          <ColumnConstraints halignment="RIGHT" hgrow="NEVER" maxWidth="370.0" minWidth="60.0" prefWidth="370.0" />
+          <ColumnConstraints fillWidth="true" hgrow="NEVER" maxWidth="60.0" minWidth="60.0" prefWidth="60.0" />
+          <ColumnConstraints fillWidth="true" hgrow="ALWAYS" maxWidth="1.7976931348623157E308" minWidth="10.0" prefWidth="300.0" />
+          <ColumnConstraints hgrow="NEVER" maxWidth="60.0" minWidth="60.0" prefWidth="60.0" />
+          <ColumnConstraints fillWidth="false" hgrow="NEVER" maxWidth="35.0" minWidth="35.0" prefWidth="35.0" />
+        </columnConstraints>
+        <rowConstraints>
+          <RowConstraints maxHeight="25.0" minHeight="10.0" prefHeight="25.0" vgrow="SOMETIMES" />
+          <RowConstraints maxHeight="25.0" minHeight="10.0" prefHeight="25.0" vgrow="SOMETIMES" />
+          <RowConstraints maxHeight="25.0" minHeight="10.0" prefHeight="25.0" vgrow="SOMETIMES" />
+          <RowConstraints maxHeight="25.0" minHeight="10.0" prefHeight="25.0" vgrow="SOMETIMES" />
+          <RowConstraints maxHeight="25.0" minHeight="10.0" prefHeight="25.0" vgrow="SOMETIMES" />
+          <RowConstraints maxHeight="25.0" minHeight="10.0" prefHeight="25.0" vgrow="SOMETIMES" />
+          <RowConstraints maxHeight="25.0" minHeight="10.0" prefHeight="25.0" vgrow="SOMETIMES" />
+        </rowConstraints>
+      </GridPane>
+    </AnchorPane>
+  </ScrollPane>
+  <HBox prefHeight="-1.0" prefWidth="-1.0" HBox.hgrow="NEVER">
+    <padding>
+      <Insets bottom="2.0" top="5.0" />
+    </padding>
+    <VBox id="VBox" alignment="CENTER" spacing="5.0" HBox.hgrow="ALWAYS">
+      <Button fx:id="resetButton" focusTraversable="false" mnemonicParsing="false" onAction="#resetSliders" text="Reset Sliders" />
+      <Separator orientation="VERTICAL" prefHeight="10.0" visible="false" VBox.vgrow="ALWAYS" />
+      <Button fx:id="updateButton" contentDisplay="RIGHT" focusTraversable="false" mnemonicParsing="false" onAction="#publishChanges" text="Update" />
+      <CheckBox fx:id="autoUpdateCheckBox" allowIndeterminate="false" focusTraversable="false" indeterminate="false" mnemonicParsing="false" selected="true" text="auto update">
+        <tooltip>
+          <Tooltip text="When enabled, each slider directly updates the correlogram view." />
+        </tooltip>
+      </CheckBox>
+    </VBox>
+  </HBox>
+</HBox>

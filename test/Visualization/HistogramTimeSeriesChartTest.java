@@ -2,6 +2,7 @@ package Visualization;
 
 import com.fastdtw.util.Arrays;
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.math3.util.FastMath;
 import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;
@@ -53,6 +54,48 @@ public class HistogramTimeSeriesChartTest {
         }
 
         return -1;
+    }
+
+    // evaluating FastMath.pow(double, 3) is about 2.5 times faster than evaluating Math.pow(double, 3) in math.
+    // evaluating double * double * double is about 5 times faster than using FastMath.
+
+    @Test public void testPowPerformanceBrute3(){
+        double[] data = new double[1000000];
+        for (int i = 0; i < data.length; i++) data[i] = Math.random();
+
+        long before = System.currentTimeMillis();
+
+        double sum = 0;
+        for (int i = 0; i < data.length; i++) sum += data[i]*data[i]*data[i];
+
+        System.out.println(String.format("sum: %s", sum));
+        System.out.println(String.format("System.currentTimeMillis() - before: %s", System.currentTimeMillis() - before));
+    }
+
+    @Test public void testPowPerformanceFastMath(){
+        double[] data = new double[1000000];
+        for (int i = 0; i < data.length; i++) data[i] = Math.random();
+
+        long before = System.currentTimeMillis();
+
+        double sum = 0;
+        for (int i = 0; i < data.length; i++) sum += FastMath.pow(data[i], 3);
+
+        System.out.println(String.format("sum: %s", sum));
+        System.out.println(String.format("System.currentTimeMillis() - before: %s", System.currentTimeMillis() - before));
+    }
+
+    @Test public void testPowPerformanceMath(){
+        double[] data = new double[1000000];
+        for (int i = 0; i < data.length; i++) data[i] = Math.random();
+
+        long before = System.currentTimeMillis();
+
+        double sum = 0;
+        for (int i = 0; i < data.length; i++) sum += Math.pow(data[i], 3);
+
+        System.out.println(String.format("sum: %s", sum));
+        System.out.println(String.format("System.currentTimeMillis() - before: %s", System.currentTimeMillis() - before));
     }
 
 }

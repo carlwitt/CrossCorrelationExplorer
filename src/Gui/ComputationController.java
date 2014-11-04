@@ -15,6 +15,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.text.Text;
 import org.apache.commons.math3.random.RandomDataGenerator;
 import org.controlsfx.control.CheckListView;
+import org.controlsfx.control.IndexedCheckModel;
 import org.controlsfx.dialog.Dialogs;
 
 import java.net.URL;
@@ -149,6 +150,15 @@ public class ComputationController implements Initializable {
         // connect the computed results table to the data model
         correlogramCacheTable.setItems(sharedData.experiment.cacheKeySet);
 
+        sharedData.experiment.cacheKeySet.addListener((ListChangeListener<WindowMetadata>) c -> {
+            if(c.next() && c.wasAdded()){
+                assert(c.getAddedSize() == 1);
+                WindowMetadata newEntry = c.getAddedSubList().get(0);
+                correlogramCacheTable.getSelectionModel().select(newEntry);
+                correlogramCacheTable.scrollTo(newEntry);
+            }
+        });
+
     }
 
     public void compute(){
@@ -278,7 +288,7 @@ public class ComputationController implements Initializable {
             this.listView = new CheckListView<>(domain);
             this.listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
-            listView.getCheckModel().getSelectedItems().addListener(this::checkBoxClicked);
+            listView.getCheckModel().getCheckedItems().addListener(this::checkBoxClicked);
         }
 
         public void checkBoxClicked(ListChangeListener.Change<? extends TimeSeries> c) {
@@ -319,7 +329,7 @@ public class ComputationController implements Initializable {
 
             // compute how many items can be added
             int numItems = listView.getItems().size();
-            int numUnchecked = numItems - listView.getCheckModel().getSelectedIndices().size();
+            int numUnchecked = numItems - listView.getCheckModel().getCheckedIndices().size();
 
             int toAdd = Math.min(requestedToAdd, numUnchecked);
 
@@ -329,11 +339,11 @@ public class ComputationController implements Initializable {
             Integer[] uncheckedIndices = new Integer[numUnchecked];
             int j = 0;
             for (int i = 0; i < numItems; i++)
-                if( ! listView.getCheckModel().isSelected(i)) uncheckedIndices[j++] = i;
+                if( ! listView.getCheckModel().isChecked(i)) uncheckedIndices[j++] = i;
 
             // generate a random sample of the unchecked indices and check them
             for(Object idx : rdg.nextSample(Arrays.asList(uncheckedIndices),toAdd)){
-                listView.getCheckModel().select((Integer) idx);
+                listView.getCheckModel().check((Integer) idx);
             }
 
         }
@@ -341,31 +351,31 @@ public class ComputationController implements Initializable {
         /** Sets the check box states according to the current sample. */
         private void updateCheckboxes() {
             listeningToChanges = false;
-            MultipleSelectionModel<TimeSeries> checkModel = listView.getCheckModel();
-            checkModel.clearSelection();
+            IndexedCheckModel<TimeSeries> checkModel = listView.getCheckModel();
+            checkModel.clearChecks();
             // selectIndices() seems to be a bit faster than multiple calls to select()
-            checkModel.selectIndices(-1, sample.stream().mapToInt(value -> value.getId() - 1).toArray());
+            checkModel.checkIndices(sample.stream().mapToInt(value -> value.getId() - 1).toArray());
 //            sample.stream().forEach(timeSeries -> checkModel.select(timeSeries.getId() - 1));
             listeningToChanges = true;
         }
 
         /** Fills the sample list according to the current check box states. */
         private void updateSample() {
-            MultipleSelectionModel<TimeSeries> checkModel = listView.getCheckModel();
+            IndexedCheckModel<TimeSeries> checkModel = listView.getCheckModel();
             sample.clear();
-            sample.addAll(checkModel.getSelectedItems());
+            sample.addAll(checkModel.getCheckedItems());
         }
 
         /** Goes through the selection and unchecks checked items and vice versa. */
         private void invertCheckBoxes() {
 
-            MultipleSelectionModel<TimeSeries> checkModel = listView.getCheckModel();
+            IndexedCheckModel<TimeSeries> checkModel = listView.getCheckModel();
 
             for(int i : listView.getSelectionModel().getSelectedIndices()){
-                if(checkModel.isSelected(i)){
-                    checkModel.clearSelection(i);
+                if(checkModel.isChecked(i)){
+                    checkModel.clearCheck(i);
                 } else {
-                    checkModel.select(i);
+                    checkModel.check(i);
                 }
             }
 
