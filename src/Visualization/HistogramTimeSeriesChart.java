@@ -123,6 +123,11 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
         // drawing shouldn't take longer than 10 seconds, otherwise, the loops aborts
         Util.TimeOutChecker timeOutChecker = new Util.TimeOutChecker(10000);
 
+        // use global max bin value
+        int maxPeakFrequency = 0;
+        for (int i = 0; i < xValues.length - 1; i++)
+            maxPeakFrequency = Math.max(maxPeakFrequency, aggregator.maxBinValue[i]);
+
         // start with second time step, drawing polygons connecting to the previous time step
         for (int i = Math.max(1,firstDataPointIdx); i < Math.min(xValues.length, lastDataPointIdx+1); i++) {
             xMinYMaxY[0] = xValues[i];
@@ -134,8 +139,6 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
             double minYSCPrevious = lastXMinYMaxY[1];
             double minYSC = xMinYMaxY[1];
 
-            int maxBinValue = aggregator.maxBinValue[i-1];
-
             // x values of the polygon are constant for the interval between two time steps
             polygonXValues[0] = lastXMinYMaxY[0]-0.5;
             polygonXValues[1] = xMinYMaxY[0];
@@ -143,9 +146,9 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
             polygonXValues[3] = lastXMinYMaxY[0]-0.5;
 
             if(drawPoly && i <= histograms.length)
-                drawPolygons(gc, histograms[i-1], drawOrders[i-1], numBins, binHeightPxPrevious, polygonXValues, polygonYValues, binHeightPx, minYSCPrevious, minYSC, maxBinValue, ensembleColor);
+                drawPolygons(gc, histograms[i-1], drawOrders[i-1], numBins, binHeightPxPrevious, polygonXValues, polygonYValues, binHeightPx, minYSCPrevious, minYSC, maxPeakFrequency, ensembleColor);
             if(drawGrid)
-                drawGrid(gc, histograms[i-1], numBins, lastXMinYMaxY, binHeightPxPrevious, xMinYMaxY, polygonXValues, polygonYValues, binHeightPx, minYSCPrevious, minYSC, maxBinValue, ensembleColor);
+                drawGrid(gc, histograms[i-1], numBins, lastXMinYMaxY, binHeightPxPrevious, xMinYMaxY, polygonXValues, polygonYValues, binHeightPx, minYSCPrevious, minYSC, maxPeakFrequency, ensembleColor);
 
             // copy current values to last values
             lastXMinYMaxY[0] = xMinYMaxY[0];
@@ -239,7 +242,7 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
 
                 gc.setStroke(ensembleColor.deriveColor(0, 1, 1, opacity));
                 gc.setLineWidth(opacity*2.5);
-                gc.strokeLine(polygonXValues[0],polygonYValues[0],polygonXValues[1],polygonYValues[1]);
+                gc.strokeLine(polygonXValues[0],0.5*(polygonYValues[0]+polygonYValues[3]),polygonXValues[1],0.5*(polygonYValues[1]+polygonYValues[2]));
 
 //                        gc.setFill(ensembleColor.interpolate(Color.WHITE,1-opacity));
 //                        gc.fillPolygon(polygonXValues, polygonYValues, 4);
@@ -292,7 +295,7 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
 //        gc.setStroke(Color.BLACK);
 //        gc.setLineWidth(0.7);
 //        gc.setLineCap(StrokeLineCap.BUTT);
-//        if(lastDataPointIdx-firstDataPointIdx<100){
+//        if(lastDataPointIdx-firstDataPointIdx<100){z
 //
 //            // draw each series
 //            double[] points = new double[4];
