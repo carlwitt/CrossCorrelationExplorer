@@ -25,8 +25,9 @@ public class TimeSeriesAverager {
     final int getGroupSize(){ return groupSize.get(); }
     public final IntegerProperty groupSizeProperty(){ return groupSize; }
 
-    /** The histogram resolution defines the number of bins in which the y value range between the minimum and the maximum at a data point index is divided. */
-    public int numBins = 16;
+    /** The bin size defines the range (in data coordinates) that a single bin covers (on the y axis), e.g. 0.1 ˚C. */
+    public double binSize = 0.05;
+
     /**
      * Contains the "slope" distribution between two data point indices.
      * The first dimension refers to the interval index,
@@ -42,6 +43,11 @@ public class TimeSeriesAverager {
      * the second dimension refers to the order index and contains the bin row and column indices encoded as row * numBins + col * numBins. */
     public int[][] drawOrder;
 
+    /** For each histogram, contains the lower bound of the lowest bin.
+     * Given that one bin starts at 0, lowestBinStartsAt is the bin lower bound that the minimum y value lies in.
+     */
+    public double[] lowestBinStartsAt;
+
     /** The minimum group value among all group values at a given group index. */
     public float minValues[];
     /** The maximum group value among all group values at a given group index. */
@@ -50,29 +56,29 @@ public class TimeSeriesAverager {
     /** Reusable auxiliary data structure for sorting the histogram bins. */
     List<Integer> indices = new ArrayList<>();
 
-    /** For a data structure description, refer to the return parameter of {@link #compute(java.util.List, int)}. */
+    /** For a data structure description, refer to the return parameter of {@link #compute(java.util.List, int, double)}. */
     private final Cacheable<double[][]> aggregatedData = new Cacheable<double[][]>() {
 
-        /** Compare {@link Data.TimeSeriesAverager#numBins} parameter. */
-        int cachedForNumBins = TimeSeriesAverager.this.numBins;
+        /** Compare {@link Data.TimeSeriesAverager#binSize} parameter. */
+        double cachedForBinSize = TimeSeriesAverager.this.binSize;
         /** The bin size (number of consecutive data points to be aggregated) for which the aggregation has been computed. */
-        int cachedForBinSize = Integer.MIN_VALUE;
+        int cachedForGroupSize = Integer.MIN_VALUE;
         /** Contains the ids of the time series which have been aggregated in ascending order. */
         int[] cachedForIds = new int[0];
 
         @Override public boolean isValid() {
-            return getGroupSize() == cachedForBinSize
-                    && numBins == cachedForNumBins
+            return getGroupSize() == cachedForGroupSize
+                    && Math.abs(binSize - cachedForBinSize) <= 2*Double.MIN_VALUE
                     && cachedForIds.length == timeSeries.size()     // doesn't need to compare the arrays in depth if the sizes differ
                     && Arrays.equals(cachedForIds, timeSeries.stream().sorted().mapToInt(TimeSeries::getId).toArray());
         }
 
         @Override public void recompute() {
             int size = getGroupSize();
-            set(TimeSeriesAverager.this.compute(timeSeries, size));
+            set(TimeSeriesAverager.this.compute(timeSeries, size, binSize));
             cachedForIds = timeSeries.stream().sorted().mapToInt(TimeSeries::getId).toArray();
-            cachedForBinSize = size;
-            cachedForNumBins = numBins;
+            cachedForGroupSize = size;
+            cachedForBinSize = binSize;
         }
     };
 
@@ -85,7 +91,7 @@ public class TimeSeriesAverager {
      * The second dimension refers to data point index.
      * Returns an empty two-dimensional array if the time series list is empty.
      */
-    double[][] compute(List<TimeSeries> timeSeries, int groupSize) {
+    double[][] compute(List<TimeSeries> timeSeries, int groupSize, double binSize) {
 
         assert groupSize > 0 : "Aggregation group size must be at least one data point per group.";
         if(timeSeries.isEmpty()) return new double[0][0];
@@ -99,7 +105,8 @@ public class TimeSeriesAverager {
         maxValues = new float[numberOfDataPoints];
         Arrays.fill(minValues, Float.POSITIVE_INFINITY);
         Arrays.fill(maxValues, Float.NEGATIVE_INFINITY);
-        histograms = new short[numberOfDataPoints-1][numBins][numBins];
+        histograms = new short[numberOfDataPoints-1][][];
+        lowestBinStartsAt = new double[numberOfDataPoints-1];
         maxBinValue = new short[numberOfDataPoints-1];
         drawOrder = new int[histograms.length][];
 
@@ -128,42 +135,44 @@ public class TimeSeriesAverager {
             }
         }
 
-        // initialize index list for sorting
-        if(indices.size() != numBins*numBins){
-            indices = new ArrayList<>(numBins*numBins);
-            for (int i = 0; i < numBins*numBins; i++) indices.add(i);
-        }
-
         // calculate histograms of the binned data
         for (int histogramIdx = 0; histogramIdx < numberOfDataPoints-1; histogramIdx++) {
-            float fromRange = maxValues[histogramIdx] - minValues[histogramIdx];
-            float toRange = maxValues[histogramIdx+1] - minValues[histogramIdx+1];
-            for (int tsIdx = 1; tsIdx <= timeSeries.size(); tsIdx++) {  // use one based time series index
 
-                double fromY = newAggregatedData[tsIdx][histogramIdx];
-                double toY = newAggregatedData[tsIdx][histogramIdx + 1];
+            // compute the number of source bins for the first histogram
+            int lowestSourceBinIdx = (int) Math.floor(minValues[histogramIdx] / binSize);
+            int highestSourceBinIdx = (int) Math.floor(maxValues[histogramIdx] / binSize);
+            lowestBinStartsAt[histogramIdx] = lowestSourceBinIdx * binSize;
+            int numSourceBins = Math.max(1, highestSourceBinIdx - lowestSourceBinIdx + 1); // if the min value is exactly the max value and exactly on a bin bound, allocate a bin anyway
+
+            // compute the number of sink bins
+            int lowestSinkBinIdx = (int) Math.floor(minValues[histogramIdx + 1] / binSize);
+            int highestSinkBinIdx = (int) Math.floor(maxValues[histogramIdx + 1] / binSize);
+            if(histogramIdx+1<histograms.length)
+                lowestBinStartsAt[histogramIdx+1] = lowestSinkBinIdx * binSize;
+            int numSinkBins = Math.max(1, highestSinkBinIdx - lowestSinkBinIdx + 1); // if the min value is exactly the max value and exactly on a bin bound, allocate a bin anyway
+
+            histograms[histogramIdx] = new short[numSourceBins][numSinkBins];
+
+            for (int tsIdx = 1; tsIdx <= timeSeries.size(); tsIdx++) {  // use one based time series index (because 0 is reserved for the x values)
+
+                double sourceY = newAggregatedData[tsIdx][histogramIdx];
+                double sinkY = newAggregatedData[tsIdx][histogramIdx + 1];
+
                 // if the time series value is NaN at one of the data points, the segment cannot contribute to the histogram in a sensible way.
-                if(Double.isNaN(fromY) || Double.isNaN(toY)) continue;
+                if(Double.isNaN(sourceY) || Double.isNaN(sinkY)) continue;
 
-                float relativeFrom = ((float) fromY - minValues[histogramIdx])/fromRange;
-                float relativeTo = ((float) toY - minValues[histogramIdx+1])/toRange;
+                int sourceBinIdx = (int) Math.floor(sourceY / binSize);
+                int sinkBinIdx = (int) Math.floor(sinkY / binSize);
 
-                // if the range is zero, a division by zero occurs, although putting all time series into the first bin is perfectly valid (since all bins cover the same single value)
-                if(fromRange <= Float.MIN_VALUE) relativeFrom = 0;
-                if(toRange <= Float.MIN_VALUE) relativeTo = 0;
+                if(sourceBinIdx == numSourceBins) sourceBinIdx -= 1;
+                if(sinkBinIdx == numSinkBins) sinkBinIdx -= 1;
 
-                if( Float.isNaN(relativeFrom) || Float.isNaN(relativeTo) ) continue;
-
-                int binFrom = (int) Math.floor(relativeFrom * numBins);
-                if(binFrom == numBins) binFrom-=1;
-
-                int binTo = (int) Math.floor(relativeTo * numBins);
-                if(binTo == numBins) binTo-=1;
-
-                assert histogramIdx >= 0 && binFrom >= 0 && binTo >= 0 : String.format("histogramIdx: %s binFrom: %s binTo: %s", histogramIdx, binFrom, binTo);
-                histograms[histogramIdx][binFrom][binTo]++;
+                assert histogramIdx >= 0 && sourceBinIdx >= lowestSourceBinIdx && sinkBinIdx >= lowestSinkBinIdx : String.format("histogramIdx: %s sourceBinIdx: %s sinkBinIdx: %s", histogramIdx, sourceBinIdx, sinkBinIdx);
+                assert sourceBinIdx-lowestSourceBinIdx < histograms[histogramIdx].length && sinkBinIdx-lowestSinkBinIdx < histograms[histogramIdx][0].length : String.format("histogramIdx: %s sourceBinIdx: %s  max: %s sinkBinIdx: %s max: %s", histogramIdx, sourceBinIdx, histograms[histogramIdx].length, sinkBinIdx,histograms[histogramIdx][0].length);
+                histograms[histogramIdx][sourceBinIdx - lowestSourceBinIdx][sinkBinIdx - lowestSinkBinIdx]++;
             }
 
+//            lowestSourceBinIdx = lowestSinkBinIdx; // would be nicer to cache
             drawOrder[histogramIdx] = sortHistogram(histograms[histogramIdx]);
             maxBinValue[histogramIdx] = findHistogramMaxValue(histograms[histogramIdx]);
         }
@@ -173,14 +182,24 @@ public class TimeSeriesAverager {
     }
 
     protected int[] sortHistogram(final short[][] histogram){
+
+        int numSourceBins = histogram.length;
+        int numSinkBins = histogram[0].length;
+
+        // initialize index list for sorting
+        if(indices.size() != numSourceBins * numSinkBins){
+            indices.clear();
+            for (int i = 0; i < numSourceBins*numSinkBins; i++) indices.add(i);
+        }
+
         // sort the histogram values and save the permutation
         Comparator<Integer> comparator = (i, j) -> {
-            int rowI = i/numBins;
-            int colI = i%numBins;
-            int rowJ = j/numBins;
-            int colJ = j%numBins;
-            assert rowI < numBins && colI < numBins : String.format("rowI %s colI %s", rowI, colI);
-            assert rowJ < numBins && colJ < numBins : String.format("rowJ %s colJ %s", rowJ, colJ);
+            int rowI = i/numSinkBins;
+            int colI = i%numSinkBins;
+            int rowJ = j/numSinkBins;
+            int colJ = j%numSinkBins;
+            assert rowI < numSourceBins && colI < numSinkBins : String.format("rowI %s colI %s numSourceBins: %s numSinkBins: %s", rowI, colI, numSourceBins, numSinkBins);
+            assert rowJ < numSourceBins && colJ < numSinkBins : String.format("rowJ %s colJ %s", rowJ, colJ);
             return Integer.compare(histogram[rowI][colI], histogram[rowJ][colJ]);
         };
         Collections.sort(indices, comparator);
@@ -193,11 +212,11 @@ public class TimeSeriesAverager {
      * @param histogram a 2D histogram of size numBins x numBins containing non-negative values.
      * @return the maximum value over all bins of the histogram. */
     public short findHistogramMaxValue(short[][] histogram) {
-        assert histogram.length == numBins && histogram[0].length == numBins : String.format("Histogram has invalid dimensions in peak detection routine. Should be %s x %s and is %s x %s",numBins,numBins,histogram.length,histogram[0].length);
+        assert histogram.length > 0 : "Illegal histogram dimensions. Must have at least one source bin.";
         int maximum = 0;
-        for (int i = 0; i < numBins; i++) {
-            for (int j = 0; j < numBins; j++) {
-                maximum = Math.max(Short.toUnsignedInt(histogram[i][j]), maximum);
+        for (short[] toSinkBin : histogram) {
+            for (int j = 0; j < histogram[0].length; j++) {
+                maximum = Math.max(Short.toUnsignedInt(toSinkBin[j]), maximum);
             }
         }
         return (short) maximum; // don't worry, the cast is correctly undone by using toUnsignedInt()
@@ -216,4 +235,12 @@ public class TimeSeriesAverager {
     }
 
     public int getNumberOfTimeSeries() { return aggregatedData.get().length-1; }
+
+    public void setBinSize(double binSize) {
+        this.binSize = binSize;
+    }
+
+    public double getBinSize() {
+        return binSize;
+    }
 }

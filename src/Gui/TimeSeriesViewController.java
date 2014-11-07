@@ -10,6 +10,7 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Bounds;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
 import javafx.util.converter.NumberStringConverter;
@@ -29,14 +30,15 @@ public class TimeSeriesViewController {
     /** maps a color to each set of time series (for instance the time series in correlation set A, in correlation set B and temporary time series for preview). */
     private final HashMap<Color, ObservableList<TimeSeries>> seriesSets = new HashMap<>();
     
-    private final Visualization.TimeSeriesChart timeSeriesChart = new HistogramTimeSeriesChart();
+    private final HistogramTimeSeriesChart timeSeriesChart = new HistogramTimeSeriesChart();
     
     /** controls the level of detail with which time series are drawn.
      * this is important since rendering all series with all points takes very long and is not the main purpose of the software. */
-//    @FXML protected Slider detailSlider;
-    @FXML protected Label levelOfDetailLabel;
-    @FXML protected Slider histogramResolutionSlider;
-    @FXML protected Label histogramResolutionLabel;
+    @FXML protected Label groupSizeLabel;
+    @FXML protected TextField binningYAxisResolutionTextField;
+    @FXML protected Label binningYAxisResolutionLabel;
+    @FXML protected Button increaseResolutionButton;
+    @FXML protected Button decreaseResolutionButton;
     @FXML CheckBox ensemble1CheckBox;
     @FXML CheckBox ensemble2CheckBox;
 
@@ -58,7 +60,7 @@ public class TimeSeriesViewController {
         timeSeriesChart.toBack(); // the reset button etc. are to be displayed on top of the chart
         AnchorPane.setTopAnchor(timeSeriesChart, 0.);
         AnchorPane.setRightAnchor(timeSeriesChart, 0.);
-        AnchorPane.setBottomAnchor(timeSeriesChart, 20.);
+        AnchorPane.setBottomAnchor(timeSeriesChart, 25.);
         AnchorPane.setLeftAnchor(timeSeriesChart, 20.);
 
         // auto adjust tick labels and detail slider
@@ -73,27 +75,49 @@ public class TimeSeriesViewController {
         timeSeriesChart.drawEnsemble1Property().bind(ensemble1CheckBox.selectedProperty());
         timeSeriesChart.drawEnsemble2Property().bind(ensemble2CheckBox.selectedProperty());
 
-        // histogram resolution slider
-        histogramResolutionSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
-            float newTransparency = newValue.floatValue();
-            histogramResolutionLabel.setText(String.format("histogram resolution: %s", (int)newTransparency));
-            ((HistogramTimeSeriesChart) timeSeriesChart).setNumBins((int) newTransparency);
+        timeSeriesChart.binSizeProperty().addListener((observable, oldValue, newValue) -> {
+            binningYAxisResolutionTextField.setText(String.format("%.5f", newValue.doubleValue()));
             drawChart();
+        });
+
+
+        binningYAxisResolutionTextField.setOnKeyReleased(event -> {
+            if (event.getCode() == KeyCode.ENTER) {
+                double newResolution;
+                try {
+                    newResolution = Double.parseDouble(binningYAxisResolutionTextField.getText());
+                    if (Double.isNaN(newResolution) || newResolution <= 0) throw new NumberFormatException("The parsed value is not sensible.");
+                    timeSeriesChart.setBinSize(newResolution);
+                    drawChart();
+                } catch (NumberFormatException e) {
+                    Dialog<Void> d = new Dialog<>();
+                    d.setContentText("Could not parse value.");
+                    System.err.println("Couldn't parse value.");
+                }
+            }
+        });
+
+        // double/half bin size buttons
+        increaseResolutionButton.setOnAction(event -> {
+            timeSeriesChart.setBinSize(timeSeriesChart.getBinSize()/2);
+        });
+        decreaseResolutionButton.setOnAction(event -> {
+            timeSeriesChart.setBinSize(timeSeriesChart.getBinSize()*2);
         });
 
         // line and polygon draw options
         polyCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
-            ((HistogramTimeSeriesChart) timeSeriesChart).drawPoly = newValue;
+            timeSeriesChart.drawPoly = newValue;
             timeSeriesChart.drawContents();
         });
         gridCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
-            ((HistogramTimeSeriesChart) timeSeriesChart).drawGrid = newValue;
+            (timeSeriesChart).drawGrid = newValue;
             timeSeriesChart.drawContents();
         });
 
         // transfer function toggle
         transferFunction.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
-            ((HistogramTimeSeriesChart) timeSeriesChart).useLinearTransfer = newValue == transferLinearToggle;
+            (timeSeriesChart).useLinearTransfer = newValue == transferLinearToggle;
             timeSeriesChart.drawContents();
         });
 
@@ -129,7 +153,7 @@ public class TimeSeriesViewController {
 
         // adapt text of the group size label to the currently used group size
         sharedData.experiment.dataModel.correlationSetAAggregator.groupSizeProperty().addListener((observable, oldValue, newValue) -> {
-            levelOfDetailLabel.setText(
+            groupSizeLabel.setText(
                     newValue.intValue() == 1 ? "Showing full resolution." : "group size: " + newValue.intValue()
             );
         });

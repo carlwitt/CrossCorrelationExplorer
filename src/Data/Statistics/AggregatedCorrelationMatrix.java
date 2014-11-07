@@ -127,11 +127,10 @@ public class AggregatedCorrelationMatrix {
                         assert Double.isNaN(minUncertainty) || minUncertainty >= 0 : String.format("Negative uncertainty: %s in column \n%s",minUncertainty, correlationColumn);
                         assert Double.isNaN(maxUncertainty) || maxUncertainty >= 0 : String.format("Negative max uncertainty: %s", maxUncertainty);
                     }
-                }
+                } // if uncertainty statistic is set
 
-
-            }
-        }
+            } // for row
+        } // for column
 
         region.minCorrelation = notNaNCorrelations > 0 ? aggregateCorrelationStatistics.getMin() : Double.NaN;
         region.firstQuartileCorrelation = notNaNCorrelations > 0 ? aggregateCorrelationStatistics.getPercentile(25) : Double.NaN;

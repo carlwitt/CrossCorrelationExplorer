@@ -4,6 +4,8 @@ import Data.DataModel;
 import Data.TimeSeriesAverager;
 import Global.Util;
 import Gui.TimeSeriesViewController;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.StrokeLineCap;
@@ -19,22 +21,20 @@ import java.util.Arrays;
  */
 public class HistogramTimeSeriesChart extends TimeSeriesChart {
 
-    int numBins = 1;
-    public boolean useLinearTransfer = true;
+    private DoubleProperty binSize = new SimpleDoubleProperty(0.1);
+    public double getBinSize(){return binSize.get();}
+    public void setBinSize(double newBinSize){
+        sharedData.experiment.dataModel.correlationSetAAggregator.setBinSize(newBinSize);
+        sharedData.experiment.dataModel.correlationSetBAggregator.setBinSize(newBinSize);
+        binSize.set(newBinSize);
+    }
+    public DoubleProperty binSizeProperty(){return binSize;}
 
+    public boolean useLinearTransfer = true;
     public boolean drawPoly = false, drawGrid = true;
 
     public HistogramTimeSeriesChart(){
         super(); margins[TOP] = 5;
-    }
-
-
-    public void setNumBins(int numBins){
-        this.numBins = numBins;
-        sharedData.experiment.dataModel.correlationSetAAggregator.numBins = numBins;
-        sharedData.experiment.dataModel.correlationSetBAggregator.numBins = numBins;
-        sharedData.experiment.dataModel.correlationSetAAggregator.getXValues();
-        sharedData.experiment.dataModel.correlationSetBAggregator.getXValues();
     }
 
     @Override public void drawContents() {
@@ -83,15 +83,15 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
     }
 
     protected void drawEnsemble(GraphicsContext gc, Affine dataToScreen, TimeSeriesAverager aggregator, Color ensembleColor) {// for the x values
+
         double[] xValues = aggregator.getXValues();
 
         // find the horizontal clipping
-        double xAxisSpacing = xValues[1] - xValues[0];      // xValues change with binning, so this is already considered
+        double xAxisSpacing = xValues[1] - xValues[0];      // xValues of the time series have already been subject to time aggregation, so no need to adjust for group size
         double leftPadding = Math.max(0, xAxis.getLowerBound() - xValues[0]);
         double rightPadding = Math.max(0, xValues[xValues.length-1] - xAxis.getUpperBound());
         int invisiblePointsFront = (int)Math.floor(leftPadding/xAxisSpacing);
         int invisiblePointsBack = (int)Math.floor(rightPadding/xAxisSpacing);
-        int firstDataPointIdx = invisiblePointsFront;
         int lastDataPointIdx = xValues.length-1-invisiblePointsBack;
 
         float[] minValues = aggregator.minValues;
@@ -99,68 +99,65 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
 
         gc.setStroke(ensembleColor);
         gc.setLineWidth(1);
-        gc.setLineCap(StrokeLineCap.BUTT);
+        gc.setLineCap(StrokeLineCap.SQUARE);
 
         // draw the area between min and max y value of each time step shaded (which also a hint that the view is an aggregation)
         drawHull(gc, dataToScreen, xValues, minValues, maxValues);
 
         short[][][] histograms = aggregator.histograms;
         int[][] drawOrders = aggregator.drawOrder;
-        int numBins = histograms[0].length;
+        double[] lowestBinStartsAt = aggregator.lowestBinStartsAt;
 
         // contains the transformed current x position (index 0), the minimum Y (index 1) and the maximum Y value (index 3)
-        double[] lastXMinYMaxY = new double[]{ xValues[0], minValues[0], 0, maxValues[0] };
-        dataToScreen.transform2DPoints(lastXMinYMaxY, 0, lastXMinYMaxY, 0, 2);
+        // storing all values in a two point array is faster than transforming them separately
+        double[] lastXLowerY = new double[]{ xValues[0], lowestBinStartsAt[0] };
+        dataToScreen.transform2DPoints(lastXLowerY, 0, lastXLowerY, 0, 1);
 
-        double binHeightPxPrevious = (lastXMinYMaxY[3]-lastXMinYMaxY[1])/numBins;
+        double binHeightPx = dataToScreen.deltaTransform(0, -getBinSize()).getY();
+        assert binHeightPx > 0 : "Negative bin height in pixels: "+binHeightPx;
 
-        double[] xMinYMaxY = new double[4];
+        // like lastXMinYMaxY but for the current time step
+        double[] xLowerY = new double[2];
+        // the x and y values that describe the are within the bin
         double[] polygonXValues = new double[4];
         double[] polygonYValues = new double[4];
-
-        double binHeightPx;
 
         // drawing shouldn't take longer than 10 seconds, otherwise, the loops aborts
         Util.TimeOutChecker timeOutChecker = new Util.TimeOutChecker(10000);
 
-        // use global max bin value
+        // find global max bin value (within this ensemble) to normalize input values to the transfer function
         int maxPeakFrequency = 0;
         for (int i = 0; i < xValues.length - 1; i++)
             maxPeakFrequency = Math.max(maxPeakFrequency, aggregator.maxBinValue[i]);
 
         // start with second time step, drawing polygons connecting to the previous time step
-        for (int i = Math.max(1,firstDataPointIdx); i < Math.min(xValues.length, lastDataPointIdx+1); i++) {
-            xMinYMaxY[0] = xValues[i];
-            xMinYMaxY[1] = minValues[i];
-            xMinYMaxY[3] = maxValues[i];
-            dataToScreen.transform2DPoints(xMinYMaxY, 0, xMinYMaxY, 0, 2);
-            binHeightPx = (xMinYMaxY[3]-xMinYMaxY[1])/numBins;
+        for (int i = Math.max(1, invisiblePointsFront); i < Math.min(xValues.length-1, lastDataPointIdx+1); i++) {
 
-            double minYSCPrevious = lastXMinYMaxY[1];
-            double minYSC = xMinYMaxY[1];
+            xLowerY[0] = xValues[i];
+            xLowerY[1] = lowestBinStartsAt[i];
+            dataToScreen.transform2DPoints(xLowerY, 0, xLowerY, 0, 1);
 
             // x values of the polygon are constant for the interval between two time steps
-            polygonXValues[0] = lastXMinYMaxY[0]-0.5;
-            polygonXValues[1] = xMinYMaxY[0];
-            polygonXValues[2] = xMinYMaxY[0];
-            polygonXValues[3] = lastXMinYMaxY[0]-0.5;
+            polygonXValues[0] = lastXLowerY[0];   // without adding some minor constant, there are gaps between the polygons
+            polygonXValues[1] = xLowerY[0];
+            polygonXValues[2] = xLowerY[0];
+            polygonXValues[3] = lastXLowerY[0];
 
-            if(drawPoly && i <= histograms.length)
-                drawPolygons(gc, histograms[i-1], drawOrders[i-1], numBins, binHeightPxPrevious, polygonXValues, polygonYValues, binHeightPx, minYSCPrevious, minYSC, maxPeakFrequency, ensembleColor);
+            if(drawPoly && i < histograms.length)
+                drawTimeStepPolygons(gc, histograms[i - 1], drawOrders[i - 1], polygonXValues, polygonYValues, binHeightPx, lastXLowerY[1], xLowerY[1], maxPeakFrequency, ensembleColor);
             if(drawGrid)
-                drawGrid(gc, histograms[i-1], numBins, lastXMinYMaxY, binHeightPxPrevious, xMinYMaxY, polygonXValues, polygonYValues, binHeightPx, minYSCPrevious, minYSC, maxPeakFrequency, ensembleColor);
+                drawTimeStepGrid(gc, histograms[i - 1], lastXLowerY, xLowerY, polygonXValues, polygonYValues, binHeightPx, maxPeakFrequency, ensembleColor);
 
             // copy current values to last values
-            lastXMinYMaxY[0] = xMinYMaxY[0];
-            lastXMinYMaxY[1] = xMinYMaxY[1];
-            lastXMinYMaxY[3] = xMinYMaxY[3];
-            binHeightPxPrevious = binHeightPx;
+            lastXLowerY[0] = xLowerY[0];
+            lastXLowerY[1] = xLowerY[1];
 
             if(timeOutChecker.isTimeOut()) {
                 System.out.println(String.format("Time out in drawing polygons"));
                 break;
             }
         }
+
     }
 
     protected void drawHull(GraphicsContext gc, Affine dataToScreen, double[] xValues, float[] minValues, float[] maxValues) {
@@ -210,76 +207,84 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
 
     }
 
-    protected void drawGrid(GraphicsContext gc, short[][] histogram, int numBins, double[] lastXMinYMaxY, double binHeightPxPrevious, double[] xMinYMaxY, double[] polygonXValues, double[] polygonYValues, double binHeightPx, double minYSCPrevious, double minYSC, int maxBinValue, Color ensembleColor) {
-        for (int prevBinIdx = 0; prevBinIdx < numBins; prevBinIdx++) {
+    /**
+     * Visualizes the histogram data between two time steps. Each bin frequency is mapped to a line width (transfer function).
+     * A line with that width is then drawn, starting halfway between the source bin lower and upper bounds (y value) and ending
+     * halfway between the sink bin lower and upper bound. Centering the line in the parallelogram also better reflects the average slope
+     * of the line segments in that bin. Connecting the lower bounds or connecting the upper bounds could give a slope 0 line, although the average slope might not be 0.
+     * @param lastXLowerY contains the screen coordinate where the lowest bin of the previous time step starts
+     * @param xLowerY contains the screen coordinate where the lowest bin of the current time step starts
+     * @param polygonXValues
+     * @param polygonYValues
+     */
+    protected void drawTimeStepGrid(GraphicsContext gc, short[][] histogram, double[] lastXLowerY, double[] xLowerY, double[] polygonXValues, double[] polygonYValues, double binHeightPx, int maxBinValue, Color ensembleColor) {
 
-            // x values of the polygon are constant for the interval between two time steps
-            polygonXValues[0] = lastXMinYMaxY[0];
-            polygonXValues[1] = xMinYMaxY[0];
-            polygonXValues[2] = xMinYMaxY[0];
-            polygonXValues[3] = lastXMinYMaxY[0];
+        int numSourceBins = histogram.length;
+        int numSinkBins = histogram[0].length;
+
+        for (int prevBinIdx = 0; prevBinIdx < numSourceBins; prevBinIdx++) {
 
             // for a fixed left bin, the left y values of the polygon are constant
-            polygonYValues[0] = minYSCPrevious + prevBinIdx*binHeightPxPrevious;
-            polygonYValues[3] = polygonYValues[0] + binHeightPxPrevious;
+            // we're working with screen coordinates so moving upwards means subtracting pixels
+            polygonYValues[0] = lastXLowerY[1] - prevBinIdx * binHeightPx;
+            polygonYValues[3] = polygonYValues[0] - binHeightPx;
 
-            for (int nextBinIdx = 0; nextBinIdx < numBins; nextBinIdx++) {
+            for (int nextBinIdx = 0; nextBinIdx < numSinkBins; nextBinIdx++) {
 
-                polygonYValues[1] = minYSC + nextBinIdx * binHeightPx;
-                polygonYValues[2] = polygonYValues[1] + binHeightPx;
+                polygonYValues[1] = xLowerY[1] - nextBinIdx * binHeightPx;
+                polygonYValues[2] = polygonYValues[1] - binHeightPx;
                 double opacity;
                 int numTimeSeriesInBin = Short.toUnsignedInt(histogram[prevBinIdx][nextBinIdx]);
+
+                if(numTimeSeriesInBin == 0) continue;   // if no line segments fall within this bin, skip the bin
+
                 if(useLinearTransfer)
                     opacity = Math.min(0.8, 1. * numTimeSeriesInBin / maxBinValue + 0.3); // linear mapping
                 else  {
                     double relativeFrequency = 1. * histogram[prevBinIdx][nextBinIdx] / maxBinValue;
                     opacity = 0.1 + 0.9 * relativeFrequency * relativeFrequency; // cubic mapping
-//                     opacity = Math.min(1., Math.exp(histogram[prevBinIdx][nextBinIdx] / maxBinValue - 1)); // exponential mapping
-//                      opacity = Math.max(0.3, Math.min(0.8, 0.5 * Math.log10(1. * numTimeSeriesInBin / maxBinValue) + 1)); // logarithmic mapping
-                    }
-
-                if(numTimeSeriesInBin == 0) continue;
+                }
 
                 gc.setStroke(ensembleColor.deriveColor(0, 1, 1, opacity));
                 gc.setLineWidth(opacity*2.5);
                 gc.strokeLine(polygonXValues[0],0.5*(polygonYValues[0]+polygonYValues[3]),polygonXValues[1],0.5*(polygonYValues[1]+polygonYValues[2]));
 
-//                        gc.setFill(ensembleColor.interpolate(Color.WHITE,1-opacity));
-//                        gc.fillPolygon(polygonXValues, polygonYValues, 4);
-//                        gc.strokePolygon(polygonXValues, polygonYValues, 4);
+            } // for sink bins
 
-            }
-        }
+        } // for source bins
+
     }
 
-    protected void drawPolygons(GraphicsContext gc, short[][] histogram, int[] drawOrder, int numBins, double binHeightPxPrevious, double[] polygonXValues, double[] polygonYValues, double binHeightPx, double minYSCPrevious, double minYSC, int maxBinValue, Color ensembleColor) {
+    protected void drawTimeStepPolygons(GraphicsContext gc, short[][] histogram, int[] drawOrder, double[] polygonXValues, double[] polygonYValues, double binHeightPx, double minYSCPrevious, double minYSC, int maxBinValue, Color ensembleColor) {
 
-        for (int orderIdx = 0; orderIdx < numBins * numBins; orderIdx++) {
+        int numSinkBins = histogram[0].length;
 
-            int prevBinIdx = drawOrder[orderIdx] / numBins;
-            int nextBinIdx = drawOrder[orderIdx] % numBins;
+        for (int orderIdx = 0; orderIdx < drawOrder.length; orderIdx++) {
+
+            int sourceBinIdx = drawOrder[orderIdx] / numSinkBins;
+            int sinkBinIdx = drawOrder[orderIdx] % numSinkBins;
 
             // for a fixed left bin, the left y values of the polygon are constant
-            polygonYValues[0] = minYSCPrevious + prevBinIdx*binHeightPxPrevious;
-            polygonYValues[3] = polygonYValues[0] + binHeightPxPrevious;
+            // we're working with screen coordinates so moving upwards means subtracting pixels
+            polygonYValues[0] = minYSCPrevious - sourceBinIdx * binHeightPx;
+            polygonYValues[3] = polygonYValues[0] - binHeightPx;
 
-
-            polygonYValues[1] = minYSC + nextBinIdx * binHeightPx;
-            polygonYValues[2] = polygonYValues[1] + binHeightPx;
+            polygonYValues[1] = minYSC - sinkBinIdx * binHeightPx;
+            polygonYValues[2] = polygonYValues[1] - binHeightPx;
             double opacity;
 
-            int numTimeSeriesInBin = Short.toUnsignedInt(histogram[prevBinIdx][nextBinIdx]);
+            int numTimeSeriesInBin = Short.toUnsignedInt(histogram[sourceBinIdx][sinkBinIdx]);
+
+            if(numTimeSeriesInBin == 0) continue;   // if no time series fall within this bin, skip the bin
 
             if(useLinearTransfer)
                 opacity = Math.min(0.8, 1. * numTimeSeriesInBin / maxBinValue + 0.3); // linear mapping
             else{
-                double relativeFrequency = 1. * histogram[prevBinIdx][nextBinIdx] / maxBinValue;
+                double relativeFrequency = 1. * histogram[sourceBinIdx][sinkBinIdx] / maxBinValue;
                 opacity = 0.1 + 0.9 * relativeFrequency * relativeFrequency; // quadratic mapping
 //                opacity = Math.max(0.3, Math.min(0.8, 0.5 * Math.log10(1. * numTimeSeriesInBin / maxBinValue) + 1)); // logarithmic mapping
 //                opacity = Math.max(0.3, Math.min(0.8, 0.5 * Math.log10(1. * numTimeSeriesInBin / maxBinValue) + 1)); // logarithmic mapping
             }
-
-            if(numTimeSeriesInBin == 0) continue;
 
 //                  gc.setStroke(ensembleColor.deriveColor(0,1,1,opacity));
 //                  gc.setLineWidth(opacity*5);
@@ -287,7 +292,7 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
 
             gc.setFill(ensembleColor.interpolate(Color.WHITE, 1 - opacity));
             gc.fillPolygon(polygonXValues, polygonYValues, 4);
-//            gc.strokeText(""+ histogram[prevBinIdx][nextBinIdx], polygonXValues[0],polygonYValues[0]);
+//            gc.strokeText(""+ histogram[sourceBinIdx][sinkBinIdx], polygonXValues[0],polygonYValues[0]);
 //                  gc.strokePolygon(polygonXValues, polygonYValues, 4);
 
         }
@@ -323,6 +328,4 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
 //
 //        }
     }
-
-
 }

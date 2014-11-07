@@ -17,13 +17,31 @@
 <AnchorPane fx:id="timeSeriesPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="50.0" prefHeight="326.9999000000025" prefWidth="1022.0" style="-fx-background-color: white;" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.TimeSeriesViewController">
   <Rectangle arcHeight="5.0" arcWidth="5.0" fill="GAINSBORO" height="1240.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" width="20.0" AnchorPane.bottomAnchor="203.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0" />
   <Text rotate="270.0" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-background-color: gainsboro;" text="Time Series View" AnchorPane.bottomAnchor="261.26" AnchorPane.leftAnchor="-43.0" AnchorPane.topAnchor="50.43" />
-  <HBox id="HBox" alignment="CENTER" maxHeight="20.0" maxWidth="843.0" prefWidth="812.0" spacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="25.0">
-    <Label fx:id="histogramResolutionLabel" text="histogram resolution: 16" />
-    <Slider fx:id="histogramResolutionSlider" blockIncrement="1.0" majorTickUnit="1.0" max="64.0" min="1.0" minorTickCount="1" orientation="HORIZONTAL" showTickLabels="false" showTickMarks="false" snapToTicks="true" value="16.0" />
-    <MenuButton maxHeight="20.0" mnemonicParsing="false" text="Transfer Function">
+  <HBox id="HBox" alignment="CENTER" maxHeight="20.0" maxWidth="843.0" prefWidth="843.0" spacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="25.0">
+    <Label fx:id="binningYAxisResolutionLabel" text="Bin Size Y-Axis">
+      <HBox.margin>
+        <Insets />
+      </HBox.margin>
+    </Label>
+    <Button fx:id="increaseResolutionButton" maxHeight="20.0" mnemonicParsing="false" text="/2">
       <font>
-        <Font size="9.0" />
+        <Font size="11.0" fx:id="x2" />
       </font>
+      <tooltip>
+        <Tooltip text="Halves the bin size, thus increasing the resolution." />
+      </tooltip>
+    </Button>
+    <TextField fx:id="binningYAxisResolutionTextField" alignment="CENTER" maxHeight="20.0" prefHeight="20.0" prefWidth="90.0" promptText="e.g. 0.01" text="0.1">
+      <tooltip>
+        <Tooltip text="The granularity of rasterization (time series approximation) on the y axis. Scientific notation (e.g. 1e-4) accepted." />
+      </tooltip>
+    </TextField>
+    <Button fx:id="decreaseResolutionButton" font="$x2" maxHeight="20.0" mnemonicParsing="false" text="x2">
+      <tooltip>
+        <Tooltip text="Double the bin size, \nthus decreasing the resolution." />
+      </tooltip>
+    </Button>
+    <MenuButton font="$x2" maxHeight="20.0" mnemonicParsing="false" text="Transfer Function">
       <items>
         <RadioMenuItem mnemonicParsing="false" selected="true" text="linear" fx:id="transferLinearToggle">
           <graphic>
@@ -63,13 +81,26 @@
           </graphic>
         </RadioMenuItem>
       </items>
+      <tooltip>
+        <Tooltip text="Defines the transfer function that maps line segment (i.e. time series) density in an area to color." />
+      </tooltip>
+      <HBox.margin>
+        <Insets left="20.0" fx:id="x1" />
+      </HBox.margin>
     </MenuButton>
     <CheckBox id="gridBoxCheckBox" fx:id="polyCheckBox" mnemonicParsing="false" text="polygons">
+      <tooltip>
+        <Tooltip text="Visualizes time series density in an area by coloring that area according to the transfer function." />
+      </tooltip>
       <HBox.margin>
         <Insets left="20.0" fx:id="x1" />
       </HBox.margin>
     </CheckBox>
-    <CheckBox id="gridBoxCheckBox" fx:id="gridCheckBox" indeterminate="false" mnemonicParsing="false" selected="true" text="grid" />
+    <CheckBox id="gridBoxCheckBox" fx:id="gridCheckBox" indeterminate="false" mnemonicParsing="false" selected="true" text="grid">
+      <tooltip>
+        <Tooltip text="Visualizes time series density in an area by drawing a vertically centered line within that area, colored and stroked according to the transfer function." />
+      </tooltip>
+    </CheckBox>
     <CheckBox fx:id="ensemble1CheckBox" mnemonicParsing="false" selected="true" text="Ensemble 1" textFill="#00cc21" HBox.margin="$x1" />
     <CheckBox fx:id="ensemble2CheckBox" mnemonicParsing="false" selected="true" text="Ensemble 2" textFill="#0066ff">
       <HBox.margin>
@@ -78,7 +109,7 @@
     </CheckBox>
   </HBox>
   <HBox id="HBox" alignment="CENTER" maxHeight="20.0" maxWidth="400.0" spacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="4.0">
-    <Label fx:id="levelOfDetailLabel" text="Showing full resolution." visible="true" />
+    <Label fx:id="groupSizeLabel" text="Showing full resolution." visible="true" />
   </HBox>
   <Button cancelButton="false" contentDisplay="GRAPHIC_ONLY" defaultButton="false" graphicTextGap="0.0" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" onAction="#resetView" prefHeight="20.0" prefWidth="20.0" style=";" text="" translateX="-20.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="20.0">
     <graphic>
