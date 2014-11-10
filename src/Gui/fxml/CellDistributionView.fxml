@@ -6,9 +6,8 @@
 <?import javafx.scene.text.Text?>
 <?import javafx.scene.web.WebView?>
 <AnchorPane maxHeight="-1.0" maxWidth="-1.0" minHeight="100.0" minWidth="300.0" prefHeight="350.0" prefWidth="1200.0" style="-fx-background-color: gainsboro;" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.CellDistributionViewController">
-    <StackPane id="StackPane" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="0.0"
-               AnchorPane.topAnchor="0.0">
-        <!--<HBox minHeight="14.0" prefHeight="18.0" prefWidth="600.0" AnchorPane.bottomAnchor="5.0" AnchorPane.rightAnchor="5.0">
+  <StackPane id="StackPane" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+    <!--<HBox minHeight="14.0" prefHeight="18.0" prefWidth="600.0" AnchorPane.bottomAnchor="5.0" AnchorPane.rightAnchor="5.0">
       <children>
         <Separator prefWidth="200.0" visible="false" HBox.hgrow="ALWAYS" />
         <Label fx:id="numBinsLabel" text="10 bins" visible="false">
@@ -16,19 +15,17 @@
             <Insets right="5.0" />
           </HBox.margin>
         </Label>
-        <Slider fx:id="numBinsSlider" visible="false" />
+        <Slider fx:id="resolutionLevelSlider" visible="false" />
       </children>
       <padding>
         <Insets bottom="4.0" top="4.0" />
       </padding>
     </HBox>-->
-        <WebView fx:id="webView" cache="true" cacheHint="QUALITY" prefHeight="200.0" prefWidth="200.0"/>
-        <HBox id="HBox" alignment="CENTER_RIGHT" maxHeight="20.0" maxWidth="300.0" prefHeight="200.0" prefWidth="500.0"
-              spacing="5.0" StackPane.alignment="BOTTOM_RIGHT">
-            <Label fx:id="numberOfBinsLabel" text="Number of Bins" HBox.hgrow="NEVER"/>
-            <Slider fx:id="numBinsSlider" blockIncrement="1.0" max="150.0" min="10.0" prefWidth="156.0"
-                    snapToTicks="true" value="40.0" HBox.hgrow="NEVER"/>
-        </HBox>
-    </StackPane>
+    <WebView fx:id="webView" cache="true" cacheHint="QUALITY" prefHeight="200.0" prefWidth="200.0" />
+    <HBox id="HBox" alignment="CENTER_RIGHT" maxHeight="20.0" maxWidth="300.0" prefHeight="200.0" prefWidth="500.0" spacing="5.0" StackPane.alignment="BOTTOM_RIGHT">
+      <Label fx:id="numberOfBinsLabel" text="Number of Bins" HBox.hgrow="NEVER" />
+      <Slider fx:id="resolutionLevelSlider" blockIncrement="1.0" majorTickUnit="1.0" max="10.0" min="0.0" minorTickCount="0" prefWidth="156.0" snapToTicks="true" value="5.0" HBox.hgrow="NEVER" />
+    </HBox>
+  </StackPane>
   <Text fontSmoothingType="GRAY" rotate="270.0" smooth="true" strikethrough="false" strokeType="OUTSIDE" strokeWidth="0.0" text="Correlation Values" translateX="0.0" AnchorPane.bottomAnchor="-2.32" AnchorPane.leftAnchor="-48.0" AnchorPane.topAnchor="52.32" />
 </AnchorPane>

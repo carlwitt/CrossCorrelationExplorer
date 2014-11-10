@@ -1,6 +1,7 @@
 package Visualization;
 
 import Data.DataModel;
+import Data.SharedData;
 import Data.TimeSeriesAverager;
 import Global.Util;
 import Gui.TimeSeriesViewController;
@@ -34,7 +35,12 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
     public boolean drawPoly = false, drawGrid = true;
 
     public HistogramTimeSeriesChart(){
-        super(); margins[TOP] = 5;
+        super();
+    }
+
+    @Override public void setSharedData(SharedData sharedData){
+        super.setSharedData(sharedData);
+        setBinSize(0.1);
     }
 
     @Override public void drawContents() {

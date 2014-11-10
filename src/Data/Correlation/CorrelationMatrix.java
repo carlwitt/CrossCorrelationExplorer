@@ -1,5 +1,6 @@
 package Data.Correlation;
 
+import Data.Statistics.CorrelationHistogram;
 import Data.TimeSeries;
 import Data.Windowing.WindowMetadata;
 import com.google.common.base.Joiner;
@@ -27,6 +28,13 @@ public class CorrelationMatrix {
     /** Replaces values that are outside the bounds of time series (when shifting windows too far outside) */
     public final double placeholder = Double.NaN;
 
+    // memory for precomputed reusable terms for cross correlation.
+    // having two 2D arrays instead of one 3D array saves one array access per access to the data.
+    /** the mean of each window (starting at index 0, 1, 2, ...) of each time series of set A. first dimension refers to time series, second to window. */
+    protected double[][] meansA, meansB;
+    /** the L2 norm of the mean-shifted window (as a vector) (L2: square root of sum of squared vector entries) */
+    protected double[][] L2NormsA, L2NormsB;
+
     /** These constants can be used to conveniently refer to certain statistics.
      * <pre>
      * {@link #MEAN} the average correlation in a cell.
@@ -52,6 +60,7 @@ public class CorrelationMatrix {
      */
     protected final Double[][] extrema = new Double[NUM_STATS][NUM_META_STATS];
 
+    /** Used for t-testing a pearson correlation value on significance. */
     protected CorrelationSignificance significanceTester;
 
     public final ComputeService computeService = new ComputeService();
@@ -87,9 +96,7 @@ public class CorrelationMatrix {
 
     protected int numThreads = 1;
 
-    /**
-     * Resets the column data. Determines a sensible number of threads for parallel computation.
-     */
+    /** Resets the column data. Determines a sensible number of threads for parallel computation. */
     private void initComputation(){
         columns = new ArrayList<>();
         // partition the input set A among the threads
@@ -99,6 +106,7 @@ public class CorrelationMatrix {
         numThreads = Math.max(minThreads, Math.min(maxThreads, stdThreads));
     }
 
+    /** Computes the correlation matrix according to the {@link #metadata} that describes the computation input. */
     public void compute(){
 
         initComputation();
@@ -106,9 +114,9 @@ public class CorrelationMatrix {
 
     }
 
-
     /**
      * Fills the columns data structure. Horizontally partitions the correlation matrix. Each thread is assigned a subsequence of columns to compute.
+     * Each partition of the matrix is computed in a {@link Data.Correlation.CorrelationMatrix.PartialMatrixComputer}.
      * @param reportProgress an optional callback to report progress to the GUI. Used by the compute service to pass the current base window index
      *                       which causes prediction of the remaining time and makes the result available via the service reportProgress() etc. methods.
      */
@@ -146,11 +154,6 @@ public class CorrelationMatrix {
 
     }
 
-    // having two 2D arrays instead of one 3D array saves one array access per access to the data.
-    /** the mean of each window (starting at index 0, 1, 2, ...) of each time series of set A. first dimension refers to time series, second to window. */
-    protected double[][] meansA, meansB;
-    /** the L2 norm of the mean-shifted window (as a vector) (L2: square root of sum of squared vector entries) */
-    protected double[][] L2NormsA, L2NormsB;
 
     /**
      * TODO: Is precomputation for large time lag steps slower than no precomputation?
@@ -215,10 +218,12 @@ public class CorrelationMatrix {
 
     }
 
+    /** Computes one horizontal slice of the correlation matrix, that is, all columns in a given range. */
     private class PartialMatrixComputer implements Callable<CorrelationMatrix>{
 
         CorrelationMatrix partialMatrix = new CorrelationMatrix(metadata); // each threads own results (a subsequence of the matrixs columns)
 
+        /** The first window index (inclusive) and the last window index (exclusive). */
         final int from, to;
         final Consumer<Integer> progress;
 
@@ -250,20 +255,17 @@ public class CorrelationMatrix {
 
                 int baseWindowStartIdx = metadata.baseWindowOffset * baseWindowIdx;
 
-                CorrelationColumn column = new CorrelationColumnBuilder(baseWindowStartIdx, metadata.tauMin).allEmpty(columnSize).build();
+                CorrelationHistogram correlationHistogram = new CorrelationHistogram(metadata);
+                CorrelationColumn column = new CorrelationColumnBuilder(baseWindowStartIdx, metadata.tauMin).allEmpty(columnSize).histogram(correlationHistogram).build();
 
                 // compute columns cell by cell
                 int lagIdx = 0;
                 for(int lag : metadata.getDifferentTimeLags()){
 
                     if(Thread.currentThread().isInterrupted())
-                    {
-                        System.out.println(String.format("thread interrupted at lag: %s", lag));
                         return null;
-                    }
 
                     descriptiveStatistics.clear();
-
 
                     if (lag >= 0) {
                         // process positive time lags (look at past events in time series B ~ find influences of B on A)
@@ -275,6 +277,7 @@ public class CorrelationMatrix {
                         windowBStartIdx = baseWindowStartIdx;
                     }
 
+                    // compute all pairwise correlation values
                     List<TimeSeries> setA = metadata.setA;
                     for (int tsAIdx = 0; tsAIdx < setA.size(); tsAIdx++) {
                         TimeSeries tsA = setA.get(tsAIdx);
@@ -308,21 +311,18 @@ public class CorrelationMatrix {
                                 covariance += (windowAData[i] - windowAMean) * (windowBData[i] - windowBMean);
                             double r = covariance / windowAL2Norm / windowBL2Norm;
 
-//                            double r = CrossCorrelation.correlationCoefficient(windowAData, windowBData); //CrossCorrelation.correlationCoefficient(tsA, tsB, baseWindowStartIdx, baseWindowStartIdx + metadata.windowSize - 1, lag);
                             if (!Double.isNaN(r)) descriptiveStatistics.addValue(r);
 
-//                            System.out.println(String.format("windowAData: %s", Arrays.toString(windowAData)));
-//                            System.out.println(String.format("windowBData: %s", Arrays.toString(windowBData)));
-//                            System.out.println(String.format("r: %s", r));
+                        } // for each time series in set B
 
-                        }
+                    } // for each time series in set A
 
-                    }
-
+                    // summarize the computed distribution (calculate mean, sd, etc) and store the results in the column data structure
                     column.computeCell(descriptiveStatistics, valuesPerCell, lagIdx);
+                    correlationHistogram.setDistribution(lagIdx, descriptiveStatistics.getValues());
                     lagIdx++;
 
-                }
+                } // for each lag
 
                 partialMatrix.append(column);
 
@@ -440,9 +440,12 @@ public class CorrelationMatrix {
          * Second dimension refers to the time lag index. */
         public final double[][] data; // = new double[NUM_STATS][];
 
+        public final CorrelationHistogram histogram;
+
+        public final static short histogramResolution = 180; // bins, covering the possible range between -1 and 1
+
         /** Contains the minimal/maximal value of the given statistic along this column.
-         * E.g. extrema[STD_DEV][MINIMUM] gives the minimum standard deviation among all time lags for the window represented by this column.
-         */
+         * E.g. extrema[STD_DEV][MINIMUM] gives the minimum standard deviation among all time lags for the window represented by this column. */
         final Double[][] extrema = new Double[NUM_STATS][NUM_META_STATS];
 
         /** Each columns represents the results of a window of the x-axis. This is the x-value where the window starts (where it ends follows from the column length). */
@@ -454,6 +457,7 @@ public class CorrelationMatrix {
         CorrelationColumn(CorrelationColumnBuilder builder){
             this.windowStartIndex = builder.windowStartIndex;
             this.tauMin = builder.tauMin;
+            this.histogram = builder.histogram;
             data = builder.data;
         }
 
@@ -551,12 +555,12 @@ public class CorrelationMatrix {
 
         public final int windowStartIndex;
         public final int tauMin;
+        public CorrelationHistogram histogram = null;
 
         public CorrelationColumnBuilder(int windowStartIndex, int tauMin){
             this.windowStartIndex = windowStartIndex;
             this.tauMin = tauMin;
         }
-
         public CorrelationColumnBuilder mean(double[] mean){
             this.data[MEAN] = mean;
             return this;
@@ -585,7 +589,10 @@ public class CorrelationMatrix {
             this.data[NEGATIVE_SIGNIFICANT] = negSig;
             return this;
         }
-
+        public CorrelationColumnBuilder histogram(CorrelationHistogram histogram){
+            this.histogram = histogram;
+            return this;
+        }
         public CorrelationColumnBuilder allEmpty(int columnSize) {
             this.data[MEAN] = new double[columnSize];
             this.data[STD_DEV] = new double[columnSize];

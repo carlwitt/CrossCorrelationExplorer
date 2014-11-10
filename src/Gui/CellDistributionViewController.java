@@ -4,6 +4,7 @@ import Data.Correlation.CorrelationMatrix;
 import Data.Correlation.CorrelationSignificance;
 import Data.SharedData;
 import Data.Statistics.AggregatedCorrelationMatrix;
+import Data.Statistics.CorrelationHistogram;
 import Visualization.Correlogram;
 import Visualization.DeferredDrawing;
 import javafx.fxml.FXML;
@@ -22,13 +23,16 @@ public class CellDistributionViewController implements Initializable, DeferredDr
     SharedData sharedData;
     private final DescriptiveStatistics descriptiveStatistics = new DescriptiveStatistics();
 
-    @FXML private Slider numBinsSlider;
+    @FXML private Slider resolutionLevelSlider;
     @FXML private Label numberOfBinsLabel;
     @FXML private WebView webView;
 
     private static String visualizationPath = Correlogram.class.getResource("d3/histogram.html").toExternalForm();
 
-    int numBins = 40;
+    int numBins = CorrelationHistogram.NUM_BINS;
+
+    /** The minimum absolute correlation value that is significant. Will be visualized in the chart using gray shaded areas. */
+    double criticalCorrelationValue = 1.;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -36,13 +40,23 @@ public class CellDistributionViewController implements Initializable, DeferredDr
         webView.getEngine().load(visualizationPath);
 
         numberOfBinsLabel.setText("Number of Bins: " + numBins);
-        numBinsSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
-            if(newValue == null) return;
-            numBins = newValue.intValue();
+
+        resolutionLevelSlider.setMax(CorrelationHistogram.divisors.length-1);
+        resolutionLevelSlider.setValue(CorrelationHistogram.divisors.length-1);
+
+        resolutionLevelSlider.valueProperty().addListener((observable, oldValue, newResolutionLevel) -> {
+            if(newResolutionLevel == null) return;
+            numBins = numBinsFromResolutionLevel(newResolutionLevel.intValue());
             numberOfBinsLabel.setText("Number of Bins: " + numBins);
             visualizeCellDistribution(sharedData.getActiveCorrelationMatrixRegion());
         });
 
+    }
+
+    protected int numBinsFromResolutionLevel(int resolutionLevel){
+        int[] divisors = CorrelationHistogram.divisors;
+        int divisor = divisors[divisors.length-1 - resolutionLevel];
+        return CorrelationHistogram.NUM_BINS / divisor;
     }
 
     public void setSharedData(SharedData sharedData) {
@@ -59,48 +73,67 @@ public class CellDistributionViewController implements Initializable, DeferredDr
         });
     }
 
-    double criticalCorrelationValue = 1.;
-
     /**
      * Retrieves the distribution within the given active matrix region and updates the histogram plot.
      */
     protected void visualizeCellDistribution(AggregatedCorrelationMatrix.MatrixRegionData activeRegion) {
 
-        //TODO switch to precomputed histogram data!
         CorrelationMatrix correlationMatrix = sharedData.getCorrelationMatrix();
         if(correlationMatrix == null || activeRegion == null) return;
 
         if(activeRegion.column >= correlationMatrix.getSize()) return;
 
-        int columnIndex = activeRegion.column;
-        int lagIndex = activeRegion.row;
+        int[] binCounts = activeRegion.cellDistribution;
 
-        if(lagIndex >= 0 && lagIndex < Integer.MAX_VALUE){
+        // compute histogram if no histogram is present (old data)
+        if(binCounts == null){
+            int columnIndex = activeRegion.column;
+            int lagIndex = activeRegion.row;
+
             descriptiveStatistics.clear();
             double[] correlationValues = correlationMatrix.computeSingleCell(columnIndex, lagIndex);
             for(double r : correlationValues)
                 if( ! Double.isNaN(r)) descriptiveStatistics.addValue(r);
 
-            webView.getEngine().executeScript(String.format("update(%s);", calcHistogramJSON(descriptiveStatistics, numBins)));
-
+            binCounts = CorrelationHistogram.computeHistogram(descriptiveStatistics, numBins);
+//            System.out.println(String.format("online  histogram: %s", Arrays.toString(binCounts)));
         }
+//        System.out.println(String.format("offline histogram: %s", Arrays.toString(activeRegion.cellDistribution)));
+
+        if(numBins < CorrelationHistogram.NUM_BINS){
+            binCounts = aggregateHistogram(binCounts, numBins);
+        }
+
+        webView.getEngine().executeScript(String.format("update(%s);", convertHistogramToJSON(binCounts)));
     }
 
-    public String calcHistogramJSON(DescriptiveStatistics stats, int numBins) {
+    private int[] aggregateHistogram(int[] binCounts, int numBins) {
+        int[] aggregated = new int[numBins];
+        int divisor = binCounts.length / numBins;
+        for (int i = 0; i < binCounts.length; i++) aggregated[i / divisor] += binCounts[i];
+        return aggregated;
+    }
+
+    /**
+     * Computes a histogram from the given data and converts it into JSON format.
+     * @param binCounts The frequency distribution of the correlation values.
+     * @return JSON of the following form:
+     * {bins:
+     *      [
+     *          {x: -1, y: first bin frequency},
+     *          {x: second bin start, y: second bin frequency}, ...
+     *      ],
+     *  criticalCorrelationValue:
+     *      minimum significant correlation value
+     * }
+     */
+    public String convertHistogramToJSON(final int[] binCounts) {
 
         StringBuilder builder = new StringBuilder("[");
 
-        final int[] binCounts = new int[numBins];
         double min = -1; //stats.getMin();
         double max =  1; //stats.getMax();
         final double binSize = (max - min)/numBins;
-
-        double[] values = stats.getValues();
-        for (double d : values) {
-            int bin = (int) ((d - min) / binSize);
-            assert bin >= 0 && bin <= numBins : String.format("Invalid bin idx: %s not in [%s, %s] value %s (min %s)", bin, 0, numBins, d, min);
-            binCounts[bin == numBins ? numBins - 1 : bin] += 1;
-        }
 
         for (int i = 0; i < binCounts.length; i++) {
             double binStart = min + binSize*i;
@@ -108,7 +141,7 @@ public class CellDistributionViewController implements Initializable, DeferredDr
             if(i<binCounts.length-1) builder.append(",");
         }
         builder.append("]");
-//        System.out.println(String.format("{data: %s, criticalCorrelationValue: %s}", builder.toString(), criticalCorrelationValue));
+
         return String.format("{bins: %s, criticalCorrelationValue: %s}", builder.toString(), criticalCorrelationValue);
 
     }

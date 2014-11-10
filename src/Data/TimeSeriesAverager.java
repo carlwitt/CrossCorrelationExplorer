@@ -11,7 +11,7 @@ import java.util.*;
  * All time series are expected to have the same x values. Between each two x values, a 2D histogram is computed, summarizing the number of time series moving from
  *
  * TODO: histograms can be computed for the highest resolution (no binning on the x axis) and then aggregated easily to fit the current binning.
- * Laying out the histograms as 1D arrays could save some memory (factor of numBins less arrays/references). For 10k data points thats (4 byte per reference?) only 10k references instead of 160k references, saving of 600kb.
+ * Laying out the histograms as 1D arrays could save some memory (factor of numBins less arrays/references). For 10k data points that's (4 byte per reference?) only 10k references instead of 160k references, a saving of 600kb.
  * That wouldn't be worth it, but what about speed? Could it help (e.g. if caching loads the entire array instead of just parts of it?)
  */
 public class TimeSeriesAverager {
@@ -44,8 +44,7 @@ public class TimeSeriesAverager {
     public int[][] drawOrder;
 
     /** For each histogram, contains the lower bound of the lowest bin.
-     * Given that one bin starts at 0, lowestBinStartsAt is the bin lower bound that the minimum y value lies in.
-     */
+     * Given that one bin starts at 0, lowestBinStartsAt is the bin lower bound that the minimum y value lies in. */
     public double[] lowestBinStartsAt;
 
     /** The minimum group value among all group values at a given group index. */
@@ -83,7 +82,11 @@ public class TimeSeriesAverager {
     };
 
 
-    public TimeSeriesAverager(List<TimeSeries> ensemble){ this.timeSeries = ensemble; }
+    public TimeSeriesAverager(List<TimeSeries> ensemble){
+        // check whether the unsigned short data type is large enough to store the largest possible frequency in a histogram summarizing a time step in an ensemble of the given size.
+        if(ensemble.size() > 2*Short.MAX_VALUE+1) throw new IllegalArgumentException("Ensemble is too large.");
+        this.timeSeries = ensemble;
+    }
 
     /**
      * @return The coarser time series in a compressed format.
@@ -164,11 +167,13 @@ public class TimeSeriesAverager {
                 int sourceBinIdx = (int) Math.floor(sourceY / binSize);
                 int sinkBinIdx = (int) Math.floor(sinkY / binSize);
 
-                if(sourceBinIdx == numSourceBins) sourceBinIdx -= 1;
-                if(sinkBinIdx == numSinkBins) sinkBinIdx -= 1;
+                if(sourceBinIdx == numSourceBins && numSourceBins > 1) sourceBinIdx -= 1;
+                if(sinkBinIdx == numSinkBins && numSinkBins > 1) sinkBinIdx -= 1;
 
-                assert histogramIdx >= 0 && sourceBinIdx >= lowestSourceBinIdx && sinkBinIdx >= lowestSinkBinIdx : String.format("histogramIdx: %s sourceBinIdx: %s sinkBinIdx: %s", histogramIdx, sourceBinIdx, sinkBinIdx);
-                assert sourceBinIdx-lowestSourceBinIdx < histograms[histogramIdx].length && sinkBinIdx-lowestSinkBinIdx < histograms[histogramIdx][0].length : String.format("histogramIdx: %s sourceBinIdx: %s  max: %s sinkBinIdx: %s max: %s", histogramIdx, sourceBinIdx, histograms[histogramIdx].length, sinkBinIdx,histograms[histogramIdx][0].length);
+                assert sourceBinIdx >= lowestSourceBinIdx && sinkBinIdx >= lowestSinkBinIdx : String.format("sourceBinIdx: %s smallest Idx: %s\nsinkBinIdx: %s smallest Idx: %s", sourceBinIdx, lowestSourceBinIdx, sinkBinIdx, lowestSinkBinIdx);
+                assert sourceBinIdx-lowestSourceBinIdx < histograms[histogramIdx].length && sinkBinIdx-lowestSinkBinIdx < histograms[histogramIdx][0].length : String.format("normalized sourceBinIdx: %s max: %s normalized sinkBinIdx: %s max: %s",
+                        sourceBinIdx-lowestSourceBinIdx, histograms[histogramIdx].length,
+                        sinkBinIdx-lowestSinkBinIdx,     histograms[histogramIdx][0].length);
                 histograms[histogramIdx][sourceBinIdx - lowestSourceBinIdx][sinkBinIdx - lowestSinkBinIdx]++;
             }
 

@@ -727,6 +727,7 @@ public class Correlogram extends CanvasChart {
                 CorrelationMatrix.CorrelationColumn column = matrix.getColumn(columnIdx);
                 if(CorrelationMatrix.isValidStatistic(getCorrelationStatistic())) newRegion.medianCorrelation = column.data[getCorrelationStatistic()][lagIdx];
                 if(CorrelationMatrix.isValidStatistic(getUncertaintyStatistic())) newRegion.averageUncertainty = column.data[getUncertaintyStatistic()][lagIdx];
+                newRegion.cellDistribution = column.histogram == null ? null : column.histogram.getHistogram(lagIdx);
             }
         }
 

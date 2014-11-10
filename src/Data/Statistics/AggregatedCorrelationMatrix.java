@@ -92,6 +92,9 @@ public class AggregatedCorrelationMatrix {
         double minUncertainty = Double.POSITIVE_INFINITY, averageUncertainty = 0, maxUncertainty = Double.NEGATIVE_INFINITY;
         int notNaNCorrelations = 0, notNaNUncertainties = 0;
 
+        int[] summedHistogram = new int[CorrelationHistogram.NUM_BINS];
+        DescriptiveStatistics descriptiveStatistics = new DescriptiveStatistics();
+
         for (int i = firstColumnIdx; i <= lastColumnIdx; i++) {
 
             CorrelationMatrix.CorrelationColumn correlationColumn = matrix.getColumn(i);
@@ -108,7 +111,7 @@ public class AggregatedCorrelationMatrix {
                         continue evaluateCell; // filtered cell doesn't influence aggregation
                 }
 
-
+                // correlation dimension
                 if(CorrelationMatrix.isValidStatistic(region.CORRELATION_DIM)){
                     double correlation = correlationColumn.data[region.CORRELATION_DIM][j];
                     if( ! Double.isNaN(correlation)){
@@ -116,6 +119,7 @@ public class AggregatedCorrelationMatrix {
                         notNaNCorrelations++;
                     }
                 }
+                // uncertainty dimension
                 if(CorrelationMatrix.isValidStatistic(region.UNCERTAINTY_DIM)){
                     double uncertainty = correlationColumn.data[region.UNCERTAINTY_DIM][j];
                     if( ! Double.isNaN(uncertainty)){
@@ -129,6 +133,22 @@ public class AggregatedCorrelationMatrix {
                     }
                 } // if uncertainty statistic is set
 
+                // compute region histogram as sum of histograms in the region
+                // for some matrices generated with an older version of the program, the offline histograms might not have been computed.
+                // normally, none of the histograms should be null, or all of them are null.
+                int[] histogram;
+                if(correlationColumn.histogram == null){
+                    double[] correlationValues = matrix.computeSingleCell(i, j);
+                    for(double r : correlationValues)
+                        if( ! Double.isNaN(r)) descriptiveStatistics.addValue(r);
+                    histogram = CorrelationHistogram.computeHistogram(descriptiveStatistics, CorrelationHistogram.NUM_BINS);
+                } else {
+                    histogram = correlationColumn.histogram.getHistogram(j);
+                }
+                // add histogram to the summed histogram
+                for (int k = 0; k < histogram.length; k++) summedHistogram[k] += histogram[k];
+
+
             } // for row
         } // for column
 
@@ -141,6 +161,8 @@ public class AggregatedCorrelationMatrix {
         region.minUncertainty = notNaNUncertainties > 0 ? minUncertainty : Double.NaN;
         region.averageUncertainty = notNaNUncertainties > 0 ? averageUncertainty / notNaNUncertainties : Double.NaN;
         region.maxUncertainty = notNaNUncertainties > 0 ? maxUncertainty : Double.NaN;
+
+        region.cellDistribution = summedHistogram;
 
         assert Double.isNaN(region.averageUncertainty) || region.averageUncertainty <= region.maxUncertainty : String.format("Average uncertainty %s larger than max uncertainty %s",region.averageUncertainty,region.maxUncertainty);
 
@@ -191,7 +213,7 @@ public class AggregatedCorrelationMatrix {
 
         /** The cell distribution aggregation in the region. The i-th int represents the number of entries in the i-th bin.
          * The i-th bin represents the correlation value range [-1 + i * 2/numBins, -1 + (i+1) * 2/numBins) where the last interval is closed and not open. */
-        int[] cellDistribution;
+        public int[] cellDistribution;
 
         public MatrixRegionData(){}
 
