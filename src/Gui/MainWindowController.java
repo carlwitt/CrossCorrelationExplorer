@@ -5,9 +5,12 @@ import Data.SharedData;
 import Global.Main;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.control.*;
 import javafx.scene.layout.Pane;
 import javafx.stage.FileChooser;
+import javafx.stage.Screen;
+import javafx.stage.Stage;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.dialog.Dialog;
 import org.controlsfx.dialog.Dialogs;
@@ -33,6 +36,7 @@ public class MainWindowController extends WindowController implements Initializa
     FileChooser fileChooser = new FileChooser();
 
     // progress display layer
+    @FXML private Pane mainWindowRoot;
     @FXML private Pane progressPane;
     @FXML private ProgressBar progressBar;
     @FXML private Label progressLabel;
@@ -47,6 +51,20 @@ public class MainWindowController extends WindowController implements Initializa
     @FXML private MatrixFilterController matrixFilterController;
 
     public Main globalMain; // to restart the program
+
+    @Override
+    public void showWindow() {
+        super.showWindow();
+
+        // resize primary stage to full screen
+        Screen primaryScreen = Screen.getPrimary();
+        Rectangle2D bounds = primaryScreen.getVisualBounds();
+        Stage mainWindowStage = (Stage) mainWindowRoot.getScene().getWindow();
+        mainWindowStage.setX(bounds.getMinX());
+        mainWindowStage.setY(bounds.getMinY());
+        mainWindowStage.setWidth(bounds.getWidth());
+        mainWindowStage.setHeight(bounds.getHeight());
+    }
 
     /**
      * Called after the controls have been parsed from the XML. Sets up logic and components that could not be set up using the GUI builder.
@@ -79,6 +97,8 @@ public class MainWindowController extends WindowController implements Initializa
         });
         timeSeriesViewController.setDeferringDrawRequests(true);
         cellDistributionViewController.setDeferringDrawRequests(true);
+
+        timeSeriesViewController.drawChart();
 
     }
 

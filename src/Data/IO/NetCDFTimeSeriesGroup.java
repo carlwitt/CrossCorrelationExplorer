@@ -17,8 +17,8 @@ import java.util.List;
  */
 public class NetCDFTimeSeriesGroup {
 
-    /** The name for the time series set (either TimeSeriesSetA or TimeSeriesSetB). This will not be mapped to an actual group, because
-     * those are not yet supported. Instead, the name is used to prefix all the names of the variables and dimensions that would belong to the group. */
+    /** The name for the time series set (either TimeSeriesSetA or TimeSeriesSetB). This will not be mapped to a NetCDF group, because
+     * the library doesn't yet support them. Instead, the name is used to prefix all the names of the variables and dimensions that would belong to the group. */
     private final String timeSeriesGroupName;
 
     /** The labels for the rows and columns of the {@link #temperatures} matrix (think: axis labels).
@@ -43,7 +43,7 @@ public class NetCDFTimeSeriesGroup {
     private NetcdfFileWriter dataFile = null;
 
     /**
-     * Prepares writing to a file. Does all the declarations and variable creations.
+     * Prepares writing to a file. Handles all the declarations and variable creations.
      * @param dataFile The NetCDF file to manipulate.
      * @param timeSeriesGroupName See {@link #timeSeriesGroupName}.
      * @param tsFilePath Optional. Corresponds to the file from which the time series were originally loaded.
@@ -80,7 +80,7 @@ public class NetCDFTimeSeriesGroup {
         for (int i = 0; i < id.getLength(); i++) {
             double[] tsTemperatures = timeSeries.get(i).getDataItems().im;
             for (int j = 0; j < time.getLength(); j++) {
-                temperatures.set(i, j, (float) tsTemperatures[j]);
+                temperatures.set(i, j, tsTemperatures[j]);
             }
         }
     }

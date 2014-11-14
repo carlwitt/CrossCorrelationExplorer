@@ -84,6 +84,10 @@ public class CorrelationHistogram {
         decompressHistogram(frequencies[row], histogram);
     }
 
+    public short[] getCompressedHistogram(int row){
+        return frequencies[row];
+    }
+
     private short[] computeHistogram(double[] distribution) {
 
         // reset intermediate memory
@@ -91,7 +95,7 @@ public class CorrelationHistogram {
 
         for (int i = 0; i < distribution.length; i++) {
             int binIdx = (int) ((distribution[i] + 1.) / 2. * NUM_BINS);
-            intermediateHistogram[binIdx < NUM_BINS ? binIdx : NUM_BINS]++;
+            intermediateHistogram[binIdx < NUM_BINS ? binIdx : NUM_BINS-1]++;
         }
         return compressHistogram(intermediateHistogram);
     }
@@ -120,5 +124,9 @@ public class CorrelationHistogram {
         int[] histogram = new int[NUM_BINS];
         decompressHistogram(frequencies[row], histogram);
         return histogram;
+    }
+
+    public void setCompressedHistogram(int row, short[] compressedHistogram) {
+        frequencies[row] = compressedHistogram;
     }
 }

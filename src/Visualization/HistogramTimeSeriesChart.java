@@ -8,6 +8,7 @@ import Gui.TimeSeriesViewController;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Alert;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.StrokeLineCap;
 import javafx.scene.transform.Affine;
@@ -68,7 +69,7 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
 
         // determine bin size from screen space
         int numDataPointsInRange = dataModel.getNumDataPointsInRange(0, xAxis.getLowerBound(), xAxis.getUpperBound());
-        int optimalBinSize = (int) Math.max(1, Math.ceil(10. * numDataPointsInRange / getWidth()));
+        int optimalBinSize = (int) Math.max(1, Math.ceil(5. * numDataPointsInRange / getWidth()));
         aggregators[0].setGroupSize(optimalBinSize);
         aggregators[1].setGroupSize(optimalBinSize);
 
@@ -129,7 +130,7 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
         double[] polygonYValues = new double[4];
 
         // drawing shouldn't take longer than 10 seconds, otherwise, the loops aborts
-        Util.TimeOutChecker timeOutChecker = new Util.TimeOutChecker(10000);
+        Util.TimeOutChecker timeOutChecker = new Util.TimeOutChecker(5000);
 
         // find global max bin value (within this ensemble) to normalize input values to the transfer function
         int maxPeakFrequency = 0;
@@ -159,7 +160,7 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
             lastXLowerY[1] = xLowerY[1];
 
             if(timeOutChecker.isTimeOut()) {
-                System.out.println(String.format("Time out in drawing polygons"));
+                new Alert(Alert.AlertType.ERROR, "Sorry, rendering with the given parameters took more than five seconds. The operation timed out.").show();
                 break;
             }
         }

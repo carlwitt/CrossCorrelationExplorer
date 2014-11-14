@@ -102,13 +102,7 @@ public class ComputationController implements Initializable {
     @Override public void initialize(URL location, ResourceBundle resources) {
 
         // on selecting an entry in the results table, update the correlation matrix and restore the input parameters
-        correlogramCacheTable.getSelectionModel().getSelectedIndices().addListener((ListChangeListener<Integer>) c -> {
-            WindowMetadata selectedItem = correlogramCacheTable.getSelectionModel().getSelectedItem();
-            if(selectedItem != null){
-                setParameters(selectedItem);
-                sharedData.setcorrelationMatrix(sharedData.experiment.getResult(selectedItem));
-            }
-        });
+        correlogramCacheTable.getSelectionModel().getSelectedIndices().addListener(this::correlogramCacheTableSelectionChanged);
 
         // bind table columns to string getters of the metadata class
         correlogramCacheTable.setPlaceholder(new Text("No computations performed yet."));
@@ -151,8 +145,8 @@ public class ComputationController implements Initializable {
         correlogramCacheTable.setItems(sharedData.experiment.cacheKeySet);
 
         sharedData.experiment.cacheKeySet.addListener((ListChangeListener<WindowMetadata>) c -> {
-            if(c.next() && c.wasAdded()){
-                assert(c.getAddedSize() == 1);
+            if (c.next() && c.wasAdded()) {
+                assert (c.getAddedSize() == 1);
                 WindowMetadata newEntry = c.getAddedSubList().get(0);
                 correlogramCacheTable.getSelectionModel().select(newEntry);
                 correlogramCacheTable.scrollTo(newEntry);
@@ -162,38 +156,11 @@ public class ComputationController implements Initializable {
     }
 
     public void compute(){
-    
-        // execute values from text inputs
-        int initialWindowSize = Integer.parseInt(windowSizeText.getText());
-        int overlap = (int) Double.parseDouble(baseWindowOffsetText.getText());
-        int tauMin = (int) Double.parseDouble(timeLagMinText.getText());
-        int tauMax = (int) Double.parseDouble(timeLagMaxText.getText());
-        int tauStep = (int) Double.parseDouble(timeLagStepText.getText());
-        double significanceLevel = Double.parseDouble(significanceLevelText.getText());
 
-        // the window size must be at least two (otherwise, the pearson correlation coefficient is undefined)
-        // and at most the length of the time series (otherwise the correlation matrix will have no columns)
-        int maxWindowSize = Math.min(sharedData.experiment.dataModel.getTimeSeriesLength(0), sharedData.experiment.dataModel.getTimeSeriesLength(1));
-        int minWindowSize = 2;
-        int windowSize = Math.min(maxWindowSize, Math.max(minWindowSize, initialWindowSize));
-        if(windowSize != initialWindowSize){
-            Dialogs.create().title("Invalid window size.")
-                    .masthead(String.format("The window size must be at least %s and at most %s.\n%s given, using %s instead.",minWindowSize,maxWindowSize,initialWindowSize,windowSize))
-                    .showInformation();
-        }
-        int baseWindowOffset = windowSize-overlap;
-        // TODO: there's nothing wrong with negative overlaps (baseWindowOffsets larger than the window size), but the lag window cache can't handle it currently.
-        if(baseWindowOffset <= 0 || baseWindowOffset > windowSize){
-            Dialogs.create().title("Invalid window overlap.").masthead(String.format("Invalid window overlap. Must be at least 0, at most %s.\n%s given.", windowSize-1, overlap)).showError();
-            return;
-        }
-
-        // display the parsed values
-        windowSizeText.setText(""+windowSize); // to display what was parsed
-
-        WindowMetadata metadata = new WindowMetadata(dataModel.correlationSetA, dataModel.correlationSetB,
-                windowSize, tauMin, tauMax, tauStep, baseWindowOffset);
-        CorrelationMatrix.setSignificanceLevel(metadata, significanceLevel);
+        // assemble metadata from GUI input elements
+        Optional<WindowMetadata> metadataFromGUIElements = createMetadataFromGUIElements();
+        if(! metadataFromGUIElements.isPresent()) return;
+        WindowMetadata metadata = metadataFromGUIElements.get();
 
         // get result from cache or execute an asynchronous compute service
         CorrelationMatrix result;
@@ -202,34 +169,100 @@ public class ComputationController implements Initializable {
             sharedData.setcorrelationMatrix(result);
         } else {
             result = new CorrelationMatrix(metadata);
-            final CorrelationMatrix.ComputeService service = result.computeService;
-            
-            // remove partial state if previous computation was cancelled
-            service.reset();
-            
-            // after the computation, put correlation result in the shared data object and save the result
-            service.setOnSucceeded(t -> {
-                progressLayer.hide();
-                sharedData.experiment.addResult(service.getValue());
-                sharedData.setcorrelationMatrix(service.getValue());
-            });
-            
-            // on cancel: hide the progress layer. wire the cancel button to that action.
-            service.setOnCancelled(t -> progressLayer.hide());
-            progressLayer.cancelButton.setOnAction(t -> { System.err.println(String.format("cancel computation! success: %s",service.cancel())); progressLayer.hide(); });
-            
-            // bind progress display elements
-            progressLayer.progressBar.progressProperty().bind(service.progressProperty());
-            progressLayer.messageLabel.textProperty().bind(service.messageProperty());
-        
-            progressLayer.show();
-            
-            service.start();
+            computeMatrixWithProgressFeedback(result);
         }
         
     }
 
-    public void setParameters(WindowMetadata metadata){
+    /**
+     * Assembles computation input parameters from the GUI input elements.
+     * @return If the input parameters are valid, an Optional with the desired metadata. Otherwise this Optional is empty.
+     */
+    protected Optional<WindowMetadata> createMetadataFromGUIElements() {
+
+        int initialWindowSize = Integer.parseInt(windowSizeText.getText());
+        int overlap = (int) Double.parseDouble(baseWindowOffsetText.getText());
+        int tauMin = (int) Double.parseDouble(timeLagMinText.getText());
+        int tauMax = (int) Double.parseDouble(timeLagMaxText.getText());
+        int tauStep = (int) Double.parseDouble(timeLagStepText.getText());
+        double significanceLevel = Double.parseDouble(significanceLevelText.getText());
+
+        // check window size. Must be at least two (otherwise, the pearson correlation coefficient is undefined)
+        // and at most the length of the time series (otherwise the correlation matrix will have no columns)
+        int maxWindowSize = Math.min(sharedData.experiment.dataModel.getTimeSeriesLength(0), sharedData.experiment.dataModel.getTimeSeriesLength(1));
+        int minWindowSize = 3;
+        int windowSize = Math.min(maxWindowSize, Math.max(minWindowSize, initialWindowSize));
+        if(windowSize != initialWindowSize){
+            String info = String.format("The window size must be at least %s and at most %s.",minWindowSize, maxWindowSize);
+            Alert invalidWindowSizeWarning = new Alert(Alert.AlertType.ERROR, info);
+            invalidWindowSizeWarning.setTitle("Invalid window size");
+            invalidWindowSizeWarning.show();
+
+            // set the window size input to the maximum allowed value, if too large a value was requested
+            if(initialWindowSize > maxWindowSize) windowSizeText.setText(""+maxWindowSize);
+
+            return Optional.empty();
+        }
+
+        // check window overlap
+        int baseWindowOffset = windowSize-overlap;
+        // TODO: there's nothing wrong with negative overlaps (baseWindowOffsets larger than the window size), but the lag window cache can't handle it currently.
+        if(baseWindowOffset <= 0 || baseWindowOffset > windowSize){
+            String info = String.format("Invalid window overlap. Must be at least 0, at most %s.", windowSize-1);
+            Alert invalidWindowOverlapError = new Alert(Alert.AlertType.ERROR, info);
+            invalidWindowOverlapError.setTitle("Invalid window overlap");
+            invalidWindowOverlapError.show();
+
+            return Optional.empty();
+        }
+
+        WindowMetadata metadata = new WindowMetadata(dataModel.correlationSetA, dataModel.correlationSetB,
+                windowSize, tauMin, tauMax, tauStep, baseWindowOffset);
+        CorrelationMatrix.setSignificanceLevel(metadata, significanceLevel);
+        return Optional.of(metadata);
+
+    }
+
+    /**
+     * Restores GUI input element states from the parameters of the selected computation result.
+     */
+    public void correlogramCacheTableSelectionChanged(ListChangeListener.Change<? extends Integer> c) {
+        WindowMetadata metadata = correlogramCacheTable.getSelectionModel().getSelectedItem();
+        if (metadata != null) {
+            ComputationController.this.restoreComputationParameters(metadata);
+
+            CorrelationMatrix correlationMatrix = sharedData.experiment.getResult(metadata);
+
+            // check if the histograms for each cell have been computed yet
+            if (correlationMatrix.getColumn(0).histogram == null) {
+
+                Alert dlg = new Alert(Alert.AlertType.WARNING, "", ButtonType.NO, ButtonType.YES);
+                dlg.setTitle("Missing data");
+                dlg.setHeaderText("Recompute the selected correlation matrix?");
+                dlg.setContentText(
+                        "The selected correlation matrix was computed with an older software version. " +
+                        "It lacks data that is needed for smooth live interaction. " +
+                        "\nWould you like to compute it now? " +
+                        "Otherwise interaction might be slow.");
+                ButtonType recomputeMatrix = dlg.showAndWait().orElse(ButtonType.NO);
+
+                if (recomputeMatrix == ButtonType.YES) {
+                    correlationMatrix = new CorrelationMatrix(metadata);
+                    computeMatrixWithProgressFeedback(correlationMatrix);
+                } else {
+                    sharedData.setcorrelationMatrix(correlationMatrix);
+                }
+            } else {
+                sharedData.setcorrelationMatrix(correlationMatrix);
+            } // end if histogram data is missing
+        } // end if selected metadata is not null
+    }
+
+    /**
+     * Executed when selecting an entry in the {@link #correlogramCacheTable}. Sets the computation parameter inputs to the values with which the correlation matrix was computed.
+     * @param metadata Contains all parameters of the cross-correlation computation.
+     */
+    public void restoreComputationParameters(WindowMetadata metadata){
 
         windowSizeText.setText(""+metadata.windowSize);
         baseWindowOffsetText.setText(""+metadata.getOverlap());
@@ -241,6 +274,32 @@ public class ComputationController implements Initializable {
         // restore time series selection
         setASelector.setSample(metadata.setA);
         setBSelector.setSample(metadata.setB);
+    }
+
+    protected void computeMatrixWithProgressFeedback(CorrelationMatrix matrix) {
+        final CorrelationMatrix.ComputeService service = matrix.computeService;
+
+        // remove partial state if previous computation was cancelled
+        service.reset();
+
+        // after the computation, put correlation result in the shared data object and save the result
+        service.setOnSucceeded(t -> {
+            progressLayer.hide();
+            sharedData.experiment.addResult(service.getValue());
+            sharedData.setcorrelationMatrix(service.getValue());
+        });
+
+        // on cancel: hide the progress layer. wire the cancel button to that action.
+        service.setOnCancelled(t -> progressLayer.hide());
+        progressLayer.cancelButton.setOnAction(t -> { System.err.println(String.format("Computation cancelled. Success: %s",service.cancel())); progressLayer.hide(); });
+
+        // bind progress display elements
+        progressLayer.progressBar.progressProperty().bind(service.progressProperty());
+        progressLayer.messageLabel.textProperty().bind(service.messageProperty());
+
+        progressLayer.show();
+
+        service.start();
     }
 
     /**

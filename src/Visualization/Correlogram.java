@@ -794,14 +794,16 @@ public class Correlogram extends CanvasChart {
     }
 
     /**
-     * Computes the bounds of the x and y axes such that the plot fills all available plotting space.
+     * Computes the bounds of the x and y axes such that the non-NaN part of the plot fills all available plotting space.
      * @param m the matrix to take the shape from (number of columns and rows)
      * @return min/max values for the x and y axes
      */
     protected Bounds useAllSpaceAxesBounds(CorrelationMatrix m) {
         Affine cellToData = cellToData(m.metadata);
         Point2D minXminY = cellToData.transform(0,0);
-        Point2D maxXmaxY = cellToData.transform(m.getLastFilledColumnIndex(getCorrelationStatistic()), m.metadata.getNumberOfDifferentTimeLags());  // x: the last one is getSize()-1 but we want to see it (not its start point to be the upper bound of the axis)
+        int maxX = m.getLastFilledColumnIndex(getCorrelationStatistic())+1;
+        int maxY = m.metadata.getNumberOfDifferentTimeLags();
+        Point2D maxXmaxY = cellToData.transform(maxX, maxY);  // x: the last one is getSize()-1 but we want to see it (not its start point to be the upper bound of the axis)
         double xRange = maxXmaxY.getX() - minXminY.getX();
         double yRange = maxXmaxY.getY() - minXminY.getY();
         return new BoundingBox(minXminY.getX(), minXminY.getY(), xRange, yRange);

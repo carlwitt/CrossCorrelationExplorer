@@ -440,7 +440,7 @@ public class CorrelationMatrix {
          * Second dimension refers to the time lag index. */
         public final double[][] data; // = new double[NUM_STATS][];
 
-        public final CorrelationHistogram histogram;
+        public CorrelationHistogram histogram;
 
         public final static short histogramResolution = 180; // bins, covering the possible range between -1 and 1
 
@@ -619,7 +619,7 @@ public class CorrelationMatrix {
 
     /** @return the number of columns (=windows) in the matrix. */
     public int getSize() {
-        assert metadata.numBaseWindows == columns.size();
+        assert metadata.numBaseWindows == columns.size() : String.format("Number of base windows (%s) differs from the number of columns (%s)", metadata.numBaseWindows, columns.size());
         return columns.size();
     }
 
@@ -637,49 +637,9 @@ public class CorrelationMatrix {
         return -1;
     }
 
-    /** @return the index of the first time series value where the first column (time window) starts. */
-    int getStartOffsetInTimeSeries(){
-        if(columns.size() == 0) return 0; // the matrix can have no columns if the winodw size exceeds the length of the time series
-        return columns.get(0).windowStartIndex;
-    }
-
-    /** @return the time series value index where the last window ends (window corresponding to the maximum lag in the last column). */
-    int getEndOffsetInTimeSeries(){
-        if(columns.size() == 0)
-            return 0; // the matrix can have no columns if the winodw size exceeds the length of the time series
-        CorrelationColumn lastColumn = columns.get(columns.size()-1);
-        assert lastColumn.data[MEAN] != null : String.format("Column has no mean! %s", lastColumn);
-        return lastColumn.windowStartIndex + lastColumn.tauMin + lastColumn.data[MEAN].length - 1;
-    }
-
-    /** @return the first point in time covered by the matrix. */
-    public double getStartXValueInTimeSeries(){
-        assert(metadata.setA.size() > 0) : "Metadata problem " + metadata;
-        return metadata.setA.get(0).getDataItems().re[getStartOffsetInTimeSeries()];
-    }
-
-    /** @return the last point in time covered by the matrix. */
-    public double getEndXValueInTimeSeries(){
-        double[] re = metadata.setA.get(0).getDataItems().re;
-//        assert re.length > getEndOffsetInTimeSeries() : String.format("getEndOffset returned %s where the max val is actually %s",getEndOffsetInTimeSeries(),re[re.length-1]);
-        return re[re.length-1];
-    }
-
     public void append(CorrelationColumn c) { columns.add(c); }
 
     public WindowMetadata getMetadata(){ return metadata; }
-
-    /** @return the smallest lag used on any column. */
-    public int minLag(){
-        if(columns.size()==0)return 0;
-        return columns.get(columns.size()-1).tauMin;
-    }
-
-    /** @return the largest lag used on any column */
-    public int maxLag(){
-        if(columns.size()==0)return 0;
-        return columns.get(0).tauMin + columns.get(0).data[MEAN].length - 1;
-    }
 
     /**
      * @param STATISTIC one of the constants {@link #MEAN}, {@link #STD_DEV}, {@link #MEDIAN}, ...

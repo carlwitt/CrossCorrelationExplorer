@@ -40,11 +40,11 @@ public class AggregatedCorrelationMatrixTest {
 
         // build expected values for aggregation
         expected = new MatrixRegionData[][]{
-            new MatrixRegionData[]{ // first column
+            { // first column
                 new MatrixRegionData(0, 0, 2, 3, 0, 3, 2, 3, -7.0, -6.25, -4.0, -1.75, -1.0, 1.0, 4.0, 7.0, null),      // first row
                 new MatrixRegionData(0, 3, 2, 3, 0, 3, 2, 1, -8.0, -8.0, -6.0, -4.0, -4.0, 4.0, 6.0, 8.0, null),        // second row
             },
-            new MatrixRegionData[]{ // second column
+            { // second column
                 new MatrixRegionData(2, 0, 2, 3, 0, 3, 1, 3, -11.0, -11.0, -10.0, -9.0, -9.0, 9.0, 10.0, 11.0, null),       // first row
                 new MatrixRegionData(2, 3, 2, 3, 0, 3, 1, 1, -12.0, -12.0, -12.0, -12.0, -12.0, 12.0, 12.0, 12.0, null)     // second row
             }

@@ -185,6 +185,9 @@ public class CorrelogramLegend extends CanvasChart {
      */
     private void adaptAxes(Double horizontalMin, Double horizontalMax, Double verticalMin, Double verticalMax) {
 
+        assert Double.isFinite(horizontalMin) && Double.isFinite(horizontalMax) : String.format("horizontalMin: %s, horizontalMax: %s", horizontalMin, horizontalMax);
+        assert Double.isFinite(verticalMin) && Double.isFinite(verticalMax) : String.format("verticalMin: %s, verticalMax: %s", verticalMin, verticalMax);
+
         paintScale.setLowerBounds(horizontalMin, verticalMin);
         paintScale.setUpperBounds(horizontalMax, verticalMax);
 
@@ -515,17 +518,13 @@ public class CorrelogramLegend extends CanvasChart {
             
             for (int rowIdx = 0; rowIdx < verticalResolution; rowIdx++) {
                 
-                sample[rowIdx][colIdx][HORIZONTAL] = horizontalValueExtrema[0] + colIdx*horizontalStep;
-                sample[rowIdx][colIdx][VERTICAL] = !Double.isNaN(ranges.getHeight()) ? ranges.getMinY() + rowIdx*verticalStep : 0;
+                sample[rowIdx][colIdx][HORIZONTAL] = Double.isNaN(horizontalValueExtrema[0]) ? 0 : horizontalValueExtrema[0] + colIdx*horizontalStep;
+                sample[rowIdx][colIdx][VERTICAL] = Double.isNaN(ranges.getHeight()) ? 0 : ranges.getMinY() + rowIdx * verticalStep;
 
+                assert ! Double.isNaN(sample[rowIdx][colIdx][HORIZONTAL]) && ! Double.isNaN(sample[rowIdx][colIdx][VERTICAL]) : String.format("sample[rowIdx][colIdx][HORIZONTAL]: %s sample[rowIdx][colIdx][VERTICAL]: %s", sample[rowIdx][colIdx][HORIZONTAL], sample[rowIdx][colIdx][VERTICAL]);
             }
         }
-//        System.out.println("CorrelogramLegend.valueRangeSample");
-//        for (int row = 0; row < sample.length; row++) {
-//            for (int col = 0; col < sample[0].length; col++)
-//                System.out.print(String.format("(%s, %s)", sample[row][col][CorrelogramLegend.HORIZONTAL], sample[row][col][CorrelogramLegend.VERTICAL]));
-//            System.out.println();
-//        }
+
         return sample;
     }
 

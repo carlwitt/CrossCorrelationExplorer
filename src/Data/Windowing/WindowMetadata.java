@@ -203,8 +203,6 @@ public class WindowMetadata {
         if (naAction != that.naAction) return false;
         if (!setA.equals(that.setA)) return false;
         if (!setB.equals(that.setB)) return false;
-        System.out.println(String.format("customParameters: %s", customParameters));
-        System.out.println(String.format("that.customParameters: %s", that.customParameters));
         if (!customParameters.equals(that.customParameters)) return false;
 
         return true;

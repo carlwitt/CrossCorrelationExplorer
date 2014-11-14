@@ -90,7 +90,7 @@ public class CorrelationSignificanceTest {
             if (t - criticalTValue > 1e-15) significantCorrelations++;
 
         }
-        System.out.println("Time for naïve: "+(System.currentTimeMillis()-before) + " significant correlations: "+significantCorrelations);
+        System.out.println("Time for naïve: "+(System.currentTimeMillis()-before) + "\nsignificant correlations: "+significantCorrelations);
 
         random = new Random(1);
         int significantCorrelationsB = 0;
@@ -103,10 +103,16 @@ public class CorrelationSignificanceTest {
 
         }
 
-        System.out.println("Time for precomputed: "+(System.currentTimeMillis()-before) + " significant correlations: "+significantCorrelationsB);
+        System.out.println("Time for precomputed: "+(System.currentTimeMillis()-before) + "\nsignificant correlations: "+significantCorrelationsB);
 
         assertEquals(significantCorrelations, significantCorrelationsB);
 
     }
+
+//    @Test public void testCriticalTValue(){
+//        TDistribution tDistribution = new TDistribution(2000);
+//        CorrelationSignificance correlationSignificance = new CorrelationSignificance(2002, 0.95);
+//        tDistribution.
+//    }
 
 }

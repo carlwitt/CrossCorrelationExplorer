@@ -158,8 +158,6 @@ public class TimeSeriesViewController {
             );
         });
 
-        // enable controls only if a correlation matrix is selected
-        timeSeriesPane.disableProperty().bind(sharedData.correlationMatrixProperty().isNull());
     }
 
     private void setScrollBarRangesToDataBounds(CorrelationMatrix matrix) {

@@ -65,9 +65,10 @@ public class BaseWindowStatisticsTest {
         // test with random data
         s = new BaseWindowStatistics(ts2, windowSize, delta);
         double[][] normalizedValues = new double[][]{
-                new double[]{-0.326162713696249, 0.345431694877334, 0.229827301227488, -0.249096282408573},
-                new double[]{0.250546323542949, -0.228377260093112, 0.255878884985577, -0.278047948435415},
-                new double[]{0.214596634032205, -0.319330199388787, 0.0616296159569174, 0.043103949399665}};
+            {-0.326162713696249, 0.345431694877334, 0.229827301227488, -0.249096282408573},
+            {0.250546323542949, -0.228377260093112, 0.255878884985577, -0.278047948435415},
+            {0.214596634032205, -0.319330199388787, 0.0616296159569174, 0.043103949399665}
+        };
 
         assertArrayEquals(normalizedValues[0], s.getNormalizedValues(0), 1e-15);
         assertArrayEquals(normalizedValues[1], s.getNormalizedValues(2), 1e-15);

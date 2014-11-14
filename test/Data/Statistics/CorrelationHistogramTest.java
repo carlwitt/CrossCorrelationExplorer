@@ -128,6 +128,9 @@ public class CorrelationHistogramTest {
         short b = 1;
         int aBits = a | 0;
         System.out.println(String.format("Integer.toBinaryString(a): %s", Integer.toBinaryString(a)));
+        System.out.println(String.format("Short.toUnsignedInt(0): %s", Short.toUnsignedInt((short)0)));
+        System.out.println(String.format("Short.toUnsignedInt(32760): %s", Short.toUnsignedInt((short)32760)));
+        System.out.println(String.format("(short)32760: %s", (short)32760));
     }
 
 }

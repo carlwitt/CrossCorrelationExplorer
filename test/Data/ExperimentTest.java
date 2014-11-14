@@ -137,4 +137,18 @@ public class ExperimentTest {
         assertEquals(true, result);
     }
 
+    @Test public void testAppendFileExtension(){
+
+        String withoutExtension = "ioajsdf.dfad";
+        String withOtherExtension = "auasasdf.asd";
+        String withExtension = "ijaserf.nc";
+
+        String hasExtensionRegex = Experiment.HAS_EXTENSION_REGEX;
+
+        assertTrue(withExtension.matches(hasExtensionRegex));
+        assertTrue(withOtherExtension.matches(hasExtensionRegex));
+        assertFalse(withoutExtension.matches(hasExtensionRegex));
+
+    }
+
 }

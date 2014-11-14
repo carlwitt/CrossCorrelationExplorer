@@ -2,7 +2,7 @@ package Data;
 
 import Data.Correlation.CorrelationMatrix;
 import Data.IO.FileModel;
-import Data.IO.NetCDFComputationResult;
+import Data.IO.NetCDFCorrelationMatrix;
 import Data.IO.NetCDFTimeSeriesGroup;
 import Data.Windowing.WindowMetadata;
 import com.google.common.collect.Lists;
@@ -175,7 +175,7 @@ public class Experiment {
             tsGroups[0] = new NetCDFTimeSeriesGroup(dataFile, "TimeSeriesSetA", 0, dataModel);
             tsGroups[1] = new NetCDFTimeSeriesGroup(dataFile, "TimeSeriesSetB", 1, dataModel);
 
-            Iterator<CorrelationMatrix> resultsInFile = NetCDFComputationResult.getResultsIterator(dataFile, dataModel);
+            Iterator<CorrelationMatrix> resultsInFile = NetCDFCorrelationMatrix.getResultsIterator(dataFile, dataModel);
             while(resultsInFile.hasNext()){
                 CorrelationMatrix nextResult = resultsInFile.next();
                 addResult(nextResult);
@@ -188,6 +188,10 @@ public class Experiment {
 
     }
 
+    // the file is considered to have an extension if it ends with a dot and one or two arbitrary characters
+    protected static final String HAS_EXTENSION_REGEX = ".*\\....?$";
+    protected static final String DEFAULT_FILE_EXTENSION = ".nc";
+
     /**
      * Persists the experiment to a NetCDF file from which it can be read again using {@link #Experiment(String)}.
      * @param netCDFPath The path where to store the file.
@@ -195,6 +199,8 @@ public class Experiment {
     public void save(String netCDFPath) {
         NetcdfFileWriter dataFile = null;
         try{
+            if(!netCDFPath.matches(HAS_EXTENSION_REGEX)) netCDFPath += DEFAULT_FILE_EXTENSION;
+
             dataFile = NetcdfFileWriter.createNew(NetcdfFileWriter.Version.netcdf3, netCDFPath);
 
             // declare time series sets
@@ -203,10 +209,10 @@ public class Experiment {
             tsGroups[0] = new NetCDFTimeSeriesGroup(dataFile, "TimeSeriesSetA", tsAPath, Lists.newArrayList(dataModel.getEnsemble(0).values()));
             tsGroups[1] = new NetCDFTimeSeriesGroup(dataFile, "TimeSeriesSetB", tsBPath, Lists.newArrayList(dataModel.getEnsemble(1).values()));
 
-            List<NetCDFComputationResult> netCDFComputationResults = new ArrayList<>();
+            List<NetCDFCorrelationMatrix> netCDFCorrelationMatrixes = new ArrayList<>();
             int i = 0;
             for (CorrelationMatrix matrix: correlograms.values())
-                netCDFComputationResults.add(new NetCDFComputationResult(dataFile, i++, matrix));
+                netCDFCorrelationMatrixes.add(new NetCDFCorrelationMatrix(dataFile, i++, matrix));
 
             // add version information
             dataFile.addGroupAttribute(null, fileFormatVersion);
@@ -215,7 +221,7 @@ public class Experiment {
             dataFile.create();
             tsGroups[0].write();
             tsGroups[1].write();
-            for (NetCDFComputationResult computationResult : netCDFComputationResults)
+            for (NetCDFCorrelationMatrix computationResult : netCDFCorrelationMatrixes)
                 computationResult.write();
 
         }catch (IOException | InvalidRangeException e) {
@@ -244,7 +250,10 @@ public class Experiment {
      * The computation results are also observable ({@link #cacheKeySet}), allowing GUI components to listen to changes.
      */
     public void addResult(CorrelationMatrix matrix){
+        // in case of an update, the old matrix is replaced
         correlograms.put(matrix.metadata, matrix);
+        // in case of an update, the metadata object shouldn't be duplicated
+        cacheKeySet.remove(matrix.metadata);
         cacheKeySet.add(matrix.metadata);
     }
 

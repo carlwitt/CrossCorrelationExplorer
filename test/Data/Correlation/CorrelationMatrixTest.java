@@ -6,6 +6,7 @@ import Data.Windowing.WindowMetadata;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -205,6 +206,13 @@ public class CorrelationMatrixTest {
         }
         System.out.println(String.format("System.currentTimeMillis() - before: %s", System.currentTimeMillis() - before));
         System.out.println(String.format("cValues[cValues.length-1]: %s", cValues[cValues.length - 1]));
+    }
+
+    @Test public void testMemoryUsage() throws IOException {
+
+        byte[] doubleArray = new byte[10000000];
+        System.in.read();
+
     }
 
 }

@@ -35,21 +35,29 @@ public class TimeSeriesAveragerTest {
         float[] expectedMinValues = new float[]{0, 0, 0, 2, 2, 1, 0, 1};
         float[] expectedMaxValues = new float[]{2, 2, 2, 2, 2, 1, 1, 2};
         short[][][] expectedHistograms = new short[][][]{
-                new short[][]{new short[]{0, 1},
-                        new short[]{1, 0}},
-                new short[][]{new short[]{1, 0},
-                        new short[]{0, 1}},
-                new short[][]{new short[]{1, 0},
-                        new short[]{1, 0}},
-                new short[][]{new short[]{2, 0},
-                        new short[]{0, 0}},
-                new short[][]{new short[]{1, 0},
-                        new short[]{0, 0}},
-                new short[][]{new short[]{1, 0},
-                        new short[]{0, 0}},
-                new short[][]{new short[]{1, 0},
-                        new short[]{0, 1}}};
-
+            {
+                {0, 1},
+                {1, 0}
+            },{
+                {1, 0},
+                {0, 1}
+            },{
+                {1, 0},
+                {1, 0}
+            },{
+                {2, 0},
+                {0, 0}
+            },{
+                {1, 0},
+                {0, 0}
+            },{
+                {1, 0},
+                {0, 0}
+            },{
+                {1, 0},
+                {0, 1}
+            }
+        };
 
         // print histograms
         Arrays.stream(timeSeriesAverager.histograms).forEach(histogram -> {
@@ -90,9 +98,9 @@ public class TimeSeriesAveragerTest {
         for (int i = 0; i < 9; i++) averager.indices.add(i);
 
         short[][] histogram = new short[][]{
-                new short[]{3, 8, 2},
-                new short[]{4, 8, 7},
-                new short[]{0, 0, 1}
+            {3, 8, 2},
+            {4, 8, 7},
+            {0, 0, 1}
         };
         System.out.println(String.format("Arrays.toString(averager.sortHistogram(histogram)): %s", Arrays.toString(averager.sortHistogram(histogram))));
 
