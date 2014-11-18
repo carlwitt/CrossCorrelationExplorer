@@ -14,8 +14,8 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Abstracts from the way a number of time seriese is stored in a text file.
- * This specific model parses a number matrix from the string data.
+ * Abstracts from the way a time series ensemble is stored in a text file.
+ * This specific model parses a number matrix from string data.
  * It also encapsulates the conventions on how to interpret these numbers (i.e. how x- and y-values are stored within the matrix).
  *
  * Method overview:
@@ -131,11 +131,8 @@ public class FileModel {
                     catch (IOException ex) { fail("Error loading file: " + _filename); }
                     
                     // remove "empty lines" (those with length 2 or less)
-//                    lines.removeIf(new Predicate<String>() {
-//                        @Override public boolean test(String t) { return t.length() <= 2; }
-//                    });
-                    if(lines.get(lines.size()-1).length() <= 2)lines.remove(lines.size()-1);
-                    
+                    while(lines.get(lines.size()-1).length() <= 2)lines.remove(lines.size()-1);
+
                     updateMessage("Parsing File");
                     rowValues = new double[lines.size()][];
 
@@ -147,7 +144,7 @@ public class FileModel {
                         parseLinesConcurrent(lines, numThreads);
 
                     // cache first column
-                    xAxisSpacing = getTimeSeriesLength() > 1 ? rowValues[1][0]-rowValues[0][0] : Double.NaN;
+                    xAxisSpacing = getTimeSeriesLength() > 1 ? rowValues[1][0]-rowValues[0][0] : Double.NEGATIVE_INFINITY;
                     firstColumn = new double[getTimeSeriesLength()];
                     for (int i = 0; i < firstColumn.length; i++) {
                         firstColumn[i] = rowValues[i][0];
@@ -155,8 +152,10 @@ public class FileModel {
                         // check that the x axis location difference is the same as between all other points
                         if(i>0) {
                             double currentXAxisSpacing = firstColumn[i]-firstColumn[i-1];
-                            if( Math.abs(currentXAxisSpacing - xAxisSpacing) > 1e-10){
-                               throw new UnevenSpacingException(String.format("The spacing between consecutive data points must be constant. Found %s between data points %s and %s while assuming a general spacing of %s.",currentXAxisSpacing,i,i+1,xAxisSpacing));
+                            if( Math.abs(currentXAxisSpacing - xAxisSpacing) > 1e-3){
+                               throw new UnevenSpacingException(String.format("" +
+                                       "Error parsing %s." +
+                                       "\nThe spacing between consecutive data points must be constant. Found %s between data points %s and %s while assuming a general spacing of %s.",getFilename(), currentXAxisSpacing,i,i+1,xAxisSpacing));
                             }
                         }
                     }
@@ -186,7 +185,7 @@ public class FileModel {
         }
     }
 
-    public void execute() throws UnevenSpacingException {
+    public void execute() throws UnevenSpacingException, NumberFormatException {
         if(isExecuted) return;
         File file = new File(getFilename());
 
@@ -203,7 +202,14 @@ public class FileModel {
         int numThreads = Runtime.getRuntime().availableProcessors();  // leave one thread for the application
 
         for (int i = 0; i < lines.size(); i++) {
-            rowValues[i] = separator.splitToDouble(lines.get(i));
+            try{
+                rowValues[i] = separator.splitToDouble(lines.get(i));
+            } catch (NumberFormatException e){
+                throw new NumberFormatException(String.format(
+                        "Error parsing %s." +
+                        "\nCouldn't parse values in line %s. Please make sure that the selected separators match the file input formats.", getFilename(), i+1));
+            }
+
         }
 
         // cache first column

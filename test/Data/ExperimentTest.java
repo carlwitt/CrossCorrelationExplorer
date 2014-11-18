@@ -61,8 +61,8 @@ public class ExperimentTest {
 //        c2.append(c2.new CorrelationColumnBuilder(3, 0).mean(new double[]{0., 1., 0.}).standardDeviation(new double[]{222., 555., 888.}).build());
 //        c2.append(c2.new CorrelationColumnBuilder(6, 0).mean(new double[]{0., 0., 1.}).standardDeviation(new double[]{333., 666., 999.}).build());
 
-        experiment.addResult(c1);
-        experiment.addResult(c2);
+        experiment.loadResult(c1);
+        experiment.loadResult(c2);
     }
 
     /**
@@ -74,8 +74,8 @@ public class ExperimentTest {
         //TODO either the equality routines, or worse, the persist routines are flawed!
         // create experiment
         Experiment experiment = new Experiment(dataModel);
-        experiment.addResult(c1);
-        experiment.addResult(c2);
+        experiment.loadResult(c1);
+        experiment.loadResult(c2);
 
         System.out.println(String.format("this.getResults:\n%s", experiment.getResults()));
 

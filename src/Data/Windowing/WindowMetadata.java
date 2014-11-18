@@ -2,6 +2,7 @@ package Data.Windowing;
 
 import Data.Correlation.CorrelationMatrix;
 import Data.Correlation.CrossCorrelation;
+import Data.Statistics.CorrelationHistogram;
 import Data.TimeSeries;
 import com.google.common.base.Joiner;
 import com.sun.istack.internal.NotNull;
@@ -145,6 +146,15 @@ public class WindowMetadata {
         return setA.get(0).getDataItems().re[1] - setA.get(0).getDataItems().re[0];
     }
 
+    /**
+     * Returns the time lag with the given time lag index. For instance, if the minimum time lag where -100, the getTimeLagByIdx(0) would return -100.
+     * @param timeLagIdx The offset of the time lag within the lag range.
+     * @return The time lag at the given offset.
+     */
+    public int getTimeLagByIdx(int timeLagIdx) {
+        return getDifferentTimeLags()[timeLagIdx];
+    }
+
     // -----------------------------------------------------------------------------------------------------------------
     // Builder constructor pattern
     // -----------------------------------------------------------------------------------------------------------------
@@ -231,4 +241,13 @@ public class WindowMetadata {
     public Double getSignificanceLevel(){ return CorrelationMatrix.getSignificanceLevel(this); }
     public String getLagRange(){ return String.format("[%s, %s]",tauMin,tauMax); }
     public Integer getLagStep(){ return tauStep; }
+    public String getApproximateMemoryConsumption(){
+        int bytes = CorrelationHistogram.NUM_BINS * 2 * getNumberOfDifferentTimeLags() * getNumberOfBaseWindows();
+        if(bytes > 1000000){
+            return bytes / 1000000 + " MB";
+        } else {
+            return bytes / 1000 + " KB";
+        }
+    }
+
 }

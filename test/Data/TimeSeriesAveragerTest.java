@@ -32,8 +32,8 @@ public class TimeSeriesAveragerTest {
 //        System.out.println(String.format("yVals1: %s", Arrays.toString(Arrays.stream(timeSeriesAverager.getYValues(1)).map(d -> Precision.round(d, 3)).toArray())));
 //        System.out.println(String.format("yVals2: %s", Arrays.toString(Arrays.stream(timeSeriesAverager.getYValues(2)).map(d -> Precision.round(d, 3)).toArray())));
 
-        float[] expectedMinValues = new float[]{0, 0, 0, 2, 2, 1, 0, 1};
-        float[] expectedMaxValues = new float[]{2, 2, 2, 2, 2, 1, 1, 2};
+        double[] expectedMinValues = new double[]{0, 0, 0, 2, 2, 1, 0, 1};
+        double[] expectedMaxValues = new double[]{2, 2, 2, 2, 2, 1, 1, 2};
         short[][][] expectedHistograms = new short[][][]{
             {
                 {0, 1},
@@ -122,6 +122,13 @@ public class TimeSeriesAveragerTest {
         short[] vals = ArrayUtils.toPrimitive(indices.toArray(new Short[5]));
         System.out.println(String.format("vals: %s", vals));
 
+    }
+
+    @Test public void testFloor(){
+        double number = -7.5;
+        double binSize = 2.5;
+        int binIdx = (int) Math.floor(number / binSize);
+        assertTrue(binIdx == -3);
     }
 
 }

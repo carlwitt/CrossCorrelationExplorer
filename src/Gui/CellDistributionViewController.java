@@ -79,29 +79,33 @@ public class CellDistributionViewController implements Initializable, DeferredDr
     protected void visualizeCellDistribution(AggregatedCorrelationMatrix.MatrixRegionData activeRegion) {
 
         CorrelationMatrix correlationMatrix = sharedData.getCorrelationMatrix();
-        if(correlationMatrix == null || activeRegion == null) return;
+        if(correlationMatrix == null) return;
+        int[] binCounts;
 
-        if(activeRegion.column >= correlationMatrix.getSize()) return;
+        if(activeRegion != null){
 
-        int[] binCounts = activeRegion.cellDistribution;
+            binCounts = activeRegion.cellDistribution;
 
-        // compute histogram if no histogram is present (old data)
-        if(binCounts == null){
-            int columnIndex = activeRegion.column;
-            int lagIndex = activeRegion.row;
+            // compute histogram if no histogram is present (old data)
+            if(binCounts == null){
+                int columnIndex = activeRegion.column;
+                int lagIndex = activeRegion.row;
 
-            descriptiveStatistics.clear();
-            double[] correlationValues = correlationMatrix.computeSingleCell(columnIndex, lagIndex);
-            for(double r : correlationValues)
-                if( ! Double.isNaN(r)) descriptiveStatistics.addValue(r);
+                descriptiveStatistics.clear();
+                double[] correlationValues = correlationMatrix.computeSingleCell(columnIndex, lagIndex);
+                for(double r : correlationValues)
+                    if( ! Double.isNaN(r)) descriptiveStatistics.addValue(r);
 
-            binCounts = CorrelationHistogram.computeHistogram(descriptiveStatistics, numBins);
-//            System.out.println(String.format("online  histogram: %s", Arrays.toString(binCounts)));
-        }
-//        System.out.println(String.format("offline histogram: %s", Arrays.toString(activeRegion.cellDistribution)));
+                binCounts = CorrelationHistogram.computeHistogram(descriptiveStatistics, numBins);
+            }
 
-        if(numBins < CorrelationHistogram.NUM_BINS){
-            binCounts = aggregateHistogram(binCounts, numBins);
+            // if the desired granularity is coarser then the full resolution, merge adjacent bins
+            if(numBins < CorrelationHistogram.NUM_BINS){
+                binCounts = aggregateHistogram(binCounts, numBins);
+            }
+        } else{
+            // if there is no active region, empty the histogram (do not show any distribution)
+            binCounts = new int[]{};
         }
 
         webView.getEngine().executeScript(String.format("update(%s);", convertHistogramToJSON(binCounts)));

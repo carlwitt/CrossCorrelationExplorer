@@ -8,11 +8,19 @@ public abstract class Cacheable<T> {
 
     /** The value to reuse. */
     protected T cachedValue;
+    protected boolean invalidated = false;
 
     /** Recomputes the value if it is not valid.
      * @return the new cached value */
     public T get(){
-        if(!isValid()) recompute();
+        if(invalidated){
+            recompute();
+            invalidated = false;
+            return cachedValue;
+        }
+        if(!isValid()){
+            recompute();
+        }
         return cachedValue;
     }
 
@@ -28,4 +36,8 @@ public abstract class Cacheable<T> {
     /** Makes the cached value valid. */
     public abstract void recompute();
 
+    /** Guarantees that the next call to get() will recompute the result. */
+    public void invalidate() {
+        invalidated = true;
+    }
 }

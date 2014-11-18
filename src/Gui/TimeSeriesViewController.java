@@ -27,13 +27,11 @@ public class TimeSeriesViewController {
     
     private SharedData sharedData;          // data that is shared between the views
     
-    /** maps a color to each set of time series (for instance the time series in correlation set A, in correlation set B and temporary time series for preview). */
+    /** maps a color to each time series ensemble (for instance the time series in correlation set A, in correlation set B and temporary time series for preview). */
     private final HashMap<Color, ObservableList<TimeSeries>> seriesSets = new HashMap<>();
     
     private final HistogramTimeSeriesChart timeSeriesChart = new HistogramTimeSeriesChart();
-    
-    /** controls the level of detail with which time series are drawn.
-     * this is important since rendering all series with all points takes very long and is not the main purpose of the software. */
+
     @FXML protected Label groupSizeLabel;
     @FXML protected TextField binningYAxisResolutionTextField;
     @FXML protected Label binningYAxisResolutionLabel;
@@ -76,11 +74,11 @@ public class TimeSeriesViewController {
         timeSeriesChart.drawEnsemble2Property().bind(ensemble2CheckBox.selectedProperty());
 
         timeSeriesChart.binSizeProperty().addListener((observable, oldValue, newValue) -> {
-            binningYAxisResolutionTextField.setText(String.format("%.5f", newValue.doubleValue()));
+            binningYAxisResolutionTextField.setText(String.format("%.7f", newValue.doubleValue()));
             drawChart();
         });
 
-
+        // parse and report user changes to the time series binning (on the y axis)
         binningYAxisResolutionTextField.setOnKeyReleased(event -> {
             if (event.getCode() == KeyCode.ENTER) {
                 double newResolution;
@@ -158,6 +156,13 @@ public class TimeSeriesViewController {
             );
         });
 
+    }
+
+    public void setScrollBarRangesToDataBounds(DataModel dataModel) {
+        Bounds dataBounds = DataModel.getDataBounds(dataModel.ensemble1TimeSeries, dataModel.ensemble2TimeSeries);
+        assert dataBounds != null;
+        timeSeriesChart.xAxis.setScrollBarBoundsDC(dataBounds);
+        timeSeriesChart.yAxis.setScrollBarBoundsDC(dataBounds);
     }
 
     private void setScrollBarRangesToDataBounds(CorrelationMatrix matrix) {

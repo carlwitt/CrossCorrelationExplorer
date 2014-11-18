@@ -178,7 +178,6 @@ public class NetCDFCorrelationMatrix {
         // read correlation histograms
         bins = dataFile.findVariable(null, binVariableName());
         if(bins != null){
-            System.out.println("correlation histogram data found. matrix id = [" + id + "]");
             valuesForCellDistributionHistograms = (ArrayShort.D3) bins.read();
 
             for (int windowIdx = 0; windowIdx < metadata.numBaseWindows; windowIdx++) {

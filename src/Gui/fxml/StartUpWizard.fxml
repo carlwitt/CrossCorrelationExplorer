@@ -9,17 +9,12 @@
 <?import javafx.scene.text.Font?>
 <BorderPane id="BorderPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="434.0" prefWidth="1021.0" rotate="0.0" snapToPixel="true" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.StartUpWizardController">
   <center>
-    <GridPane gridLinesVisible="false" hgap="3.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="338.0" prefWidth="661.0" vgap="0.0">
-      <columnConstraints>
-        <ColumnConstraints hgrow="NEVER" maxWidth="367.0" minWidth="284.0" prefWidth="278.0" />
-        <ColumnConstraints fillWidth="false" hgrow="NEVER" maxWidth="5.0" minWidth="0.0" prefWidth="18.0" />
-        <ColumnConstraints hgrow="ALWAYS" maxWidth="1.7976931348623157E308" minWidth="10.0" prefWidth="719.0" />
-      </columnConstraints>
+    <GridPane fx:id="inputPane" disable="false" gridLinesVisible="false" hgap="3.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="338.0" prefWidth="661.0" vgap="0.0">
       <Label prefWidth="107.9998779296875" text="New Experiment" GridPane.columnIndex="0" GridPane.halignment="CENTER" GridPane.rowIndex="0" />
       <AnchorPane prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="0" GridPane.rowIndex="1">
-        <Label layoutX="4.0" layoutY="-1.0" prefHeight="33.0" prefWidth="256.0" text="Time Series File 1" />
-        <Button fx:id="tsFile1SelectButton" layoutX="4.0" layoutY="32.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="164.0" style="-fx-border-color: transparent;&#10;-fx-focus-color: transparent;&#10;-fx-border-radius: 4px 0 0 4px;" text="Choose File..." textAlignment="LEFT" textOverrun="LEADING_ELLIPSIS" />
-        <MenuButton fx:id="tsFile1SeparatorMenuButton" layoutX="167.0" layoutY="32.0" mnemonicParsing="false" prefHeight="26.0" style="-fx-border-color: transparent;&#10;-fx-focus-color: transparent;&#10;-fx-border-radius: 0 4px 4px 0;" text="Separator">
+        <Label layoutX="8.0" layoutY="-1.0" prefHeight="33.0" prefWidth="256.0" text="Time Series File 1" />
+        <Button fx:id="tsFile1SelectButton" layoutX="8.0" layoutY="32.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="164.0" style="-fx-border-color: transparent;&#10;-fx-focus-color: transparent;&#10;-fx-border-radius: 4px 0 0 4px;" text="Choose File..." textAlignment="LEFT" textOverrun="LEADING_ELLIPSIS" />
+        <MenuButton fx:id="tsFile1SeparatorMenuButton" layoutX="171.0" layoutY="32.0" mnemonicParsing="false" prefHeight="26.0" style="-fx-border-color: transparent;&#10;-fx-focus-color: transparent;&#10;-fx-border-radius: 0 4px 4px 0;" text="Separator">
           <items>
             <RadioMenuItem mnemonicParsing="false" selected="true" text="Fixed Width" fx:id="file1FixedWidthSeparatorRadio">
               <graphic>
@@ -37,9 +32,9 @@
             <RadioMenuItem mnemonicParsing="false" text="Tab" toggleGroup="$file1Separator" fx:id="file1TabSeparatorRadio" />
           </items>
         </MenuButton>
-        <Label layoutX="4.0" layoutY="73.0" prefHeight="33.0" prefWidth="256.0" text="Time Series File 2" />
-        <Button fx:id="tsFile2SelectButton" layoutX="4.0" layoutY="106.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="164.0" style="-fx-border-color:transparent;&#10;-fx-focus-color:transparent;&#10;-fx-border-radius: 4px 0 0 4px;" text="Choose File..." textAlignment="CENTER" textOverrun="LEADING_ELLIPSIS" />
-        <MenuButton fx:id="tsFile2SeparatorMenuButton" layoutX="167.0" layoutY="106.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="-1.0" style="-fx-focus-color:transparent;&#10;-fx-border-color:transparent;&#10;-fx-border-radius: 0 4px 4px 0;" text="Separator">
+        <Label layoutX="8.0" layoutY="73.0" prefHeight="33.0" prefWidth="256.0" text="Time Series File 2" />
+        <Button fx:id="tsFile2SelectButton" layoutX="8.0" layoutY="106.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="164.0" style="-fx-border-color:transparent;&#10;-fx-focus-color:transparent;&#10;-fx-border-radius: 4px 0 0 4px;" text="Choose File..." textAlignment="CENTER" textOverrun="LEADING_ELLIPSIS" />
+        <MenuButton fx:id="tsFile2SeparatorMenuButton" layoutX="171.0" layoutY="106.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="-1.0" style="-fx-focus-color:transparent;&#10;-fx-border-color:transparent;&#10;-fx-border-radius: 0 4px 4px 0;" text="Separator">
           <items>
             <RadioMenuItem mnemonicParsing="false" selected="true" text="Fixed Width" fx:id="file2FixedWidthSeparatorRadio">
               <graphic>
@@ -86,6 +81,11 @@
         <Button fx:id="loadButton" disable="true" mnemonicParsing="false" onAction="#loadExperiment" prefHeight="49.0" prefWidth="128.0" style=";" text="Load" />
       </HBox>
       <Line endX="0.0" endY="300.0" scaleY="2.0" startX="0.0" stroke="GREY" strokeWidth="1.0" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.rowSpan="2147483647" GridPane.vgrow="ALWAYS" />
+      <columnConstraints>
+        <ColumnConstraints hgrow="NEVER" maxWidth="367.0" minWidth="284.0" prefWidth="278.0" />
+        <ColumnConstraints fillWidth="false" hgrow="NEVER" maxWidth="5.0" minWidth="0.0" prefWidth="18.0" />
+        <ColumnConstraints hgrow="ALWAYS" maxWidth="1.7976931348623157E308" minWidth="10.0" prefWidth="719.0" />
+      </columnConstraints>
       <padding>
         <Insets />
       </padding>
@@ -113,7 +113,7 @@
       <Label layoutY="68.0" text="Patrick Köthur" AnchorPane.leftAnchor="10.0" />
       <Label layoutY="87.0" text="carl.witt@gfz-potsdam.de" AnchorPane.leftAnchor="176.0" />
       <Label layoutY="68.0" text="patrick.koethur@gfz-potsdam.de" AnchorPane.leftAnchor="130.0" />
-      <Label layoutX="10.0" layoutY="37.0" prefWidth="284.0" text="Prototype (build 5. 11. 2014)" />
+      <Label layoutX="10.0" layoutY="37.0" prefWidth="284.0" text="Prototype (build 2014-11-19)" />
     </AnchorPane>
   </top>
 </BorderPane>

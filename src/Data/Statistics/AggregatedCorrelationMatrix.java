@@ -63,7 +63,7 @@ public class AggregatedCorrelationMatrix {
                 newRegion.column = i * columnsPerRegion;
                 newRegion.row = j * rowsPerRegion;
                 aggregateRegion(newRegion, matrixFilterRanges);
-                getRegions()[i][j] = newRegion;
+                regions[i][j] = newRegion;
             }
         }
 
@@ -164,6 +164,8 @@ public class AggregatedCorrelationMatrix {
 
         region.cellDistribution = summedHistogram;
 
+        region.isAggregated = region.croppedWidth > 1 || region.croppedHeight > 1;
+
         assert Double.isNaN(region.averageUncertainty) || region.averageUncertainty <= region.maxUncertainty : String.format("Average uncertainty %s larger than max uncertainty %s",region.averageUncertainty,region.maxUncertainty);
 
     }
@@ -207,9 +209,12 @@ public class AggregatedCorrelationMatrix {
         /** Number of matrix columns/rows actually covered by the aggregation region (can be influenced by clipping to the matrix size). */
         public int croppedWidth, croppedHeight;
         /** The correlation distribution summary of the cells in the region. */
-        public double minCorrelation, firstQuartileCorrelation, medianCorrelation, thirdQuartileCorrelation, maxCorrelation;
+        public double minCorrelation = Double.NaN, firstQuartileCorrelation = Double.NaN, medianCorrelation = Double.NaN, thirdQuartileCorrelation = Double.NaN, maxCorrelation = Double.NaN;
         /** The uncertainty distribution summary of the cells in the region */
-        public double minUncertainty, averageUncertainty, maxUncertainty;
+        public double minUncertainty = Double.NaN, averageUncertainty = Double.NaN, maxUncertainty = Double.NaN;
+
+        /** Whether the region is an aggregation of more than one correlation matrix cell. */
+        public boolean isAggregated = false;
 
         /** The cell distribution aggregation in the region. The i-th int represents the number of entries in the i-th bin.
          * The i-th bin represents the correlation value range [-1 + i * 2/numBins, -1 + (i+1) * 2/numBins) where the last interval is closed and not open. */
@@ -270,6 +275,7 @@ public class AggregatedCorrelationMatrix {
             if (croppedWidth != that.croppedWidth) return false;
             if (Double.compare(that.firstQuartileCorrelation, firstQuartileCorrelation) != 0) return false;
             if (height != that.height) return false;
+            if (isAggregated != that.isAggregated) return false;
             if (Double.compare(that.maxCorrelation, maxCorrelation) != 0) return false;
             if (Double.compare(that.maxUncertainty, maxUncertainty) != 0) return false;
             if (Double.compare(that.medianCorrelation, medianCorrelation) != 0) return false;
@@ -311,6 +317,7 @@ public class AggregatedCorrelationMatrix {
             result = 31 * result + (int) (temp ^ (temp >>> 32));
             temp = Double.doubleToLongBits(maxUncertainty);
             result = 31 * result + (int) (temp ^ (temp >>> 32));
+            result = 31 * result + (isAggregated ? 1 : 0);
             result = 31 * result + Arrays.hashCode(cellDistribution);
             return result;
         }
@@ -334,6 +341,7 @@ public class AggregatedCorrelationMatrix {
                     ", minUncertainty=" + minUncertainty +
                     ", averageUncertainty=" + averageUncertainty +
                     ", maxUncertainty=" + maxUncertainty +
+                    ", isAggregated=" + isAggregated +
                     ", cellDistribution=" + Arrays.toString(cellDistribution) +
                     '}';
         }

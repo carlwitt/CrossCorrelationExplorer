@@ -11,9 +11,6 @@ import javafx.scene.layout.Pane;
 import javafx.stage.FileChooser;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
-import org.controlsfx.control.action.Action;
-import org.controlsfx.dialog.Dialog;
-import org.controlsfx.dialog.Dialogs;
 
 import java.io.File;
 import java.net.URL;
@@ -64,6 +61,8 @@ public class MainWindowController extends WindowController implements Initializa
         mainWindowStage.setY(bounds.getMinY());
         mainWindowStage.setWidth(bounds.getWidth());
         mainWindowStage.setHeight(bounds.getHeight());
+
+        mainWindowStage.setOnCloseRequest(event -> checkForUncommitedChanges());
     }
 
     /**
@@ -93,12 +92,10 @@ public class MainWindowController extends WindowController implements Initializa
         inputTabPane.getSelectionModel().selectedIndexProperty().addListener((observable, oldValue, newValue) -> {
             Tab activeTab = inputTabPane.getTabs().get(newValue.intValue());
             timeSeriesViewController.setDeferringDrawRequests( ! activeTab.getText().equals("Time Series"));
-            cellDistributionViewController.setDeferringDrawRequests( ! activeTab.getText().equals("Cell Distribution"));
+            cellDistributionViewController.setDeferringDrawRequests(!activeTab.getText().equals("Cell Distribution"));
         });
         timeSeriesViewController.setDeferringDrawRequests(true);
         cellDistributionViewController.setDeferringDrawRequests(true);
-
-        timeSeriesViewController.drawChart();
 
     }
 
@@ -107,6 +104,13 @@ public class MainWindowController extends WindowController implements Initializa
         this.experiment = experiment;
         sharedData = new SharedData(experiment);
         initialize(null, null);
+
+        timeSeriesViewController.setScrollBarRangesToDataBounds(experiment.dataModel);
+        experiment.dataModel.correlationSetA.addAll(experiment.dataModel.ensemble1TimeSeries);
+        experiment.dataModel.correlationSetB.addAll(experiment.dataModel.ensemble2TimeSeries);
+        timeSeriesViewController.resetView();
+        timeSeriesViewController.drawChart();
+
     }
 
     public void save(){
@@ -121,6 +125,7 @@ public class MainWindowController extends WindowController implements Initializa
         if(selection != null){
             experiment.save(selection.getPath());
             stage.setTitle(experiment.filename);
+            startUpWizardController.addRecentExperimentFile(experiment.filename);
         }
     }
     public void exportCorrelogramImage(){
@@ -133,28 +138,28 @@ public class MainWindowController extends WindowController implements Initializa
         globalMain.start(null);
     }
     public void showGitHubWiki(){
-//        helpWindowController.homePage = "https://github.com/carlwitt/CrossCorrelationExplorer/wiki";
-        helpWindowController.homePage = "src/Gui/histo.html";
+        helpWindowController.homePage = "https://github.com/carlwitt/CrossCorrelationExplorer/wiki";
 
         helpWindowController.goHome();
         helpWindowController.showWindow();
     }
 
-    public void showGitHubIssues(){
-        helpWindowController.homePage = "https://github.com/login?return_to=https%3A%2F%2Fgithub.com%2Fcarlwitt%2FCrossCorrelationExplorer%2Fissues%2Fnew";
+    public void showGitHubRepository(){
+        helpWindowController.homePage = "https://github.com/carlwitt/CrossCorrelationExplorer";
         helpWindowController.goHome();
         helpWindowController.showWindow();
     }
 
-    public void quit(){
-        org.controlsfx.dialog.
-        Dialogs confirmDialog = Dialogs.create().title("There are unsaved changes. Save before exit?");
+    /** Asks whether to save the experiment data if new computation results have been added. Saves the experiment, if confirmed. */
+    public void checkForUncommitedChanges(){
         if(experiment.isChanged()){
-            Action userChoice = confirmDialog.showConfirm();
-            if(userChoice == Dialog.ACTION_OK) save();             // exit below (on Actions.NO exit without saving)
-            else if(userChoice == Dialog.ACTION_CANCEL) return;    // don't exit
+            Alert confirmDialog = new Alert(Alert.AlertType.CONFIRMATION, "You have unsaved computation results. Save before exit?", ButtonType.YES, ButtonType.NO);
+            ButtonType saveBeforeQuit = confirmDialog.showAndWait().orElse(ButtonType.NO);
+            if(saveBeforeQuit == ButtonType.YES) save();
         }
-
+    }
+    public void quit(){
+        checkForUncommitedChanges();
         System.exit(0);
     }
 }

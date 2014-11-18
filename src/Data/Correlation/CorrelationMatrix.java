@@ -172,7 +172,7 @@ public class CorrelationMatrix {
         L2NormsA = new double[metadata.setA.size()][numWindows];
         L2NormsB = new double[metadata.setB.size()][numWindows];
 
-        // precompute means for time series A
+        // precompute means for time series ensemble A
         for (int tsIdx = 0; tsIdx < metadata.setA.size(); tsIdx++) {
             TimeSeries tsA = metadata.setA.get(tsIdx);
             Arrays.fill(meansA[tsIdx], placeholder);
@@ -182,7 +182,7 @@ public class CorrelationMatrix {
             }
         }
 
-        // precompute means for time series B
+        // precompute means for time series ensemble B
         for (int tsIdx = 0; tsIdx < metadata.setB.size(); tsIdx++) {
             TimeSeries tsB = metadata.setB.get(tsIdx);
             Arrays.fill(meansB[tsIdx], placeholder);

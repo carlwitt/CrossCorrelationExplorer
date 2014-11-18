@@ -10,6 +10,7 @@ import javafx.concurrent.Worker;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
+import javafx.scene.layout.GridPane;
 import javafx.stage.FileChooser;
 import org.controlsfx.dialog.Dialogs;
 
@@ -66,6 +67,7 @@ public class StartUpWizardController extends WindowController implements Initial
     @FXML private ProgressIndicator parserProgressIndicator;
     @FXML private Button experimentFileSelectButton;
 
+    @FXML private GridPane inputPane; // contains the controls for both loading and creating experiment files.
     @FXML private Button loadButton;
     @FXML private Button createButton;
 
@@ -112,44 +114,51 @@ public class StartUpWizardController extends WindowController implements Initial
         if(inputFile == null) inputFile = new File(recentExperiments.getSelectionModel().getSelectedItem());
 
         try {
+            inputPane.setDisable(true);
             mainWindowController.setExperiment(new Experiment(inputFile.getPath()));
             mainWindowController.showWindow();
             this.hideWindow();
             addRecentExperimentFile(inputFile.getAbsolutePath());
         }
         catch(IllegalArgumentException e){
-            Dialogs.create().message("The data has been written with a previous version of the program. Sorry, can't read file.").showError();
-            return;
+            new Alert(Alert.AlertType.ERROR, "The data has been written with a previous version of the program. Sorry, can't read file.").show();
         }
         catch(Exception e){
-            Dialogs.create().masthead("Sorry for this technical error message...").showException(e);
+            Dialogs.create().masthead("Sorry for this technical error message.\nIf you'd like to help improving the software, send the details to carl.witt@gfz-potsdam.de.").showException(e);
             e.printStackTrace();
         }
+        finally { inputPane.setDisable(false); }
 
     }
 
     public void createExperiment(){
 
-        Task<Experiment> loadExperiment = new Task<Experiment>() { @Override protected Experiment call() throws Exception {
+        inputPane.setDisable(true);
+        Task<Experiment> loadExperiment = new Task<Experiment>() { @Override protected Experiment call() throws Exception{
             return new Experiment(ts1Selector.fileModel, ts2Selector.fileModel);
         }};
-
 
         new Thread(loadExperiment).start();
 
         loadExperiment.setOnFailed(event -> {
-//            Dialogs.create().title("P1231123iles.").masthead(null).showWorkerProgress(loadExperiment);
-            Dialogs.create().title("Failed parsing input time series files.").masthead(event.getSource().getException().getLocalizedMessage()).showError();
-
+            Throwable exception = loadExperiment.getException();
+            Alert parserFail = new Alert(Alert.AlertType.ERROR, exception.getLocalizedMessage());
+            parserFail.setResizable(true);
+            parserFail.setTitle("Invalid input configuration.");
+            parserFail.show();
+            inputPane.setDisable(false);
         });
 
         parserProgressIndicator.visibleProperty().bind(loadExperiment.stateProperty().isEqualTo(Worker.State.RUNNING));
 
         loadExperiment.setOnSucceeded(event -> {
-            try { mainWindowController.setExperiment(loadExperiment.get()); }
+            try {
+                mainWindowController.setExperiment(loadExperiment.get());
+                mainWindowController.showWindow();
+                this.hideWindow();
+            }
             catch (InterruptedException | ExecutionException e) { e.printStackTrace(); }
-            mainWindowController.showWindow();
-            this.hideWindow();
+            inputPane.setDisable(false);
         });
 
     }

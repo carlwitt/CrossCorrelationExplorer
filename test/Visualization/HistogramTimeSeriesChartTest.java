@@ -1,9 +1,10 @@
 package Visualization;
 
-import com.fastdtw.util.Arrays;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.math3.util.FastMath;
 import org.junit.Test;
+
+import java.util.Arrays;
 
 import static org.junit.Assert.assertTrue;
 
@@ -35,8 +36,8 @@ public class HistogramTimeSeriesChartTest {
         // fails
 //        assertTrue(Arrays.contains(values, Double.NaN));
         // both succeed
-        assertTrue(Arrays.contains(values, Double.POSITIVE_INFINITY));
-        assertTrue(Arrays.contains(values, Double.NEGATIVE_INFINITY));
+        assertTrue(com.fastdtw.util.Arrays.contains(values, Double.POSITIVE_INFINITY));
+        assertTrue(com.fastdtw.util.Arrays.contains(values, Double.NEGATIVE_INFINITY));
 
     }
 
@@ -96,6 +97,29 @@ public class HistogramTimeSeriesChartTest {
 
         System.out.println(String.format("sum: %s", sum));
         System.out.println(String.format("System.currentTimeMillis() - before: %s", System.currentTimeMillis() - before));
+    }
+
+    @Test public void testArrayUtils(){
+
+        double[] xValues = new double[]{1,2,3};
+        double[] minValues = new double[]{10,11,12};
+        double[] maxValues = new double[]{90,91,92};
+
+        double[] allXValues = ArrayUtils.clone(xValues);
+        double[] xValuesReverse = ArrayUtils.clone(xValues);
+        ArrayUtils.reverse(xValuesReverse);
+        allXValues = ArrayUtils.addAll(allXValues, xValuesReverse);
+
+        double[] allYValues = ArrayUtils.clone(minValues);
+        double[] maxYValuesReversed = ArrayUtils.clone(maxValues);
+        ArrayUtils.reverse(maxYValuesReversed);
+        allYValues = ArrayUtils.addAll(allYValues, maxYValuesReversed);
+
+        System.out.println(String.format("Arrays.toString(allXValues): %s", Arrays.toString(allXValues)));
+        System.out.println(String.format("Arrays.toString(allYValues): %s", Arrays.toString(allYValues)));
+
+
+
     }
 
 }

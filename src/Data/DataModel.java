@@ -193,7 +193,7 @@ public class DataModel {
      */
     public static Bounds getDataBounds(List<TimeSeries> ensemble1, List<TimeSeries> ensemble2) {
 
-        if(ensemble1.isEmpty() && ensemble2.isEmpty()) return null;
+        assert !(ensemble1.isEmpty() && ensemble2.isEmpty()) : "The data bounds of two empty ensembles are undefined.";
 
         if(ensemble1.isEmpty()) return getDataBounds(ensemble2);
         if(ensemble2.isEmpty()) return getDataBounds(ensemble1);

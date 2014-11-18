@@ -16,7 +16,7 @@
     </Menu>
     <Menu mnemonicParsing="false" text="Help">
       <MenuItem mnemonicParsing="false" onAction="#showGitHubWiki" text="Wiki Pages" />
-      <MenuItem mnemonicParsing="false" onAction="#showGitHubIssues" text="Report a bug (GitHub account required)" />
+      <MenuItem mnemonicParsing="false" onAction="#showGitHubRepository" text="Source Code on GitHub" />
     </Menu>
   </MenuBar>
   <SplitPane dividerPositions="0.33827493261455527" focusTraversable="false" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0" VBox.vgrow="ALWAYS">

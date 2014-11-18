@@ -259,11 +259,13 @@ public class TimeSeriesChart extends CanvasChart implements DeferredDrawing {
 //        Bounds newVisibleRange = new BoundingBox(minX, minY, xRange, yRange);
 
         clipRegionDC.set(Util.union(xAxis.getScrollBarBoundsDC(),yAxis.getScrollBarBoundsDC()));
-        drawContents();
+//        drawContents();
     }
 
     public void setSharedData(SharedData sharedData){
         this.sharedData = sharedData;
+
+        sharedData.activeCorrelationMatrixRegionProperty().addListener((observable, oldValue, newValue) -> drawContents());
     }
 
     /** Is true iff a draw has been issued while the component was deferring draw requests (e.g. not visible). */

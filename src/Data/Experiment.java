@@ -121,7 +121,7 @@ public class Experiment {
      * Creates a new experiment by filling the data model with time series from the input files.
      * @param models The file models containing the time series.
      */
-    public Experiment(FileModel... models) throws FileModel.UnevenSpacingException {
+    public Experiment(FileModel... models) throws FileModel.UnevenSpacingException, NumberFormatException {
 
         this.filename = DEFAULT_FILENAME;
         assert models.length > 1 : "Pass at least two file models to the Experiment constructor.";
@@ -178,7 +178,7 @@ public class Experiment {
             Iterator<CorrelationMatrix> resultsInFile = NetCDFCorrelationMatrix.getResultsIterator(dataFile, dataModel);
             while(resultsInFile.hasNext()){
                 CorrelationMatrix nextResult = resultsInFile.next();
-                addResult(nextResult);
+                loadResult(nextResult);
             }
         } finally {
             if (dataFile != null)
@@ -224,6 +224,8 @@ public class Experiment {
             for (NetCDFCorrelationMatrix computationResult : netCDFCorrelationMatrixes)
                 computationResult.write();
 
+            uncommitedChanges = false;
+
         }catch (IOException | InvalidRangeException e) {
             e.printStackTrace(System.err);
         }finally {
@@ -249,7 +251,7 @@ public class Experiment {
      * Registers a new computation result that will be serialized when saving the file.
      * The computation results are also observable ({@link #cacheKeySet}), allowing GUI components to listen to changes.
      */
-    public void addResult(CorrelationMatrix matrix){
+    protected void loadResult(CorrelationMatrix matrix){
         // in case of an update, the old matrix is replaced
         correlograms.put(matrix.metadata, matrix);
         // in case of an update, the metadata object shouldn't be duplicated
@@ -272,4 +274,10 @@ public class Experiment {
     public CorrelationMatrix getResult(WindowMetadata metadata){ return correlograms.get(metadata); }
 
     public boolean hasResult(WindowMetadata metadata) { return correlograms.containsKey(metadata); }
+
+    /** Adds a result to the experiment file. This will cause the experiment */
+    public void addResult(CorrelationMatrix value) {
+        loadResult(value);
+        uncommitedChanges = true;
+    }
 }

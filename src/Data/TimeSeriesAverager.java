@@ -1,6 +1,7 @@
 package Data;
 
 import Data.Correlation.CrossCorrelation;
+import Global.Util;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 
@@ -48,9 +49,9 @@ public class TimeSeriesAverager {
     public double[] lowestBinStartsAt;
 
     /** The minimum group value among all group values at a given group index. */
-    public float minValues[];
+    public double minValues[];
     /** The maximum group value among all group values at a given group index. */
-    public float maxValues[];
+    public double maxValues[];
 
     /** Reusable auxiliary data structure for sorting the histogram bins. */
     List<Integer> indices = new ArrayList<>();
@@ -68,7 +69,6 @@ public class TimeSeriesAverager {
         @Override public boolean isValid() {
             return getGroupSize() == cachedForGroupSize
                     && Math.abs(binSize - cachedForBinSize) <= 2*Double.MIN_VALUE
-                    && cachedForIds.length == timeSeries.size()     // doesn't need to compare the arrays in depth if the sizes differ
                     && Arrays.equals(cachedForIds, timeSeries.stream().sorted().mapToInt(TimeSeries::getId).toArray());
         }
 
@@ -99,15 +99,17 @@ public class TimeSeriesAverager {
         assert groupSize > 0 : "Aggregation group size must be at least one data point per group.";
         if(timeSeries.isEmpty()) return new double[0][0];
 
+        Util.TimeOutChecker timeOutChecker = new Util.TimeOutChecker(10000); // 10 sec time out for aggregation
+
         TimeSeries anyTimeSeries = timeSeries.get(0);
 
         int numberOfDataPoints = (int) Math.ceil(1. * anyTimeSeries.getSize() / groupSize);
         double[][] newAggregatedData = new double[timeSeries.size()+1][numberOfDataPoints];
 
-        minValues = new float[numberOfDataPoints];
-        maxValues = new float[numberOfDataPoints];
-        Arrays.fill(minValues, Float.POSITIVE_INFINITY);
-        Arrays.fill(maxValues, Float.NEGATIVE_INFINITY);
+        minValues = new double[numberOfDataPoints];
+        maxValues = new double[numberOfDataPoints];
+        Arrays.fill(minValues, Double.POSITIVE_INFINITY);
+        Arrays.fill(maxValues, Double.NEGATIVE_INFINITY);
         histograms = new short[numberOfDataPoints-1][][];
         lowestBinStartsAt = new double[numberOfDataPoints-1];
         maxBinValue = new short[numberOfDataPoints-1];
@@ -130,8 +132,8 @@ public class TimeSeriesAverager {
                 double mean = CrossCorrelation.mean(timeSeries.get(tsID), windowStartIdx, Math.min(windowStartIdx + groupSize - 1, anyTimeSeries.getSize() - 1));
                 newAggregatedData[tsID+1][windowIdx] = mean;
                 if(! Double.isNaN(mean)){
-                    minValues[windowIdx] = Math.min(minValues[windowIdx], (float) mean);
-                    maxValues[windowIdx] = Math.max(maxValues[windowIdx], (float) mean);
+                    minValues[windowIdx] = Math.min(minValues[windowIdx], mean);
+                    maxValues[windowIdx] = Math.max(maxValues[windowIdx], mean);
                 }
                 // proceed with the next window of this time series
                 windowIdx++;
@@ -144,14 +146,12 @@ public class TimeSeriesAverager {
             // compute the number of source bins for the first histogram
             int lowestSourceBinIdx = (int) Math.floor(minValues[histogramIdx] / binSize);
             int highestSourceBinIdx = (int) Math.floor(maxValues[histogramIdx] / binSize);
-            lowestBinStartsAt[histogramIdx] = lowestSourceBinIdx * binSize;
             int numSourceBins = Math.max(1, highestSourceBinIdx - lowestSourceBinIdx + 1); // if the min value is exactly the max value and exactly on a bin bound, allocate a bin anyway
+            lowestBinStartsAt[histogramIdx] = lowestSourceBinIdx * binSize;
 
             // compute the number of sink bins
             int lowestSinkBinIdx = (int) Math.floor(minValues[histogramIdx + 1] / binSize);
             int highestSinkBinIdx = (int) Math.floor(maxValues[histogramIdx + 1] / binSize);
-            if(histogramIdx+1<histograms.length)
-                lowestBinStartsAt[histogramIdx+1] = lowestSinkBinIdx * binSize;
             int numSinkBins = Math.max(1, highestSinkBinIdx - lowestSinkBinIdx + 1); // if the min value is exactly the max value and exactly on a bin bound, allocate a bin anyway
 
             histograms[histogramIdx] = new short[numSourceBins][numSinkBins];
@@ -170,16 +170,35 @@ public class TimeSeriesAverager {
                 if(sourceBinIdx == numSourceBins && numSourceBins > 1) sourceBinIdx -= 1;
                 if(sinkBinIdx == numSinkBins && numSinkBins > 1) sinkBinIdx -= 1;
 
-                assert sourceBinIdx >= lowestSourceBinIdx && sinkBinIdx >= lowestSinkBinIdx : String.format("sourceBinIdx: %s smallest Idx: %s\nsinkBinIdx: %s smallest Idx: %s", sourceBinIdx, lowestSourceBinIdx, sinkBinIdx, lowestSinkBinIdx);
-                assert sourceBinIdx-lowestSourceBinIdx < histograms[histogramIdx].length && sinkBinIdx-lowestSinkBinIdx < histograms[histogramIdx][0].length : String.format("normalized sourceBinIdx: %s max: %s normalized sinkBinIdx: %s max: %s",
-                        sourceBinIdx-lowestSourceBinIdx, histograms[histogramIdx].length,
-                        sinkBinIdx-lowestSinkBinIdx,     histograms[histogramIdx][0].length);
+                assert sourceBinIdx >= lowestSourceBinIdx && sinkBinIdx >= lowestSinkBinIdx
+                        && sourceBinIdx-lowestSourceBinIdx < histograms[histogramIdx].length
+                        && sinkBinIdx-lowestSinkBinIdx < histograms[histogramIdx][0].length :
+                        String.format(  "\nsourceY: %s source bin idx: %s (must be ≥ %s)" +
+                                        "\nsinkY: %s sink bin idx: %s (must be ≥ %s)" +
+                                        "\nnormalized sourceBinIdx: %s must be in range [0, %s] " +
+                                        "\nnormalized sinkBinIdx: %s must be in range [0, %s]" +
+                                        "\nhistogram idx: %s" +
+                                        "\nsource bin min max = (%s, %s)" +
+                                        "\nsink bin min max = (%s, %s)" +
+                                        "\n bin size %s",
+                                sourceY, sourceBinIdx, lowestSourceBinIdx,
+                                sinkY, sinkBinIdx, lowestSinkBinIdx,
+                            sourceBinIdx-lowestSourceBinIdx, histograms[histogramIdx].length,
+                            sinkBinIdx-lowestSinkBinIdx,     histograms[histogramIdx][0].length,
+                            histogramIdx,
+                            minValues[histogramIdx], maxValues[histogramIdx],
+                            minValues[histogramIdx+1], maxValues[histogramIdx+1],
+                            binSize);
+
                 histograms[histogramIdx][sourceBinIdx - lowestSourceBinIdx][sinkBinIdx - lowestSinkBinIdx]++;
             }
 
 //            lowestSourceBinIdx = lowestSinkBinIdx; // would be nicer to cache
             drawOrder[histogramIdx] = sortHistogram(histograms[histogramIdx]);
             maxBinValue[histogramIdx] = findHistogramMaxValue(histograms[histogramIdx]);
+
+            if(timeOutChecker.isTimeOutUserWantsToAbort()) return aggregatedData.cachedValue;
+
         }
 
         return newAggregatedData;

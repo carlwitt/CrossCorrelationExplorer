@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.function.Function;
 
 /**
  *
@@ -68,7 +69,7 @@ public class ComputationController implements Initializable {
 
     @FXML private TextField windowSizeText;
     @FXML private TextField baseWindowOffsetText;
-    @FXML private TextField timeLagMinText;
+//    @FXML private TextField timeLagMinText;
     @FXML private TextField timeLagMaxText;
     @FXML private TextField timeLagStepText;
     @FXML private TextField significanceLevelText;
@@ -92,6 +93,7 @@ public class ComputationController implements Initializable {
     @FXML private TableColumn<WindowMetadata,String> lagRangeColumn;
     @FXML private TableColumn<WindowMetadata,Integer> lagStepColumn;
     @FXML private TableColumn<WindowMetadata,Double> significanceColumn;
+    @FXML private TableColumn<WindowMetadata,String> approximateMemoryColumn;
 
     ProgressLayer progressLayer;
 
@@ -113,6 +115,7 @@ public class ComputationController implements Initializable {
         lagRangeColumn.setCellValueFactory(new PropertyValueFactory<>("lagRange"));
         lagStepColumn.setCellValueFactory(new PropertyValueFactory<>("lagStep"));
         significanceColumn.setCellValueFactory(new PropertyValueFactory<>("significanceLevel"));
+        approximateMemoryColumn.setCellValueFactory(new PropertyValueFactory<>("approximateMemoryConsumption"));
 
     }
 
@@ -180,12 +183,20 @@ public class ComputationController implements Initializable {
      */
     protected Optional<WindowMetadata> createMetadataFromGUIElements() {
 
-        int initialWindowSize = Integer.parseInt(windowSizeText.getText());
-        int overlap = (int) Double.parseDouble(baseWindowOffsetText.getText());
-        int tauMin = (int) Double.parseDouble(timeLagMinText.getText());
-        int tauMax = (int) Double.parseDouble(timeLagMaxText.getText());
-        int tauStep = (int) Double.parseDouble(timeLagStepText.getText());
-        double significanceLevel = Double.parseDouble(significanceLevelText.getText());
+        int initialWindowSize = parseOrError(Integer::parseInt, windowSizeText.getText()).intValue();
+        int overlap = parseOrError(Double::parseDouble, baseWindowOffsetText.getText()).intValue();
+        int tauStep = parseOrError(Double::parseDouble, timeLagStepText.getText()).intValue();
+        int tauMax = parseOrError(Double::parseDouble, timeLagMaxText.getText()).intValue();
+        double significanceLevel = parseOrError(Double::parseDouble, significanceLevelText.getText()).doubleValue();
+
+        // derive other parameters such that the matrix will be symmetric
+        // tauMax should be divisible by tauStep to assert that 0 is part of the lag range. Because if tauMax is not divisible by tauStep,
+        // tauMin is not divisible by tauStep and consequently, 0 won't be in the lag range
+        if(tauMax % tauStep != 0){
+            tauMax = (Math.floorDiv(tauMax, tauStep) + 1) * tauStep;
+            timeLagMaxText.setText("" + tauMax);
+        }
+        int tauMin = -tauMax; // (int) Double.parseDouble(timeLagMinText.getText());
 
         // check window size. Must be at least two (otherwise, the pearson correlation coefficient is undefined)
         // and at most the length of the time series (otherwise the correlation matrix will have no columns)
@@ -221,6 +232,21 @@ public class ComputationController implements Initializable {
         CorrelationMatrix.setSignificanceLevel(metadata, significanceLevel);
         return Optional.of(metadata);
 
+    }
+
+    /**
+     * Attempts to parse a number. Displays an error dialog if a {@link java.lang.NumberFormatException} is thrown.
+     * @param parserFunction The function to parse the number.
+     * @param inputString The string containing the number.
+     * @return A number or null, if a parser error occurred.
+     */
+    protected Number parseOrError(Function<String,Number> parserFunction, String inputString){
+        try{
+            return parserFunction.apply(inputString);
+        } catch (NumberFormatException e){
+            new Alert(Alert.AlertType.ERROR, String.format("Couldn't parse %s, please enter only numbers.", inputString)).show();
+        }
+        return null;
     }
 
     /**
@@ -266,7 +292,7 @@ public class ComputationController implements Initializable {
 
         windowSizeText.setText(""+metadata.windowSize);
         baseWindowOffsetText.setText(""+metadata.getOverlap());
-        timeLagMinText.setText(""+metadata.tauMin);
+//        timeLagMinText.setText(""+metadata.tauMin);
         timeLagMaxText.setText(""+metadata.tauMax);
         timeLagStepText.setText(""+metadata.tauStep);
         significanceLevelText.setText(""+CorrelationMatrix.getSignificanceLevel(metadata));
@@ -291,7 +317,7 @@ public class ComputationController implements Initializable {
 
         // on cancel: hide the progress layer. wire the cancel button to that action.
         service.setOnCancelled(t -> progressLayer.hide());
-        progressLayer.cancelButton.setOnAction(t -> { System.err.println(String.format("Computation cancelled. Success: %s",service.cancel())); progressLayer.hide(); });
+        progressLayer.cancelButton.setOnAction(t -> { System.out.println(String.format("Computation cancelled. Success: %s", service.cancel())); progressLayer.hide(); });
 
         // bind progress display elements
         progressLayer.progressBar.progressProperty().bind(service.progressProperty());
