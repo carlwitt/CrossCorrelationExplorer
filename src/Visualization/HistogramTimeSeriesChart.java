@@ -80,14 +80,15 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
 
             // these boolean properties are bound the draw ensemble check boxes
             if( ! drawEnsemble[ensembleID].get()) continue;
-            drawEnsemble(gc, dataToScreen, aggregators[ensembleID], ensembleColors[ensembleID], findHorizontalClipping(aggregators[ensembleID]), 0);
+            int[] timeSpan = findHorizontalClipping(aggregators[ensembleID]);
+            drawEnsemble(gc, dataToScreen, aggregators[ensembleID], ensembleColors[ensembleID], timeSpan, 0);
 
         }
 
         // visualize the time windows that served as input for the currently selected correlation matrix cell
-//        AggregatedCorrelationMatrix.MatrixRegionData activeRegion = sharedData.getActiveCorrelationMatrixRegion();
-//        if(activeRegion != null && ! activeRegion.isAggregated)
-//            visualizeInputWindows(gc, dataToScreen, aggregators, activeRegion);
+        AggregatedCorrelationMatrix.MatrixRegionData activeRegion = sharedData.getActiveCorrelationMatrixRegion();
+        if(activeRegion != null && ! activeRegion.isAggregated)
+            visualizeInputWindows(gc, dataToScreen, aggregators, activeRegion);
 
         xAxis.drawContents();
         yAxis.drawContents();
@@ -98,29 +99,45 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
     protected void visualizeInputWindows(GraphicsContext gc, Affine dataToScreen, TimeSeriesAverager[] aggregators, AggregatedCorrelationMatrix.MatrixRegionData activeRegion) {
 
         WindowMetadata metadata = sharedData.getCorrelationMatrix().metadata;
-        int timeLag = metadata.getTimeLagByIdx(activeRegion.row);
+        int groupSize = aggregators[0].getGroupSize();
 
-        int[] timeSpan = new int[]{activeRegion.column, activeRegion.column + metadata.windowSize-1};
+        int timeLag = metadata.getTimeLagByIdx(activeRegion.row) / groupSize;
+
+        int firstAggregatedDataPointIdx = sharedData.getCorrelationMatrix().getColumn(activeRegion.column).windowStartIndex / groupSize;
+        int[] timeSpan = new int[]{firstAggregatedDataPointIdx, firstAggregatedDataPointIdx + metadata.windowSize / groupSize} ;
 
         Color[] ensembleColors = TimeSeriesViewController.ensembleColors;
 
         double[] xValues = aggregators[0].getXValues();
 
         // if the lag shifts the ensemble beyond its limits, don't attempt to draw (the correlation is NaN anyway)
-        if(timeSpan[0] + timeLag < 0 || timeSpan[1] + timeLag > xValues.length-1) return;
+        if(Double.isNaN(activeRegion.medianCorrelation) || timeSpan[0] < 0 || timeSpan[1] > xValues.length-1) return;
 
         // clear the previous rendering in the window's area for the shifted rendering
         Point2D minX = dataToScreen.transform(xValues[timeSpan[0]], 0);
-        Point2D maxX = dataToScreen.transform(xValues[timeSpan[1]], 0);
-        gc.setFill(Color.YELLOW);
-        gc.fillRect(minX.getX(), 0, maxX.getX()-minX.getX(), getHeight());
-        gc.setFill(Color.WHITE);
+        Point2D maxX = dataToScreen.transform(xValues[timeSpan[1]-1], 0);
+
+        gc.setFill(Color.GAINSBORO);
+        double windowWidthSC = maxX.getX() - minX.getX();
+        gc.fillRect(minX.getX(), 0, windowWidthSC, getHeight());
+        gc.setLineWidth(1);
+//        gc.strokeText(String.format("µ=%.3f\nσ=%.3f", activeRegion.medianCorrelation, activeRegion.averageUncertainty),minX.getX()+5, 10);
 
         if(timeLag >= 0){
+            // mark the position from where the shifted ensemble B window is taken from
+            Point2D lagPositionX = dataToScreen.transform(xValues[timeSpan[0]-timeLag], 0);
+            gc.setStroke(ensembleColors[1]);
+            gc.strokeLine(lagPositionX.getX(), 0, lagPositionX.getX(), getHeight());
+
             // shift time series ensemble B to the right
             drawEnsemble(gc, dataToScreen, aggregators[0], ensembleColors[0], timeSpan, 0);
             drawEnsemble(gc, dataToScreen, aggregators[1], ensembleColors[1], timeSpan, -timeLag);
         } else {
+            // mark the position from where the shifted ensemble A window is taken from
+            Point2D lagPositionX = dataToScreen.transform(xValues[timeSpan[0]+timeLag], 0);
+            gc.setStroke(ensembleColors[0]);
+            gc.strokeLine(lagPositionX.getX(), 0, lagPositionX.getX(), getHeight());
+
             // shift time series ensemble A to the right
             drawEnsemble(gc, dataToScreen, aggregators[0], ensembleColors[0], timeSpan, timeLag);
             drawEnsemble(gc, dataToScreen, aggregators[1], ensembleColors[1], timeSpan, 0);
@@ -131,7 +148,7 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
     /**
      * @return the currently visible time span expressed as an integer array.
      *         Contains, at offset 0, the index of the first data point to consider when drawing.
-     *         Contains, at offset 1, the index of the last (inclusive) data point to consider when drawing.
+     *         Contains, at offset 1, the index of the last (exclusive) data point to consider when drawing.
      */
     protected int[] findHorizontalClipping(TimeSeriesAverager aggregator) {
         double[] xValues = aggregator.getXValues();
@@ -143,29 +160,40 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
         int invisiblePointsBack = (int)Math.floor(rightPadding/xAxisSpacing);
 
         return new int[]{
-                Math.max(1, invisiblePointsFront),
-                Math.min(xValues.length-1, xValues.length-invisiblePointsBack)
+                Math.max(0, invisiblePointsFront),
+                Math.min(xValues.length, xValues.length-invisiblePointsBack+1)
         };
     }
 
     /**
      * Visualizes the time series of an ensemble within a given time span.
      * @param timeSpan contains, at offset 0, the index of the first data point to consider when drawing.
-     *                 contains, at offset 1, the index of the last (inclusive) data point to consider when drawing.
+     *                 contains, at offset 1, the index (exclusive) of the last data point to consider when drawing.
      * @param lag a relative offset to shift the entire ensemble. The ensemble will be shifted by this many data points before being drawn.
      *            Instead of drawing A[t] at time t, A[t + lag] will be drawn.
      *            A positive lag is equivalent to shifting the ensemble to the left, a negative lag is equivalent to shifting the ensemble to the right.
      */
     protected void drawEnsemble(GraphicsContext gc, Affine dataToScreen, TimeSeriesAverager aggregator, Color ensembleColor, int[] timeSpan, int lag) {
 
+        // each of these arrays has length N = number of data points
         double[] xValues = aggregator.getXValues();
-
         double[] minValues = aggregator.minValues;
         double[] maxValues = aggregator.maxValues;
+        double[] lowestBinStartsAt = aggregator.lowestBinStartsAt;
 
+        // each of these arrays has length N-1
+        short[][][] histograms = aggregator.histograms;
+        int[][] drawOrders = aggregator.drawOrder;
+
+        int numPoints = xValues.length;
+
+        // assert proper counts of values and histograms
+        assert xValues.length == numPoints && minValues.length == numPoints && maxValues.length == numPoints && lowestBinStartsAt.length == numPoints: String.format("Illegal count of min/max values: %s/%s should be %s. Or illegal count of lower bounds: %s should be %s.", minValues.length, maxValues.length, numPoints, lowestBinStartsAt.length, numPoints);
+        assert histograms.length == numPoints-1 && drawOrders.length == numPoints-1;
         // if the lag shifts the ensemble beyond its limits, don't attempt to draw (the correlation is NaN anyway)
-        assert (timeSpan[0] + lag >= 0 && timeSpan[1] + lag < xValues.length) : String.format("Render time span [%s, %s] (lag: %s) is outside the ensemble data bounds [0, %s].", timeSpan[0]+lag, timeSpan[1]+lag, lag, xValues.length-1);
+        assert (timeSpan[0]+lag >= 0 && timeSpan[1]+lag <= numPoints) : String.format("Render time span [%s, %s] (lag: %s) is outside the ensemble data bounds [0, %s[.", timeSpan[0]+lag, timeSpan[1]+lag, lag, numPoints);
 
+        gc.save();
         gc.setStroke(ensembleColor);
         gc.setLineWidth(1);
         gc.setLineCap(StrokeLineCap.SQUARE);
@@ -173,31 +201,31 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
         // draw the area between min and max y value of each time step shaded (which also a hint that the view is an aggregation)
         drawHull(gc, dataToScreen, xValues, minValues, maxValues);
 
-        short[][][] histograms = aggregator.histograms;
-        int[][] drawOrders = aggregator.drawOrder;
-        double[] lowestBinStartsAt = aggregator.lowestBinStartsAt;
+        // Transforming the values per hand is ugly but reduces the transformation costs by half,
+        // since each transformed coordinate is needed twice: once as source time step and once as target time step.
+        // Nevertheless, this doesn't _necessarily_ mean that it speeds up rendering: drawing polygons seems to be the most costly operation.
+        // Storing all values in a two point array is faster than repeatedly creating Point2D objects as result objects.
 
-        // contains the transformed current x position (index 0), the minimum Y (index 1) and the maximum Y value (index 3)
-        // storing all values in a two point array is faster than transforming them separately
-        double[] lastXLowerY = new double[]{ xValues[timeSpan[0]+lag], lowestBinStartsAt[timeSpan[0]+lag] };
+//        // contains the transformed current x position (at index 0) and transformed minimum Y value (at index 1)
+        double[] lastXLowerY = new double[]{ xValues[timeSpan[0]], lowestBinStartsAt[timeSpan[0]+lag] };
         dataToScreen.transform2DPoints(lastXLowerY, 0, lastXLowerY, 0, 1);
 
         double binHeightPx = dataToScreen.deltaTransform(0, -getBinSize()).getY();
 
+        // TODO: This happens when zooming in too fast, although it shouldn't. It's not clear why. This is no good solution to the problem, because the resetView() calls are obviously not what the user wants when zooming in.
         if(binHeightPx <= 0) {
-            System.out.println("HistogramTimeSeriesChart.drawEnsemble: Negative bin height. Abort.");
+            System.err.println("HistogramTimeSeriesChart.drawEnsemble: Negative bin height. Abort.");
             resetView();
             return;
         }
-        // assert binHeightPx > 0 : "Negative bin height in pixels: "+binHeightPx; // this happens when zooming in too fast... (?)
 
-        // like lastXMinYMaxY but for the current time step
+        // like lastXLowerY but for the current time step
         double[] xLowerY = new double[2];
-        // the x and y values that describe the are within the bin
+        // the x and y values that describe the time series segments within this bin
         double[] polygonXValues = new double[4];
         double[] polygonYValues = new double[4];
 
-        // drawing shouldn't take longer than 10 seconds, otherwise, the loops aborts
+        // drawing shouldn't take longer than 5 seconds, otherwise, the loops aborts
         Util.TimeOutChecker timeOutChecker = new Util.TimeOutChecker(5000);
 
         // find global max bin value (within this ensemble) to normalize input values to the transfer function
@@ -206,11 +234,10 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
             maxPeakFrequency = Math.max(maxPeakFrequency, aggregator.maxBinValue[i]);
 
         // start with second time step, drawing polygons connecting to the previous time step
-        for (int i = timeSpan[0] + 1; i < timeSpan[1]; i++) {
+        for (int i = timeSpan[0]; i < timeSpan[1]-1; i++) {     // timeSpan[1] - 1 because there are only N-1 histograms for N data points
 
-            xLowerY[0] = xValues[i];
-            assert i < lowestBinStartsAt.length : String.format("i: %s xValues.length: %s lowestBinStartsAt.length: %s", i, xValues.length, lowestBinStartsAt.length);
-            xLowerY[1] = lowestBinStartsAt[i + lag];
+            xLowerY[0] = xValues[i+1];
+            xLowerY[1] = lowestBinStartsAt[i+1+lag];
             dataToScreen.transform2DPoints(xLowerY, 0, xLowerY, 0, 1);
 
             // x values of the polygon are constant for the interval between two time steps
@@ -219,10 +246,10 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
             polygonXValues[2] = xLowerY[0];
             polygonXValues[3] = lastXLowerY[0];
 
-            if(drawPoly && i < histograms.length)
-                drawTimeStepPolygons(gc, histograms[i - 1 + lag], drawOrders[i - 1 + lag], polygonXValues, polygonYValues, binHeightPx, lastXLowerY[1], xLowerY[1], maxPeakFrequency, ensembleColor);
+            if(drawPoly)
+                drawTimeStepPolygons(gc, histograms[i+lag], drawOrders[i+lag], polygonXValues, polygonYValues, binHeightPx, lastXLowerY[1], xLowerY[1], maxPeakFrequency, ensembleColor);
             if(drawGrid)
-                drawTimeStepGrid(gc, histograms[i - 1 + lag], lastXLowerY, xLowerY, polygonXValues, polygonYValues, binHeightPx, maxPeakFrequency, ensembleColor);
+                drawTimeStepGrid(gc, histograms[i+lag], lastXLowerY, xLowerY, polygonXValues, polygonYValues, binHeightPx, maxPeakFrequency, ensembleColor);
 
             // copy current values to last values
             lastXLowerY[0] = xLowerY[0];
@@ -233,6 +260,8 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
                 break;
             }
         }
+
+        gc.restore();
 
     }
 
@@ -296,7 +325,7 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
                 if(useLinearTransfer)
                     opacity = Math.min(0.8, 1. * numTimeSeriesInBin / maxBinValue + 0.3); // linear mapping
                 else  {
-                    double relativeFrequency = 1. * histogram[prevBinIdx][nextBinIdx] / maxBinValue;
+                    double relativeFrequency = 1. * numTimeSeriesInBin / maxBinValue;
                     opacity = 0.1 + 0.9 * relativeFrequency * relativeFrequency; // cubic mapping
                 }
 
@@ -335,7 +364,7 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
             if (useLinearTransfer)
                 opacity = Math.min(0.8, 1. * numTimeSeriesInBin / maxBinValue + 0.3); // linear mapping
             else {
-                double relativeFrequency = 1. * histogram[sourceBinIdx][sinkBinIdx] / maxBinValue;
+                double relativeFrequency = 1. * numTimeSeriesInBin / maxBinValue;
                 opacity = 0.3 + 0.7 * relativeFrequency * relativeFrequency; // quadratic mapping
 //                opacity = Math.max(0.3, Math.min(0.8, 0.5 * Math.log10(1. * numTimeSeriesInBin / maxBinValue) + 1)); // logarithmic mapping
 //                opacity = Math.max(0.3, Math.min(0.8, 0.5 * Math.log10(1. * numTimeSeriesInBin / maxBinValue) + 1)); // logarithmic mapping

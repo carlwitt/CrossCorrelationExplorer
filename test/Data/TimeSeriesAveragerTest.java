@@ -1,5 +1,7 @@
 package Data;
 
+import Data.IO.FileModel;
+import Data.IO.LineParser;
 import javafx.collections.FXCollections;
 import org.apache.commons.lang.ArrayUtils;
 import org.junit.Test;
@@ -8,9 +10,81 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
 
 public class TimeSeriesAveragerTest {
+
+    @Test public void testComputeAntiCorrelated() throws Exception{
+        FileModel fileModel = new FileModel("data/small/inputDataAntiCorrelated.txt", new LineParser(16));
+        fileModel.execute();
+        double[] xValues = fileModel.getXValues();
+        double[] yValues1 = fileModel.getYValues(1);
+        double[] yValues2 = fileModel.getYValues(2);
+        double[] yValues3 = fileModel.getYValues(3);
+
+        TimeSeries ts1 = new TimeSeries(1, xValues, yValues1);
+        TimeSeries ts2 = new TimeSeries(2, xValues, yValues2);
+        TimeSeries ts3 = new TimeSeries(3, xValues, yValues3);
+
+        TimeSeriesAverager timeSeriesAverager = new TimeSeriesAverager(Arrays.asList(ts1, ts2, ts3));
+        timeSeriesAverager.setGroupSize(1);
+        timeSeriesAverager.binSize = 1;
+        timeSeriesAverager.getXValues();
+
+        double[] expectedMinValues = new double[]{1, 0, 1, 0, 1, 0, 1, 1};
+        double[] expectedMaxValues = new double[]{4, 3, 3, 4, 4, 3, 3, 4};
+        short[][][] expectedHistograms = new short[][][] { {
+                {0, 0, 1, 0},
+                {0, 0, 0, 0},
+                {0, 0, 0, 0},
+                {0, 0, 0, 1}
+        }, {
+                {1, 0, 0},
+                {0, 0, 0},
+                {0, 0, 1},
+                {0, 1, 0}
+        }, {
+                {1, 0, 0, 0, 0},
+                {0, 1, 0, 0, 0},
+                {0, 0, 0, 0, 1}
+        }, {
+                {0, 0, 0, 0},
+                {1, 0, 0, 0},
+                {0, 0, 0, 0},
+                {0, 0, 0, 0},
+                {0, 0, 0, 1}
+        }, {
+                {0, 0, 1, 0},
+                {0, 0, 0, 0},
+                {0, 0, 0, 0},
+                {0, 0, 0, 1}
+        }, {
+                {1, 0, 0},
+                {0, 0, 0},
+                {0, 0, 1},
+                {0, 1, 0}
+        }, {
+                {0, 0, 0, 0},
+                {1, 0, 0, 0},
+                {0, 0, 0, 1}
+        }
+        };
+
+        // print histograms
+//        Arrays.stream(timeSeriesAverager.histograms).forEach(histogram -> {
+//            for (short[] row : histogram) {
+//                for (int col = 0; col < histogram[0].length; col++) System.out.print(row[col] + " ");
+//                System.out.println();
+//            }
+//            System.out.println();
+//        });
+
+        assertArrayEquals(expectedMinValues, timeSeriesAverager.lowestBinStartsAt, 1e-10);
+        assertArrayEquals(expectedMinValues, timeSeriesAverager.minValues, 1e-10);
+        assertArrayEquals(expectedMaxValues, timeSeriesAverager.maxValues, 1e-10);
+        assertTrue(Arrays.deepEquals(expectedHistograms, timeSeriesAverager.histograms));
+    }
 
     @Test public void testComputeSOP() {
         double[] xValues = new double[]{1, 2, 3, 4, 5, 6, 7, 8};

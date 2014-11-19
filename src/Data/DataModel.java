@@ -1,13 +1,18 @@
 package Data;
 
+import Data.IO.FileModel;
 import Global.Util;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
+import javafx.scene.control.Alert;
+import org.apache.commons.lang.ArrayUtils;
 
 import java.util.*;
+import java.util.function.BiFunction;
 
 /**
  * Stores time series and aggregated data on them.
@@ -35,19 +40,149 @@ public class DataModel {
     private Double[] minY = new Double[2];
     private Double[] maxY = new Double[2];
 
-    public DataModel(Collection<Collection<TimeSeries>> tsByEnsemble){
+    public DataModel(List<Collection<TimeSeries>> tsByEnsemble) throws EnsembleIntersectionIsEmptyException {
 
         timeSeriesByEnsemble = new ArrayList<>();
         for (Collection<TimeSeries> tss : tsByEnsemble){
+
+            // index time series in a hashmap
             HashMap<Integer, TimeSeries> map = new HashMap<>();
             for(TimeSeries ts : tss) map.put(ts.getId(), ts);
             timeSeriesByEnsemble.add(FXCollections.observableMap(map));
+
+        }
+
+        double[][] xValues = new double[][]{
+                timeSeriesByEnsemble.get(0).values().stream().findAny().get().getDataItems().re,
+                timeSeriesByEnsemble.get(1).values().stream().findAny().get().getDataItems().re,
+        };
+        Optional<int[][]> ensembleClippings = findEnsembleClippings(xValues);
+
+        if(ensembleClippings.isPresent()){
+
+            xValues[0] = Arrays.copyOfRange(xValues[0], ensembleClippings.get()[0][0], ensembleClippings.get()[0][1]+1);
+            xValues[1] = Arrays.copyOfRange(xValues[1], ensembleClippings.get()[1][0], ensembleClippings.get()[1][1]+1);
+
+            assert Util.distanceSmallerThan(xValues[0][0], xValues[1][0], FileModel.X_TOLERANCE); // assert start x values of both ensembles match
+            assert Util.distanceSmallerThan(xValues[0][1], xValues[1][1], FileModel.X_TOLERANCE); // assert end x values of both ensembles match
+
+            Platform.runLater(() -> {
+                // inform the user that clipping has been performed to adapt offset and length of both ensembles.
+                Alert informAboutClipping = new Alert(Alert.AlertType.INFORMATION, String.format("The ensembles have been clipped to a common x value range of [%s, %s]", xValues[0][0], xValues[0][xValues[0].length - 1]));
+                informAboutClipping.showAndWait();
+            });
+
+            for (int ensembleID = 0; ensembleID < 2; ensembleID++) {
+
+                for(TimeSeries ts : tsByEnsemble.get(ensembleID)){
+                    ts.getDataItems().re = xValues[ensembleID];
+                    ts.getDataItems().im = Arrays.copyOfRange(ts.getDataItems().im, ensembleClippings.get()[ensembleID][0], ensembleClippings.get()[ensembleID][1]+1);
+                }
+
+            }
+        } else {
+            throw new EnsembleIntersectionIsEmptyException("The time series ensembles have no common x values, no sensible computations can be performed on them.");
         }
 
         ensemble1TimeSeries = FXCollections.observableArrayList(timeSeriesByEnsemble.get(0).values());
         ensemble2TimeSeries = FXCollections.observableArrayList(timeSeriesByEnsemble.get(1).values());
 
     }
+
+    /** Indicates that two ensembles have no common x values, thus no sensible computation can be performed on them. */
+    public static class EnsembleIntersectionIsEmptyException extends Exception { public EnsembleIntersectionIsEmptyException(String m){super(m);} }
+
+    /**
+     * Finds the indices of the elements to retain such that both ensembles start at the same x value and have the same length.
+     * @param xValues the x values of the first ensembles as xValues[0] and the x values of the second ensemble as xValues[1].
+     * @return The returned array is of the form
+     * {
+     *      {ensemble 0 lower bound, ensemble 0 upper bound},
+     *      {ensemble 1 lower bound, ensemble 1 upper bound}
+     * }
+     * Where each bound specifies the index of the left-/rightmost element that should be retained.
+     * If the covered x ranges of the ensembles do not overlap, an empty Optional is returned, indicating that no elements should be retained.
+     */
+    protected static Optional<int[][]> findEnsembleClippings(double[][] xValues) {
+
+        double deltaX = xValues[0][1] - xValues[0][0];
+        assert Util.distanceSmallerThan(xValues[1][1] - xValues[1][0], deltaX, FileModel.X_TOLERANCE) : "Delta X are not identical.";
+
+        // to avoid further complications, xValues that are ordered descending instead of ascending are reversed.
+        // this flag memorizes whether the xValues have been reversed.
+        boolean reversed = false;
+        if(deltaX < 0){
+            ArrayUtils.reverse(xValues[0]);
+            ArrayUtils.reverse(xValues[1]);
+            reversed = true;
+        }
+
+        // contains the desired new bounds of the two ensembles to assure that they have the same length and start position.
+        int[][] ensembleClipping = new int[][]{
+            {0, xValues[0].length-1}, // initially, leave ensembles unchanged
+            {0, xValues[1].length-1}
+        };
+        int LOWER_BOUND = 0;    // refers to the semantics of the ensembleClipping[ensembleID] elements
+        int UPPER_BOUND = 1;    // refers to the semantics of the ensembleClipping[ensembleID] elements
+
+        double minXValue0 = xValues[0][LOWER_BOUND];
+        double minXValue1 = xValues[1][LOWER_BOUND];
+        double maxXValue0 = xValues[0][xValues[0].length - 1];
+        double maxXValue1 = xValues[1][xValues[1].length - 1];
+
+        // check whether both x ranges are disjoint
+        if(! new BoundingBox(minXValue0, 0, maxXValue0-minXValue0, 1).intersects(minXValue1, 0, maxXValue1 - minXValue1, 1)){
+            // if the x values have been reversed, undo the reversing and transform the clipping
+            if(reversed){
+                ArrayUtils.reverse(xValues[0]);
+                ArrayUtils.reverse(xValues[1]);
+            }
+            // intersection is empty.
+            return Optional.empty();
+        } else {
+
+            // check whether minimum ensemble x values are within tolerance, otherwise compute smallest common x value
+            if(!Util.distanceSmallerThan(minXValue0, minXValue1, FileModel.X_TOLERANCE)){
+                // find smallest common x value
+                if(minXValue0 < minXValue1){
+                    // ensemble 0 starts earlier than ensemble 1 - the earlier values of ensemble 0 are clipped
+                    ensembleClipping[0][LOWER_BOUND] = ArrayUtils.indexOf(xValues[0], minXValue1, FileModel.X_TOLERANCE);
+                } else {
+                    // ensemble 1 starts earlier than ensemble 0 - the earlier values of ensemble 1 are clipped
+                    ensembleClipping[1][LOWER_BOUND] = ArrayUtils.indexOf(xValues[1], minXValue0, FileModel.X_TOLERANCE);
+                }
+            }
+
+            // check whether maximum ensemble x values are within tolerance, otherwise compute largest common x value
+            if(!Util.distanceSmallerThan(maxXValue0, maxXValue1, FileModel.X_TOLERANCE)){
+                // find largest common x value
+                if(maxXValue0 > maxXValue1){
+                    // ensemble 0 ends later than ensemble 1 - the later values of ensemble 0 are clipped
+                    ensembleClipping[0][UPPER_BOUND] = ArrayUtils.indexOf(xValues[0], maxXValue1, FileModel.X_TOLERANCE);
+                } else {
+                    // ensemble 1 ends later than ensemble 0 - the later values of ensemble 1 are clipped
+                    ensembleClipping[1][UPPER_BOUND] = ArrayUtils.indexOf(xValues[1], maxXValue0, FileModel.X_TOLERANCE);
+                }
+            }
+
+            // if the x values have been reversed, undo the reversing and transform the clipping
+            if(reversed){
+                ArrayUtils.reverse(xValues[0]);
+                ArrayUtils.reverse(xValues[1]);
+                BiFunction<Integer, double[], Integer> reverseIndex = (Integer index, double[] array) -> array.length-1 - index;
+
+                // intersection is non-empty. x values have been reversed.
+                return Optional.of(new int[][]{
+                        {reverseIndex.apply(ensembleClipping[0][UPPER_BOUND], xValues[0]), reverseIndex.apply(ensembleClipping[0][LOWER_BOUND], xValues[0])},   // upper bounds become lower bounds. indices are reversed.
+                        {reverseIndex.apply(ensembleClipping[1][UPPER_BOUND], xValues[1]), reverseIndex.apply(ensembleClipping[1][LOWER_BOUND], xValues[1])}
+                });
+            }
+        }
+
+        // intersection is non-empty. x values have not been reversed.
+        return Optional.of(ensembleClipping);
+    }
+
     public DataModel(){
         timeSeriesByEnsemble = Arrays.asList(
                 FXCollections.observableMap(new HashMap<>()),

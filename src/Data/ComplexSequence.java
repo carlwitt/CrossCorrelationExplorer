@@ -17,8 +17,8 @@ public class ComplexSequence {
     public static enum Part{REAL, IMAGINARY}
 
     /** Real and imaginary parts. */
-    public final double[] re;
-    public final double[] im;
+    public double[] re;
+    public double[] im;
     
     private final int length;
     private double[] realMinMax;

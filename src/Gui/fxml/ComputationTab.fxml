@@ -141,6 +141,13 @@
               <TableColumn editable="false" maxWidth="5000.0" minWidth="10.0" prefWidth="75.0" style="-fx-font-size: 10;" text="time (h:m:s)" visible="false" fx:id="timeColumn" />
               <TableColumn editable="false" maxWidth="5000.0" minWidth="10.0" prefWidth="157.0" sortable="false" style="-fx-font-size: 10;" text="approx. memory consumption" fx:id="approximateMemoryColumn" />
             </columns>
+            <contextMenu>
+              <ContextMenu>
+                <items>
+                  <MenuItem mnemonicParsing="false" text="Delete Selected Items" fx:id="deleteSelectedResultsMenuItem" />
+                </items>
+              </ContextMenu>
+            </contextMenu>
           </TableView>
           <Label contentDisplay="RIGHT" text="List of all computed results." textFill="BLACK" wrapText="true" />
         </children>

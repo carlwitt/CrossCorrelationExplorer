@@ -5,6 +5,7 @@ import Data.IO.FileModel;
 import Data.IO.LineParser;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
 import javafx.concurrent.Worker;
 import javafx.fxml.FXML;
@@ -241,7 +242,10 @@ public class StartUpWizardController extends WindowController implements Initial
 
             fileChooser.setSelectedExtensionFilter(new FileChooser.ExtensionFilter("NetCDF Files", ".nc"));
 
-            fileModel.filenameProperty().bind(fileProperty.asString());
+            fileProperty.addListener((ObservableValue<? extends File> observable, File oldValue, File newValue) ->
+                    fileModel.setFilename(newValue.toString())
+            );
+
             // update separator on text change in on of the radio buttons text fields
             characterSeparatorText.textProperty().addListener((ov, t, newCharacter) -> {
                 if(!newCharacter.equals("")){

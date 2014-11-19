@@ -167,10 +167,7 @@ public class TimeSeriesViewController {
 
     private void setScrollBarRangesToDataBounds(CorrelationMatrix matrix) {
 
-        if(matrix == null){
-            System.out.println(String.format("return"));
-            return;
-        }
+        if(matrix == null) return;
         assert matrix.metadata != null;
 
         Bounds dataBounds;

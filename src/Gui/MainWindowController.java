@@ -61,6 +61,7 @@ public class MainWindowController extends WindowController implements Initializa
         mainWindowStage.setY(bounds.getMinY());
         mainWindowStage.setWidth(bounds.getWidth());
         mainWindowStage.setHeight(bounds.getHeight());
+//        mainWindowStage.toBack(); // this prevents hiding information dialogs from the start up wizard but it also results in sending the window to back relative to all other open application windows
 
         mainWindowStage.setOnCloseRequest(event -> checkForUncommitedChanges());
     }

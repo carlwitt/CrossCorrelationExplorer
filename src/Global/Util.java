@@ -5,8 +5,6 @@ import javafx.geometry.Bounds;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 
-import java.util.Optional;
-
 /**
  * Contains general purpose helper methods and classes.
  * Created by Carl Witt on 04.11.14.
@@ -89,5 +87,9 @@ public class Util {
         double minY = Math.min(a.getMinY(), b.getMinY());
         double maxY = Math.max(a.getMaxY(), b.getMaxY());
         return new BoundingBox(minX, minY, maxX - minX, maxY - minY);
+    }
+
+    public static boolean distanceSmallerThan(double a, double b, double threshold){
+        return Math.abs(a-b) < threshold;
     }
 }

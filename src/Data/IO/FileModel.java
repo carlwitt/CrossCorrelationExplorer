@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.logging.Logger;
 
 /**
  * Abstracts from the way a time series ensemble is stored in a text file.
@@ -33,7 +34,17 @@ public class FileModel {
     /** A matrix representing all numbers in the file. The first dimension refers to rows and the second to columns. */
     double[][] rowValues;
     private double[] firstColumn; // cached first column of the matrix
-    double xAxisSpacing = Double.NaN;
+
+    /** The assumption on the time series ensembles is that each subsequent point pair has the same ∆x.
+     * Due to rounding errors however, a point pair is permited a ±X_TOLERANCE deviation from the ∆x of the first point pair.
+     * The X_TOLERANCE is also applied when comparing ensemble shiftX's etc. */
+    public static double X_TOLERANCE = 1e-3;
+    /** The difference of the first two x components (of the coordinates) in the file. */
+    double deltaX = Double.NaN;
+
+    /** The offset of the x values relative to multiples of deltaX. If each x Value is a multiple of deltaX, shiftX is zero.
+     * If for instance deltaX = 2 and the first point starts at 7.5, then shiftX is 1.5 since all points are located a k * deltaX + shiftX with k being an integer. */
+    double shiftX = Double.NaN;
 
     private static final String DEFAULT_ENCODING = "UTF-8";
 
@@ -41,10 +52,13 @@ public class FileModel {
 
     // TODO: think about making the filename immutable. may be safer with the isExecuted flag.
     private final StringProperty filename = new SimpleStringProperty();
-    final void setFilename(String value) { filename.set(value); }
     public final String getFilename() { return filename.get(); }
     public final StringProperty filenameProperty() { return filename; }
-        
+    public final void setFilename(String value) {
+        isExecuted = value.equals(getFilename());
+        filename.set(value);
+    }
+
     /** The separator to split up lines of text into pieces before parsing them. */
     private LineParser separator;
 
@@ -82,6 +96,7 @@ public class FileModel {
      * @return y values of the time series
      */
     public double[] getYValues(int index){
+        assert index>0 : "Index is one based.";
         double[] result = new double[getTimeSeriesLength()];
         for (int row = 0; row < result.length; row++) {
             result[row] = rowValues[row][index];
@@ -103,7 +118,7 @@ public class FileModel {
     public LoadFileService getLoadFileService() {
         return loadFileService;
     }
-    
+
     /** Reusable concurrent execution logic for loading and parsing files with progress reporting.
      * The service can be used to load and execute the file contents asynchronously (non-UI-blocking) and to display progress.  */
     public class LoadFileService extends Service<Void> {
@@ -144,7 +159,8 @@ public class FileModel {
                         parseLinesConcurrent(lines, numThreads);
 
                     // cache first column
-                    xAxisSpacing = getTimeSeriesLength() > 1 ? rowValues[1][0]-rowValues[0][0] : Double.NEGATIVE_INFINITY;
+                    computeDeltaAndShift();
+
                     firstColumn = new double[getTimeSeriesLength()];
                     for (int i = 0; i < firstColumn.length; i++) {
                         firstColumn[i] = rowValues[i][0];
@@ -152,10 +168,8 @@ public class FileModel {
                         // check that the x axis location difference is the same as between all other points
                         if(i>0) {
                             double currentXAxisSpacing = firstColumn[i]-firstColumn[i-1];
-                            if( Math.abs(currentXAxisSpacing - xAxisSpacing) > 1e-3){
-                               throw new UnevenSpacingException(String.format("" +
-                                       "Error parsing %s." +
-                                       "\nThe spacing between consecutive data points must be constant. Found %s between data points %s and %s while assuming a general spacing of %s.",getFilename(), currentXAxisSpacing,i,i+1,xAxisSpacing));
+                            if( Math.abs(currentXAxisSpacing - deltaX) > X_TOLERANCE){
+                               throw getUnevenSpacingException(i, i+1, deltaX, currentXAxisSpacing);
                             }
                         }
                     }
@@ -185,13 +199,27 @@ public class FileModel {
         }
     }
 
+    private void computeDeltaAndShift() {
+        if(getTimeSeriesLength() > 1){
+            deltaX = rowValues[1][0] - rowValues[0][0];
+            shiftX = rowValues[0][0] - Math.floor(rowValues[0][0] / deltaX) * deltaX;
+        } else {
+            deltaX = Double.NaN;
+            shiftX = Double.NaN;
+        }
+        if(deltaX < X_TOLERANCE) Logger.getAnonymousLogger().warning(String.format("delta x = %s is smaller than X_TOLERANCE = %s.",deltaX, X_TOLERANCE));
+    }
+
     public void execute() throws UnevenSpacingException, NumberFormatException {
         if(isExecuted) return;
         File file = new File(getFilename());
 
         List<String> lines = null;
         try { lines = FileUtils.readLines(file, DEFAULT_ENCODING); }
-        catch (IOException ex) { ex.printStackTrace(); }
+        catch (IOException ex) {
+            ex.printStackTrace();
+            return;
+        }
 
         // remove trailing empty line if present
         if(lines.get(lines.size()-1).length() <= 2)lines.remove(lines.size()-1);
@@ -214,25 +242,31 @@ public class FileModel {
 
         // cache first column
         firstColumn = new double[getTimeSeriesLength()];
+        computeDeltaAndShift();
+
         for (int i = 0; i < firstColumn.length; i++) {
             firstColumn[i] = rowValues[i][0];
             if(i>0) {
                 double currentXAxisSpacing = firstColumn[i]-firstColumn[i-1];
-                if( Math.abs(currentXAxisSpacing - xAxisSpacing) > 1e-3){
-                    throw new UnevenSpacingException(String.format("The spacing between consecutive data points must be constant. Found %s between data points %s and %s while assuming a general spacing of %s.",currentXAxisSpacing,i,i+1,xAxisSpacing));
-                } else { xAxisSpacing = currentXAxisSpacing; }
+                if( Math.abs(currentXAxisSpacing - deltaX) > X_TOLERANCE){
+                    throw getUnevenSpacingException(i, i+1, deltaX, currentXAxisSpacing);
+                } else { deltaX = currentXAxisSpacing; }
             }
         }
         isExecuted = true;
     }
+
+    private UnevenSpacingException getUnevenSpacingException(int offset, int successorOffset, double expectedXAxisSpacing, double actualXAxisSpacing) {
+        return new UnevenSpacingException(String.format("" +
+                "Error parsing %s." +
+                "\nThe difference of the x components of two consecutive data points must be constant. Found %s between data points %s and %s while assuming a general spacing of %s.",getFilename(), actualXAxisSpacing, offset, successorOffset, expectedXAxisSpacing));
+    }
     /**
      * Instantiates a number of threads to parallelize the parsing of the array.
-     * Speedup is (for four cores) not significant (usually 1.8s instead of 2.5s) but it also doesn't slow things down.
-     * @param lines
+     * Speedup is (for four cores) not significant (e.g. 1.8s instead of 2.5s) but it also doesn't slow things down.
      */
     void parseLinesConcurrent(final List<String> lines, int numThreads) {
 
-//                    long before = System.currentTimeMillis();
         Thread[] processors = new Thread[numThreads];
 
         // divide the string array in approximately equally sized partitions
@@ -252,7 +286,6 @@ public class FileModel {
                     // execute each line in this thread's partition
                     for (int j = fromIndex; j <= toIndex; j++){
                         rowValues[j] = separator.splitToDouble(lines.get(j));
-//                                    updateProgress(j-fromIndex,toIndex-fromIndex+1); // slow
 
                     }
                 }
@@ -269,7 +302,6 @@ public class FileModel {
             }
         }
 
-//                    System.out.println("needed time: "+(System.currentTimeMillis()-before));
     }
 
 
@@ -291,8 +323,6 @@ public class FileModel {
         TimeSeries representativeTimeSeries = timeSeries.get(0);
         for (int i = 0; i < timeSeries.get(0).getSize(); i++) {
 
-//            lineValues.clear();
-//            lineValues.add(data.firstEntry().getValue().getDataItems().re[i]);
             String line = "";
 
             line += String.format("%-16s", representativeTimeSeries.getDataItems().re[i]);
@@ -315,5 +345,8 @@ public class FileModel {
         UnevenSpacingException(String message){super(message);}
 
     }
+
+    public double getDeltaX() { return deltaX; }
+    public double getShiftX() { return shiftX; }
 
 }

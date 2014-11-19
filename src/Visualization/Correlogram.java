@@ -729,18 +729,18 @@ public class Correlogram extends CanvasChart {
             }
         }
 
-        sharedData.setActiveCorrelationMatrixRegion(newRegion);
+//        sharedData.setActiveCorrelationMatrixRegion(newRegion);
 
-//        // report only if necessary
-//        MatrixRegionData currentRegion = sharedData.getActiveCorrelationMatrixRegion();
-//        // is null has null -> no update
-//        if (currentRegion != null || newRegion != null) {
-//            // is null has something -> update
-//            if(currentRegion == null) sharedData.setActiveCorrelationMatrixRegion(newRegion);
-//                // is something has null -> update (equals fails)
-//                // is something has something -> update if necessary (equals fails)
-//            else if(!currentRegion.equals(newRegion)) sharedData.setActiveCorrelationMatrixRegion(newRegion);
-//        }
+        // report only if necessary
+        MatrixRegionData currentRegion = sharedData.getActiveCorrelationMatrixRegion();
+        // is null has null -> no update
+        if (currentRegion != null || newRegion != null) {
+            // is null has something -> update
+            if(currentRegion == null) sharedData.setActiveCorrelationMatrixRegion(newRegion);
+                // is something has null -> update (equals fails)
+                // is something has something -> update if necessary (equals fails)
+            else if(!currentRegion.equals(newRegion)) sharedData.setActiveCorrelationMatrixRegion(newRegion);
+        }
     }
 
     /**

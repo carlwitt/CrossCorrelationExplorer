@@ -7,6 +7,7 @@ import Data.TimeSeries;
 import Data.Windowing.WindowMetadata;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
@@ -94,6 +95,7 @@ public class ComputationController implements Initializable {
     @FXML private TableColumn<WindowMetadata,Integer> lagStepColumn;
     @FXML private TableColumn<WindowMetadata,Double> significanceColumn;
     @FXML private TableColumn<WindowMetadata,String> approximateMemoryColumn;
+    @FXML private MenuItem deleteSelectedResultsMenuItem;
 
     ProgressLayer progressLayer;
 
@@ -116,6 +118,9 @@ public class ComputationController implements Initializable {
         lagStepColumn.setCellValueFactory(new PropertyValueFactory<>("lagStep"));
         significanceColumn.setCellValueFactory(new PropertyValueFactory<>("significanceLevel"));
         approximateMemoryColumn.setCellValueFactory(new PropertyValueFactory<>("approximateMemoryConsumption"));
+
+        // initialize context menu action on table: delete selected results
+        deleteSelectedResultsMenuItem.setOnAction((ActionEvent e)->deleteSelectedResults());
 
     }
 
@@ -300,6 +305,21 @@ public class ComputationController implements Initializable {
         // restore time series selection
         setASelector.setSample(metadata.setA);
         setBSelector.setSample(metadata.setB);
+    }
+
+    public void deleteSelectedResults(){
+
+        // get selected results
+        List<WindowMetadata> selectedResults = correlogramCacheTable.getSelectionModel().getSelectedItems();
+
+        // request confirmation
+        Alert confirmDeletion = new Alert(Alert.AlertType.CONFIRMATION, "All selected results will be deleted. Proceed?", ButtonType.YES, ButtonType.NO);
+        ButtonType confirmDelete = confirmDeletion.showAndWait().orElse(ButtonType.NO);
+
+        // delete if confirmed
+        if(confirmDelete == ButtonType.YES)
+            sharedData.experiment.removeAll(selectedResults);
+
     }
 
     protected void computeMatrixWithProgressFeedback(CorrelationMatrix matrix) {

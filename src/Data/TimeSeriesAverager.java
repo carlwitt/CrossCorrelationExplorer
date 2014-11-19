@@ -21,9 +21,8 @@ public class TimeSeriesAverager {
 
     /** The granularity of the aggregation. How many data points will be aggregated into one. */
     private final IntegerProperty groupSize = new SimpleIntegerProperty(20);
-
     public final void setGroupSize(int step){ groupSize.set(step); }
-    final int getGroupSize(){ return groupSize.get(); }
+    public final int getGroupSize(){ return groupSize.get(); }
     public final IntegerProperty groupSizeProperty(){ return groupSize; }
 
     /** The bin size defines the range (in data coordinates) that a single bin covers (on the y axis), e.g. 0.1 ˚C. */
@@ -44,7 +43,7 @@ public class TimeSeriesAverager {
      * the second dimension refers to the order index and contains the bin row and column indices encoded as row * numBins + col * numBins. */
     public int[][] drawOrder;
 
-    /** For each histogram, contains the lower bound of the lowest bin.
+    /** For each histogram, contains the lower bound of the lowest bin. In addition, the last element of the array contains the lower bound of the binning of the last time step (for which there is no histogram).
      * Given that one bin starts at 0, lowestBinStartsAt is the bin lower bound that the minimum y value lies in. */
     public double[] lowestBinStartsAt;
 
@@ -111,7 +110,7 @@ public class TimeSeriesAverager {
         Arrays.fill(minValues, Double.POSITIVE_INFINITY);
         Arrays.fill(maxValues, Double.NEGATIVE_INFINITY);
         histograms = new short[numberOfDataPoints-1][][];
-        lowestBinStartsAt = new double[numberOfDataPoints-1];
+        lowestBinStartsAt = new double[numberOfDataPoints];
         maxBinValue = new short[numberOfDataPoints-1];
         drawOrder = new int[histograms.length][];
 
@@ -141,6 +140,7 @@ public class TimeSeriesAverager {
         }
 
         // calculate histograms of the binned data
+        // each bin has the same size. The k-th bin covers values in range [k * binSize, (k+1) * binSize[
         for (int histogramIdx = 0; histogramIdx < numberOfDataPoints-1; histogramIdx++) {
 
             // compute the number of source bins for the first histogram
@@ -167,8 +167,7 @@ public class TimeSeriesAverager {
                 int sourceBinIdx = (int) Math.floor(sourceY / binSize);
                 int sinkBinIdx = (int) Math.floor(sinkY / binSize);
 
-                if(sourceBinIdx == numSourceBins && numSourceBins > 1) sourceBinIdx -= 1;
-                if(sinkBinIdx == numSinkBins && numSinkBins > 1) sinkBinIdx -= 1;
+                // the source and sink bin indices can not become too large, because of the half-open definition of the bins
 
                 assert sourceBinIdx >= lowestSourceBinIdx && sinkBinIdx >= lowestSinkBinIdx
                         && sourceBinIdx-lowestSourceBinIdx < histograms[histogramIdx].length
@@ -200,6 +199,10 @@ public class TimeSeriesAverager {
             if(timeOutChecker.isTimeOutUserWantsToAbort()) return aggregatedData.cachedValue;
 
         }
+
+        // compute the lowest bin bound for the last data point index
+        int lowestSourceBinIdx = (int) Math.floor(minValues[numberOfDataPoints-2] / binSize);
+        lowestBinStartsAt[numberOfDataPoints-1] = lowestSourceBinIdx * binSize;
 
         return newAggregatedData;
 

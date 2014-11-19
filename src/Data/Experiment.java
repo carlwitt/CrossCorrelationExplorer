@@ -119,20 +119,22 @@ public class Experiment {
     public Experiment(){dataModel = new DataModel(); }
     /**
      * Creates a new experiment by filling the data model with time series from the input files.
-     * @param models The file models containing the time series.
      */
-    public Experiment(FileModel... models) throws FileModel.UnevenSpacingException, NumberFormatException {
+    public Experiment(FileModel fileModelA, FileModel fileModelB) throws
+            FileModel.UnevenSpacingException,
+            NumberFormatException,
+            IncompatibleEnsemblesException,
+            DataModel.EnsembleIntersectionIsEmptyException {
 
         this.filename = DEFAULT_FILENAME;
-        assert models.length > 1 : "Pass at least two file models to the Experiment constructor.";
 
-        Collection<Collection<TimeSeries>> tsByFile = new ArrayList<>();
+        List<Collection<TimeSeries>> tsByFile = new ArrayList<>();
 
-        tsAPath = models[0].getFilename();
-        tsBPath = models[1].getFilename();
+        tsAPath = fileModelA.getFilename();
+        tsBPath = fileModelB.getFilename();
 
         // read each file
-        for (FileModel model : models) {
+        for (FileModel model : new FileModel[]{fileModelA, fileModelB}) {
 
             model.execute();
 
@@ -142,13 +144,34 @@ public class Experiment {
             for (int j = 1; j <= model.getNumberOfTimeSeries(); j++) {
                 TimeSeries newTs = new TimeSeries(j, model.getXValues(), model.getYValues(j));
                 coll.add(newTs);
-//                this.dataModel.put(i, newTs.getId(), newTs);
             }
+        }
+
+        // check that both ensembles have the same x axis spacing (delta between x-components of consecutive points)
+        if(Math.abs(fileModelA.getDeltaX() - fileModelB.getDeltaX()) > FileModel.X_TOLERANCE){
+            throw new IncompatibleEnsemblesException(String.format(
+                "The two ensembles are not compatible, due to the x values of the time series." +
+                "\nThe ensemble in %s features a constant distance of %s between consecutive data points." +
+                "\nThe ensemble in %s features a constant distance of %s between consecutive data points.",
+                fileModelA.getFilename(), fileModelA.getDeltaX(),
+                fileModelB.getFilename(), fileModelB.getDeltaX()));
+        }
+
+        // check that both ensembles have the same offsets. Ask whether interpolation should be applied to align both ensembles
+        if(Math.abs(fileModelA.getShiftX() - fileModelB.getShiftX()) > FileModel.X_TOLERANCE){
+            throw new IncompatibleEnsemblesException(String.format(
+                    "The two ensembles are not compatible, due to the x values of the time series." +
+                            "\nThe ensemble in %s features an offset of %s relative to multiples of %s." +
+                            "\nThe ensemble in %s features an offset of %s relative to multiples of %s.",
+                    fileModelA.getFilename(), fileModelA.getShiftX(), fileModelA.getDeltaX(),
+                    fileModelB.getFilename(), fileModelB.getShiftX(), fileModelB.getDeltaX()));
         }
 
         dataModel = new DataModel(tsByFile);
 
     }
+
+    public static class IncompatibleEnsemblesException extends Exception{ public IncompatibleEnsemblesException(String s){super(s);}}
 
     /**
      * Loads an existing experiment from a NetCDF file.
@@ -279,5 +302,15 @@ public class Experiment {
     public void addResult(CorrelationMatrix value) {
         loadResult(value);
         uncommitedChanges = true;
+    }
+
+    public void removeAll(List<WindowMetadata> resultMetadatas) {
+
+        for(WindowMetadata metadata : resultMetadatas){
+            correlograms.remove(metadata);
+            cacheKeySet.remove(metadata);
+            uncommitedChanges = true;
+        }
+
     }
 }
