@@ -234,8 +234,8 @@ public class FileModel {
                 rowValues[i] = separator.splitToDouble(lines.get(i));
             } catch (NumberFormatException e){
                 throw new NumberFormatException(String.format(
-                        "Error parsing %s." +
-                        "\nCouldn't parse values in line %s. Please make sure that the selected separators match the file input formats.", getFilename(), i+1));
+                        "Please check separator. Error parsing %s." +
+                        "\nCouldn't parse values in line %s. Please make sure that the selected separators match the file input formats.", new File(getFilename()).getName(), i+1));
             }
 
         }

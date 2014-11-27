@@ -14,6 +14,11 @@
       <SeparatorMenuItem mnemonicParsing="false" />
       <MenuItem mnemonicParsing="false" onAction="#quit" text="Quit" />
     </Menu>
+    <Menu mnemonicParsing="false" text="Settings">
+      <items>
+        <MenuItem mnemonicParsing="false" onAction="#changeAxisLabels" text="Axis Labels" />
+      </items>
+    </Menu>
     <Menu mnemonicParsing="false" text="Help">
       <MenuItem mnemonicParsing="false" onAction="#showGitHubWiki" text="Wiki Pages" />
       <MenuItem mnemonicParsing="false" onAction="#showGitHubRepository" text="Source Code on GitHub" />

@@ -56,9 +56,13 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
 
         GraphicsContext gc = chartCanvas.getGraphicsContext2D();
 
+        AggregatedCorrelationMatrix.MatrixRegionData activeRegion = sharedData.getActiveCorrelationMatrixRegion();
+        boolean visualizeInputWindows = activeRegion != null && !activeRegion.isAggregated && ! Double.isNaN(activeRegion.medianCorrelation);
+
         // reset transform to identity, clear previous contents
         gc.setTransform(new Affine(new Translate()));
-        gc.clearRect(0, 0, chartCanvas.getWidth(), chartCanvas.getHeight());
+        gc.setFill( visualizeInputWindows ? Color.gray(0.96) : Color.WHITE);
+        gc.fillRect(0, 0, chartCanvas.getWidth(), chartCanvas.getHeight());
         gc.setLineWidth(1);
         gc.setMiterLimit(0);
 
@@ -81,13 +85,16 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
             // these boolean properties are bound the draw ensemble check boxes
             if( ! drawEnsemble[ensembleID].get()) continue;
             int[] timeSpan = findHorizontalClipping(aggregators[ensembleID]);
+
+            // draw the area between min and max y value of each time step shaded (which also a hint that the view is an aggregation)
+            drawHull(gc, dataToScreen, aggregators[ensembleID]);
+            // draw the time series ensemble approximation
             drawEnsemble(gc, dataToScreen, aggregators[ensembleID], ensembleColors[ensembleID], timeSpan, 0);
 
         }
 
         // visualize the time windows that served as input for the currently selected correlation matrix cell
-        AggregatedCorrelationMatrix.MatrixRegionData activeRegion = sharedData.getActiveCorrelationMatrixRegion();
-        if(activeRegion != null && ! activeRegion.isAggregated)
+        if(visualizeInputWindows)
             visualizeInputWindows(gc, dataToScreen, aggregators, activeRegion);
 
         xAxis.drawContents();
@@ -116,32 +123,52 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
         // clear the previous rendering in the window's area for the shifted rendering
         Point2D minX = dataToScreen.transform(xValues[timeSpan[0]], 0);
         Point2D maxX = dataToScreen.transform(xValues[timeSpan[1]-1], 0);
-
-        gc.setFill(Color.GAINSBORO);
         double windowWidthSC = maxX.getX() - minX.getX();
+        gc.setFill(Color.WHITE);
         gc.fillRect(minX.getX(), 0, windowWidthSC, getHeight());
-        gc.setLineWidth(1);
-//        gc.strokeText(String.format("µ=%.3f\nσ=%.3f", activeRegion.medianCorrelation, activeRegion.averageUncertainty),minX.getX()+5, 10);
+        // highlight the start of the area
+        gc.setLineWidth(2);
+        gc.setStroke(Color.DARKGRAY);
+        gc.strokeLine(minX.getX(), 0, minX.getX(), getHeight());
 
+        Point2D lagPositionXMinY;
+        Point2D lagPositionMaxY;
         if(timeLag >= 0){
-            // mark the position from where the shifted ensemble B window is taken from
-            Point2D lagPositionX = dataToScreen.transform(xValues[timeSpan[0]-timeLag], 0);
-            gc.setStroke(ensembleColors[1]);
-            gc.strokeLine(lagPositionX.getX(), 0, lagPositionX.getX(), getHeight());
 
-            // shift time series ensemble B to the right
-            drawEnsemble(gc, dataToScreen, aggregators[0], ensembleColors[0], timeSpan, 0);
+            // compute the position from where the shifted ensemble B window is taken from
+            lagPositionXMinY = dataToScreen.transform(xValues[timeSpan[0]-timeLag], aggregators[1].minValues[timeSpan[0]-timeLag]);
+            lagPositionMaxY = dataToScreen.transform(0, aggregators[1].maxValues[timeSpan[0]-timeLag]);
+            gc.setStroke(ensembleColors[1]);
+
+            // draw right-shifted time series ensemble B
+            drawEnsemble(gc, dataToScreen, aggregators[0], ensembleColors[0], timeSpan, 0);            // redraw unshifted ensemble: has been deleted by highlight window
             drawEnsemble(gc, dataToScreen, aggregators[1], ensembleColors[1], timeSpan, -timeLag);
         } else {
-            // mark the position from where the shifted ensemble A window is taken from
-            Point2D lagPositionX = dataToScreen.transform(xValues[timeSpan[0]+timeLag], 0);
-            gc.setStroke(ensembleColors[0]);
-            gc.strokeLine(lagPositionX.getX(), 0, lagPositionX.getX(), getHeight());
 
-            // shift time series ensemble A to the right
+            // compute the position from where the shifted ensemble A window is taken from
+            lagPositionXMinY = dataToScreen.transform(xValues[timeSpan[0]+timeLag], aggregators[0].minValues[timeSpan[0]+timeLag]);
+            lagPositionMaxY = dataToScreen.transform(0, aggregators[0].maxValues[timeSpan[0]+timeLag]);
+            gc.setStroke(ensembleColors[0]);
+
+            // draw right-shifted time series ensemble A
             drawEnsemble(gc, dataToScreen, aggregators[0], ensembleColors[0], timeSpan, timeLag);
-            drawEnsemble(gc, dataToScreen, aggregators[1], ensembleColors[1], timeSpan, 0);
+            drawEnsemble(gc, dataToScreen, aggregators[1], ensembleColors[1], timeSpan, 0);            // redraw unshifted ensemble: has been deleted by highlight window
         }
+
+        // mark the position from where the shifted ensemble window is taken from
+
+        // lag window start marker (vertical line)
+        gc.setLineWidth(1);
+        gc.strokeLine(lagPositionXMinY.getX(), 0, lagPositionXMinY.getX(), getHeight());
+
+        // highlight the source and end y-axis interval (thick line around min/max where the window is taken from)
+        gc.setLineWidth(3.45);
+        gc.strokeLine(lagPositionXMinY.getX(), lagPositionXMinY.getY()+25, lagPositionXMinY.getX(), lagPositionMaxY.getY()-25);
+        gc.strokeLine(minX.getX(), lagPositionXMinY.getY()+25, minX.getX(), lagPositionMaxY.getY()-25);
+
+        // shade the source window (x-axis range that extends over the source window)
+        gc.setFill(ensembleColors[timeLag >= 0 ? 1 : 0].deriveColor(0,1,1,0.10)); // Color.gray(.5,0.13);
+        gc.fillRect(lagPositionXMinY.getX(), 0, Math.min(windowWidthSC, minX.getX()-lagPositionXMinY.getX()), getHeight());
 
     }
 
@@ -197,9 +224,6 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
         gc.setStroke(ensembleColor);
         gc.setLineWidth(1);
         gc.setLineCap(StrokeLineCap.SQUARE);
-
-        // draw the area between min and max y value of each time step shaded (which also a hint that the view is an aggregation)
-        drawHull(gc, dataToScreen, xValues, minValues, maxValues);
 
         // Transforming the values per hand is ugly but reduces the transformation costs by half,
         // since each transformed coordinate is needed twice: once as source time step and once as target time step.
@@ -265,7 +289,11 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
 
     }
 
-    protected void drawHull(GraphicsContext gc, Affine dataToScreen, double[] xValues, double[] minValues, double[] maxValues) {
+    protected void drawHull(GraphicsContext gc, Affine dataToScreen, TimeSeriesAverager aggregator) {
+
+        double[] xValues = aggregator.getXValues();
+        double[] minValues = aggregator.minValues;
+        double[] maxValues = aggregator.maxValues;
 
         // the x values of the polygon are formed by the concatenation of the x values and the reversed x values (counter clockwise polygon traversal)
         double[] allXValues = ArrayUtils.clone(xValues);

@@ -6,6 +6,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
+import javafx.event.EventHandler;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.geometry.Orientation;
@@ -40,8 +41,8 @@ abstract class CanvasChart extends AnchorPane {
     public NumberAxis xAxis,
                       yAxis;
 
-    /** the margins around the core plot within the containing pane (is used for axes, legends, title, etc. */
-    protected double[] margins = new double[]{10, 10, 50, 70};
+    /** the margins around the core plot within the containing pane (is used for axes, legends, title, etc.) */
+    protected double[] margins = new double[]{10, 10, 50, 90};
     int TOP = 0, RIGHT = 1, BOTTOM = 2, LEFT = 3;
 
     /**
@@ -169,6 +170,18 @@ abstract class CanvasChart extends AnchorPane {
         Transform mirror = new Translate(0, chartCanvas.getHeight());
         return new Affine(mirror.createConcatenation(scale).createConcatenation(translate));
     }
+
+    // mouse listeners ---------------------------------------------------------
+
+    public void setAxisHinting(boolean xAxisHinting, boolean yAxisHinting){
+        chartPane.setOnMouseMoved(new EventHandler<MouseEvent>() {
+            @Override public void handle(MouseEvent event) {
+                if(xAxisHinting) xAxis.showCurrentMousePosition(event);
+                if(yAxisHinting) yAxis.showCurrentMousePosition(event);
+            }
+        });
+    }
+
 
     protected void mouseDragged(MouseEvent t){
 

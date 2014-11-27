@@ -2,13 +2,11 @@ package Data;
 
 import Data.IO.FileModel;
 import Global.Util;
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
-import javafx.scene.control.Alert;
 import org.apache.commons.lang.ArrayUtils;
 
 import java.util.*;
@@ -40,6 +38,8 @@ public class DataModel {
     private Double[] minY = new Double[2];
     private Double[] maxY = new Double[2];
 
+    public final Optional<int[][]> ensembleClippings;
+
     public DataModel(List<Collection<TimeSeries>> tsByEnsemble) throws EnsembleIntersectionIsEmptyException {
 
         timeSeriesByEnsemble = new ArrayList<>();
@@ -56,7 +56,7 @@ public class DataModel {
                 timeSeriesByEnsemble.get(0).values().stream().findAny().get().getDataItems().re,
                 timeSeriesByEnsemble.get(1).values().stream().findAny().get().getDataItems().re,
         };
-        Optional<int[][]> ensembleClippings = findEnsembleClippings(xValues);
+        ensembleClippings = findEnsembleClippings(xValues);
 
         if(ensembleClippings.isPresent()){
 
@@ -65,12 +65,6 @@ public class DataModel {
 
             assert Util.distanceSmallerThan(xValues[0][0], xValues[1][0], FileModel.X_TOLERANCE); // assert start x values of both ensembles match
             assert Util.distanceSmallerThan(xValues[0][1], xValues[1][1], FileModel.X_TOLERANCE); // assert end x values of both ensembles match
-
-            Platform.runLater(() -> {
-                // inform the user that clipping has been performed to adapt offset and length of both ensembles.
-                Alert informAboutClipping = new Alert(Alert.AlertType.INFORMATION, String.format("The ensembles have been clipped to a common x value range of [%s, %s]", xValues[0][0], xValues[0][xValues[0].length - 1]));
-                informAboutClipping.showAndWait();
-            });
 
             for (int ensembleID = 0; ensembleID < 2; ensembleID++) {
 
@@ -187,6 +181,7 @@ public class DataModel {
         timeSeriesByEnsemble = Arrays.asList(
                 FXCollections.observableMap(new HashMap<>()),
                 FXCollections.observableMap(new HashMap<>()));
+        ensembleClippings = Optional.empty();
     }
 
     public int getTimeSeriesLength(int ensembleID) {

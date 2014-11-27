@@ -11,6 +11,7 @@ import javafx.scene.layout.Pane;
 import javafx.stage.FileChooser;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import org.controlsfx.dialog.Dialogs;
 
 import java.io.File;
 import java.net.URL;
@@ -159,6 +160,21 @@ public class MainWindowController extends WindowController implements Initializa
             if(saveBeforeQuit == ButtonType.YES) save();
         }
     }
+
+    public void changeAxisLabels(){
+        String xAxisLabel = Dialogs.create().message("X Axis Unit").showTextInput().orElse("Year");
+        String yAxisLabel = Dialogs.create().message("Y Axis Unit").showTextInput().orElse("Temperature ˚C");
+
+        timeSeriesViewController.timeSeriesChart.xAxis.setLabel(xAxisLabel);
+        timeSeriesViewController.timeSeriesChart.yAxis.setLabel(yAxisLabel);
+        correlationViewController.correlogram.xAxis.setLabel(xAxisLabel);
+        correlationViewController.correlogram.yAxis.setLabel("Lag ("+xAxisLabel+")");
+
+        correlationViewController.correlogram.drawContents();
+        timeSeriesViewController.timeSeriesChart.drawContents();
+
+    }
+
     public void quit(){
         checkForUncommitedChanges();
         System.exit(0);

@@ -200,6 +200,8 @@ public class Correlogram extends CanvasChart {
 
         setRenderMode(defaultRenderMode);
 
+        setAxisHinting(true, true);
+
     }
 
     public void setSharedData(SharedData sharedData) {

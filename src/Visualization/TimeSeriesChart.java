@@ -51,6 +51,8 @@ public class TimeSeriesChart extends CanvasChart implements DeferredDrawing {
         drawEnsemble1Property().addListener((observable, oldValue, newValue) -> drawContents());
         drawEnsemble2Property().addListener((observable, oldValue, newValue) -> drawContents());
 
+        setAxisHinting(true, true);
+
     }
 
     // TODO check necessity for transparency

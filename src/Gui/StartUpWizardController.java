@@ -154,9 +154,17 @@ public class StartUpWizardController extends WindowController implements Initial
 
         loadExperiment.setOnSucceeded(event -> {
             try {
-                mainWindowController.setExperiment(loadExperiment.get());
+                Experiment experiment = loadExperiment.get();
+                mainWindowController.setExperiment(experiment);
                 mainWindowController.showWindow();
                 this.hideWindow();
+
+                // inform the user that clipping has been performed to adapt offset and length of both ensembles.
+                if(experiment.dataModel.ensembleClippings.isPresent()){
+                    double[] xRange = new double[]{experiment.dataModel.getMinX(0), experiment.dataModel.getMaxX(0)};
+                    Alert informAboutClipping = new Alert(Alert.AlertType.INFORMATION, String.format("The ensembles have been clipped to a common x value range of [%s, %s]", xRange[0], xRange[1]));
+                    informAboutClipping.showAndWait();
+                }
             }
             catch (InterruptedException | ExecutionException e) { e.printStackTrace(); }
             inputPane.setDisable(false);

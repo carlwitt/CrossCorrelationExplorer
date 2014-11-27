@@ -11,6 +11,7 @@ import javafx.geometry.*;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.ScrollBar;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -49,6 +50,11 @@ public class NumberAxis extends StackPane {
 
     /** Translates data domain coordinates into screen coordinates. */
     private Affine dataToScreen;
+
+    /** This values is the axis value that is highlighted by drawing an extra tick mark and label for it (in a special color).
+     * This is for instance used to show the current mouse position to ease reading the axis values at a location in the plot.
+     * If the value is Double.NaN, no highlight is drawn. */
+    public double highlightValueDC = Double.NaN;
 
     // axes ranges -----------------------------------------------------------------------------------------------------
 
@@ -354,25 +360,38 @@ public class NumberAxis extends StackPane {
             double resultTickUnit = tickUnit(notTooManyTicks, getLowerBound(), getUpperBound());
             tickUnit.set(Math.max(minTickUnit, resultTickUnit));
         }
+
+        double tickLabelSize = isHorizontal ?
+                renderedTextSize("example", tickLabelFont).getX() :
+                renderedTextSize("example", tickLabelFont).getY();
         
         double nextLower = nextLowerTickMarkValue(getLowerBound(), getTickOrigin(), getTickUnit());
         
         int numTicks = (int) Math.ceil( getRange()/tickUnit.get() );
         for (int i = 0; i < numTicks+5; i++) {
-            drawTickMark(g, nextLower+i*tickUnit.get());
+            double tickMarkPosition = nextLower + i * tickUnit.get();
+
+            // draw tick mark depending on whether it's too close to the highlight tickmark
+            if(Double.isNaN(highlightValueDC) || Math.abs(toScreen(tickMarkPosition)-toScreen(highlightValueDC)) > tickLabelSize )
+                drawTickMark(g, tickMarkPosition, null);
         }
-        
+
+        drawTickMark(g, highlightValueDC, Color.BLACK);
+
     }
 
     /** Draws a single tick mark.
      * @param g The graphics context to draw on.
      * @param value The data coordinates value to put a tick mark on.
      */
-    void drawTickMark(GraphicsContext g, double value){
+    void drawTickMark(GraphicsContext g, double value, Color color){
         
         double tickMarkLength = 3;
+
+        g.save();
         g.setLineWidth(1);
         g.setFont(tickLabelFont);
+        if(color != null) g.setStroke(color);
 
         // avoid negative zero values
         value = Math.abs(value) < 1e-10 ? Math.abs(value) : value;
@@ -396,10 +415,12 @@ public class NumberAxis extends StackPane {
             // tick label
             double labelStartPos = screenCoordinate + textDimensions.getY()/4;
             // don't draw labels that are only partially visible
-            if(labelStartPos >= textDimensions.getY() && labelStartPos <= getHeight()){
+            if(labelStartPos >= 0 && labelStartPos <= getHeight()){
                 g.strokeText(tickLabel, getWidth() - tickMarkLength - textDimensions.getX() - 2, labelStartPos);
             }
         }
+
+        g.restore();
     }
     
     // -------------------------------------------------------------------------
@@ -491,6 +512,15 @@ public class NumberAxis extends StackPane {
      */
     Point2D renderedTextSize(String string, Font font){
         return new Point2D(fontLoader.computeStringWidth(string, font),fontLoader.getFontMetrics(font).getLineHeight());
+    }
+
+    public void showCurrentMousePosition(MouseEvent e){
+
+//        System.out.println((isHorizontal ? "X Axis" : "Y Axis") + "NumberAxis.showCurrentMousePosition");
+//        System.out.println("e = [" + e + "]");
+
+        highlightValueDC = fromScreen(isHorizontal ? e.getX() : e.getY());
+        drawContents();
     }
     
     // -------------------------------------------------------------------------

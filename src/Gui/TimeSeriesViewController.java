@@ -30,7 +30,7 @@ public class TimeSeriesViewController {
     /** maps a color to each time series ensemble (for instance the time series in correlation set A, in correlation set B and temporary time series for preview). */
     private final HashMap<Color, ObservableList<TimeSeries>> seriesSets = new HashMap<>();
     
-    private final HistogramTimeSeriesChart timeSeriesChart = new HistogramTimeSeriesChart();
+    public final HistogramTimeSeriesChart timeSeriesChart = new HistogramTimeSeriesChart();
 
     @FXML protected Label groupSizeLabel;
     @FXML protected TextField binningYAxisResolutionTextField;

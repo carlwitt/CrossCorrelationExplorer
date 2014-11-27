@@ -36,8 +36,8 @@ public class CorrelogramController {
     /** Data that is shared between views to implement linked views. */
     private SharedData sharedData;
 
-    private final Correlogram correlogram;
-    private final CorrelogramLegend legend;
+    public final Correlogram correlogram;
+    public final CorrelogramLegend legend;
 
     @FXML Pane correlogramRoot;
     @FXML VBox correlogramView;
