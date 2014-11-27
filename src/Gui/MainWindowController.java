@@ -15,6 +15,8 @@ import org.controlsfx.dialog.Dialogs;
 
 import java.io.File;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 /**
@@ -50,6 +52,9 @@ public class MainWindowController extends WindowController implements Initializa
 
     public Main globalMain; // to restart the program
 
+    /** Contains managers for each of the tabs (parameters, time series view, cell distribution histogram, matrix filter). The managers allow for docking them to a window of their own. */
+    Map<String, TabToWindowManager> tabToWindowManagers = new HashMap<>();
+
     @Override
     public void showWindow() {
         super.showWindow();
@@ -62,9 +67,9 @@ public class MainWindowController extends WindowController implements Initializa
         mainWindowStage.setY(bounds.getMinY());
         mainWindowStage.setWidth(bounds.getWidth());
         mainWindowStage.setHeight(bounds.getHeight());
-//        mainWindowStage.toBack(); // this prevents hiding information dialogs from the start up wizard but it also results in sending the window to back relative to all other open application windows
 
         mainWindowStage.setOnCloseRequest(event -> checkForUncommitedChanges());
+        mainWindowStage.setOnCloseRequest(event -> quit());
     }
 
     /**
@@ -90,15 +95,19 @@ public class MainWindowController extends WindowController implements Initializa
         String[] tabLabels = new String[]{"Parameters", "Cell Distribution", "Time Series", "Matrix Filter"};
         for (int i = 0; i < tabLabels.length; i++) assert inputTabPane.getTabs().get(i).getText().equals(tabLabels[i]) : "Tab labels changed, please review Main Window Controller code.";
 
-        // activate/deactivate time series rendering based on the visibility of the tab
+        // when changing tabs, activate/deactivate deferred rendering based on the visibility of the tab
         inputTabPane.getSelectionModel().selectedIndexProperty().addListener((observable, oldValue, newValue) -> {
             Tab activeTab = inputTabPane.getTabs().get(newValue.intValue());
-            timeSeriesViewController.setDeferringDrawRequests( ! activeTab.getText().equals("Time Series"));
-            cellDistributionViewController.setDeferringDrawRequests(!activeTab.getText().equals("Cell Distribution"));
+
+            timeSeriesViewController.setDeferringDrawRequests(!tabToWindowManagers.get("Time Series").isDockedOff() && !activeTab.getText().equals("Time Series"));
+            cellDistributionViewController.setDeferringDrawRequests(!tabToWindowManagers.get("Cell Distribution").isDockedOff() && !activeTab.getText().equals("Cell Distribution"));
         });
         timeSeriesViewController.setDeferringDrawRequests(true);
         cellDistributionViewController.setDeferringDrawRequests(true);
 
+        for(Tab tab : inputTabPane.getTabs()){
+            tabToWindowManagers.put(tab.getText(), new TabToWindowManager(tab));
+        }
     }
 
     public void setExperiment(Experiment experiment) {
@@ -177,6 +186,7 @@ public class MainWindowController extends WindowController implements Initializa
 
     public void quit(){
         checkForUncommitedChanges();
+        for(TabToWindowManager tabToWindowManager : tabToWindowManagers.values()) tabToWindowManager.close();
         System.exit(0);
     }
 }

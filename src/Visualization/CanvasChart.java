@@ -173,6 +173,10 @@ abstract class CanvasChart extends AnchorPane {
 
     // mouse listeners ---------------------------------------------------------
 
+    /** Enables lightweight tooltips that show the current mouse position on the axes. The tooltip is given as an additional, bold font tick mark on the axis.
+     * @param xAxisHinting whether to show axis hints on the x axis.
+     * @param yAxisHinting whether to show axis hints on the y axis.
+     */
     public void setAxisHinting(boolean xAxisHinting, boolean yAxisHinting){
         chartPane.setOnMouseMoved(new EventHandler<MouseEvent>() {
             @Override public void handle(MouseEvent event) {

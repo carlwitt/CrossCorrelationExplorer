@@ -516,9 +516,6 @@ public class NumberAxis extends StackPane {
 
     public void showCurrentMousePosition(MouseEvent e){
 
-//        System.out.println((isHorizontal ? "X Axis" : "Y Axis") + "NumberAxis.showCurrentMousePosition");
-//        System.out.println("e = [" + e + "]");
-
         highlightValueDC = fromScreen(isHorizontal ? e.getX() : e.getY());
         drawContents();
     }

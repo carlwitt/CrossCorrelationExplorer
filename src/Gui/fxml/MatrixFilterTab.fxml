@@ -3,7 +3,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<HBox fx:id="matrixFilterRoot" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="-Infinity" prefHeight="-1.0" prefWidth="-1.0" style="-fx-background-color: white;" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.MatrixFilterController">
+<HBox fx:id="matrixFilterRoot" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="300.0" prefHeight="-1.0" prefWidth="1227.0" style="-fx-background-color: white;" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.MatrixFilterController">
   <ScrollPane fitToHeight="false" fitToWidth="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" pannable="false" prefHeight="-1.0" prefViewportHeight="200.0" prefViewportWidth="200.0" prefWidth="-1.0" style="-fx-border-color: rgb(243,243,243);&#10;" HBox.hgrow="ALWAYS">
     <AnchorPane id="Content" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="0.0" prefHeight="-1.0" prefWidth="-1.0" style="">
       <GridPane fx:id="sliderGrid" gridLinesVisible="false" hgap="5.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" prefHeight="-1.0" prefWidth="-1.0" style="" vgap="2.0">
