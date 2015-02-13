@@ -21,6 +21,7 @@ import java.util.Map;
 
 /**
  * Used to draw the time series. Supports basic aggregation by drawing only each N-th data point.
+ * Serves as a base class for different versions of the chart.
  * @author Carl Witt
  */
 public class TimeSeriesChart extends CanvasChart implements DeferredDrawing {
@@ -57,6 +58,12 @@ public class TimeSeriesChart extends CanvasChart implements DeferredDrawing {
 
     // TODO check necessity for transparency
     public double transparency = 0.05;
+
+    /**
+     * Using the canvas path operators (beginPath, closePath, moveTo, lineTo) turns out to be much slower,
+     * although it has the advantage of not creating render artifacts at the joints of the line segments which
+     * occur when rendering with transparency.
+     */
     @Override public void drawContents() {
 
         if(isDeferringDrawRequests){
@@ -244,7 +251,7 @@ public class TimeSeriesChart extends CanvasChart implements DeferredDrawing {
 //        }
 //        
 //    }
-    
+
     public void resetView() {
 //        DataModel dataModel = sharedData.experiment.dataModel;
 //        double maxX = Math.max(dataModel.getMaxX(0), dataModel.getMaxX(1));

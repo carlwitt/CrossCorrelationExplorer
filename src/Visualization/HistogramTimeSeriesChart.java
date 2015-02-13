@@ -19,7 +19,12 @@ import javafx.scene.transform.Translate;
 import org.apache.commons.lang.ArrayUtils;
 
 /**
- * Used to draw the time series. Better aggregation by averaging each n-th data point if there are more data points to render than pixels available.
+ * The current version of the time series ensemble visualisation. Uses a value range quantisation into bins and estimates the density
+ * of lines by counting the number of lines starting in bin i and ending in bin j. The resulting 2D histogram is precomputed and used for fast visualisation.
+ * This technique is described in the following papers:
+ * [1] N. Elmqvist and J. D. Fekete, “Hierarchical Aggregation for Information Visualization: Overview, Techniques, and Design Guidelines,” IEEE Trans. Visual. Comput. Graphics, vol. 16, no. 3, pp. 439–454.
+ * [2] M. Novotny and H. Hauser, “Outlier-preserving focus+ context visualization in parallel coordinates,” IEEE Trans. Visual. Comput. Graphics, vol. 12, no. 5, pp. 893–900, 2006.
+ *
  * @author Carl Witt
  */
 public class HistogramTimeSeriesChart extends TimeSeriesChart {
@@ -61,7 +66,8 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
 
         // reset transform to identity, clear previous contents
         gc.setTransform(new Affine(new Translate()));
-        gc.setFill( visualizeInputWindows ? Color.gray(0.96) : Color.WHITE);
+//        gc.setFill( visualizeInputWindows ? Color.gray(0.96) : Color.WHITE);
+        gc.setFill(Color.WHITE);
         gc.fillRect(0, 0, chartCanvas.getWidth(), chartCanvas.getHeight());
         gc.setLineWidth(1);
         gc.setMiterLimit(0);
@@ -103,6 +109,13 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
         redrawPending = false;
     }
 
+    /**
+     * This drawing routine highlights the source data for a particular cell in the correlogram.
+     * It plots the time series values in the two ensembles next to each other (at the same x axis offset) to allow for visual comparison of correlation.
+     * Additionally, it visualises the offset of the lag window, to show where the window is originally located in the ensemble.
+     *
+     *
+     */
     protected void visualizeInputWindows(GraphicsContext gc, Affine dataToScreen, TimeSeriesAverager[] aggregators, AggregatedCorrelationMatrix.MatrixRegionData activeRegion) {
 
         WindowMetadata metadata = sharedData.getCorrelationMatrix().metadata;
@@ -125,6 +138,10 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
         Point2D maxX = dataToScreen.transform(xValues[timeSpan[1]-1], 0);
         double windowWidthSC = maxX.getX() - minX.getX();
         gc.setFill(Color.WHITE);
+        gc.fillRect(minX.getX(), 0, windowWidthSC, getHeight());
+        // highlight the base window
+//        gc.setFill(ensembleColors[timeLag < 0 ? 1 : 0].deriveColor(0,1,1,0.10));
+        gc.setFill(Color.gray(0.8,1));
         gc.fillRect(minX.getX(), 0, windowWidthSC, getHeight());
         // highlight the start of the area
         gc.setLineWidth(2);
@@ -167,8 +184,8 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
         gc.strokeLine(minX.getX(), lagPositionXMinY.getY()+25, minX.getX(), lagPositionMaxY.getY()-25);
 
         // shade the source window (x-axis range that extends over the source window)
-        gc.setFill(ensembleColors[timeLag >= 0 ? 1 : 0].deriveColor(0,1,1,0.10)); // Color.gray(.5,0.13);
-        gc.fillRect(lagPositionXMinY.getX(), 0, Math.min(windowWidthSC, minX.getX()-lagPositionXMinY.getX()), getHeight());
+//        gc.setFill(ensembleColors[timeLag >= 0 ? 1 : 0].deriveColor(0,1,1,0.10)); // Color.gray(.5,0.13);
+//        gc.fillRect(lagPositionXMinY.getX(), 0, Math.min(windowWidthSC, minX.getX()-lagPositionXMinY.getX()), getHeight());
 
     }
 
@@ -289,6 +306,11 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
 
     }
 
+    /**
+     * Draws a shaded area outlining the min/max ranges over time. Besides emphasizing the overall shape of an ensemble,
+     * this is sometimes particularly useful to point out discretization errors. If a coarse binning is used, the displayed min/max values
+     * might differ from the actual min/max values.
+     */
     protected void drawHull(GraphicsContext gc, Affine dataToScreen, TimeSeriesAverager aggregator) {
 
         double[] xValues = aggregator.getXValues();
@@ -367,6 +389,12 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
 
     }
 
+    /**
+     * Like {@link #drawTimeStepGrid(javafx.scene.canvas.GraphicsContext, short[][], double[], double[], double[], double[], double, int, javafx.scene.paint.Color)}
+     * except that instead of lines, polygons are drawn. These polygons will have the same slope but their height (comparable to the line thickness) equals the bin height.
+     * Simple drawing lines with increased thickness won't produce satisfactory results, since the line ends won't be aligned vertically.
+     * Is a littler slower in terms of render speed.
+     */
     protected void drawTimeStepPolygons(GraphicsContext gc, short[][] histogram, int[] drawOrder, double[] polygonXValues, double[] polygonYValues, double binHeightPx, double minYSCPrevious, double minYSC, int maxBinValue, Color ensembleColor) {
 
         int numSinkBins = histogram[0].length;
