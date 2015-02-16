@@ -6,7 +6,12 @@ import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import java.util.Arrays;
 
 /**
- * Stores aggregated information about a distribution of correlation values (i.e. in range [-1, 1] within each cell of a column.
+ * Stores aggregated information about a distribution of correlation values (i.e. values in range [-1, 1]) within
+ * each cell of a correlation matrix column.
+ *
+ * The bin counts are lossy encoded to save memory (storing 2 byte shorts instead of 4 byte ints).
+ * The encoding preserves small numbers and causes relative errors on scales that couldn't be visualised anyway.
+ *
  * Created by Carl Witt on 23.10.14.
  */
 public class CorrelationHistogram {

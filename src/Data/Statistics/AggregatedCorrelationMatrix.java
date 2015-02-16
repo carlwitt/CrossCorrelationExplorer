@@ -95,11 +95,12 @@ public class AggregatedCorrelationMatrix {
         int[] summedHistogram = new int[CorrelationHistogram.NUM_BINS];
         DescriptiveStatistics descriptiveStatistics = new DescriptiveStatistics();
 
+        // aggregation main loop
         for (int i = firstColumnIdx; i <= lastColumnIdx; i++) {
 
             CorrelationMatrix.CorrelationColumn correlationColumn = matrix.getColumn(i);
 
-            evaluateCell:
+            evaluateCells:
             for (int j = firstRowIdx; j <= lastRowIdx; j++) {
 
                 // check matrix filters
@@ -108,10 +109,10 @@ public class AggregatedCorrelationMatrix {
                     if(matrixFilterRanges[STAT] == null) continue;
                     if(correlationColumn.data[STAT][j] < matrixFilterRanges[STAT][0] ||
                             correlationColumn.data[STAT][j] > matrixFilterRanges[STAT][1])
-                        continue evaluateCell; // filtered cell doesn't influence aggregation
+                        continue evaluateCells; // filtered cell doesn't influence aggregation
                 }
 
-                // correlation dimension
+                // correlation dimension. checking whether the correlation dimension is done as a precaution, because it's done for uncertainty (see below).
                 if(CorrelationMatrix.isValidStatistic(region.CORRELATION_DIM)){
                     double correlation = correlationColumn.data[region.CORRELATION_DIM][j];
                     if( ! Double.isNaN(correlation)){
@@ -119,7 +120,8 @@ public class AggregatedCorrelationMatrix {
                         notNaNCorrelations++;
                     }
                 }
-                // uncertainty dimension
+                // uncertainty dimension. checking whether the uncertainty dimension is a valid statistic is done because the
+                // fraction negative, positive and absolute significant cells don't have an associated uncertainty dimension.
                 if(CorrelationMatrix.isValidStatistic(region.UNCERTAINTY_DIM)){
                     double uncertainty = correlationColumn.data[region.UNCERTAINTY_DIM][j];
                     if( ! Double.isNaN(uncertainty)){
