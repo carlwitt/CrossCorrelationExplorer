@@ -1,0 +1,6 @@
+.idea
+out/
+compiled/
+target/
+*.iml
+computationLog.txt
