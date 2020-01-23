@@ -9,6 +9,8 @@ import Global.Util;
 import Gui.TimeSeriesViewController;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Point2D;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Alert;
@@ -30,6 +32,13 @@ import org.apache.commons.lang.ArrayUtils;
 public class HistogramTimeSeriesChart extends TimeSeriesChart {
 
     private DoubleProperty binSize = new SimpleDoubleProperty(0.1);
+    /** Whether to visualise the time series subsequences (windows) that are compared to each other in the cross-correlation formula for the selected window/time lag combination (as selected in the correlogram) **/
+    public Boolean enableWindowHighlighting = false;
+    public Boolean swapEnsembleOrder = false;
+    /* In opaque rendering, bin frequency is mapped to saturation, as used in [1]. Otherwise bin frequency is mapped to transparency.
+        * [1] M. Novotny and H. Hauser, “Outlier-preserving Focus+Context Visualization in Parallel Coordinates,” IEEE Trans. Visual. Comput. Graphics, vol. 12, no. 5, pp. 893–900, 2006. */
+    public Boolean transparencyRendering = false;
+
     public double getBinSize(){return binSize.get();}
     public void setBinSize(double newBinSize){
         sharedData.experiment.dataModel.correlationSetAAggregator.setBinSize(newBinSize);
@@ -39,6 +48,7 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
     public DoubleProperty binSizeProperty(){return binSize;}
 
     public boolean useLinearTransfer = true;
+
     public boolean drawPoly = false, drawGrid = true;
 
     public HistogramTimeSeriesChart(){
@@ -46,8 +56,14 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
     }
 
     @Override public void setSharedData(SharedData sharedData){
-        super.setSharedData(sharedData);
+        this.sharedData = sharedData;
         setBinSize(0.1);
+        sharedData.activeCorrelationMatrixRegionProperty().addListener(new ChangeListener<AggregatedCorrelationMatrix.MatrixRegionData>() {
+            @Override
+            public void changed(ObservableValue<? extends AggregatedCorrelationMatrix.MatrixRegionData> observable, AggregatedCorrelationMatrix.MatrixRegionData oldValue, AggregatedCorrelationMatrix.MatrixRegionData newValue) {
+                if(enableWindowHighlighting) drawContents();
+            }
+        });
     }
 
     @Override public void drawContents() {
@@ -62,7 +78,7 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
         GraphicsContext gc = chartCanvas.getGraphicsContext2D();
 
         AggregatedCorrelationMatrix.MatrixRegionData activeRegion = sharedData.getActiveCorrelationMatrixRegion();
-        boolean visualizeInputWindows = activeRegion != null && !activeRegion.isAggregated && ! Double.isNaN(activeRegion.medianCorrelation);
+        boolean visualizeInputWindows = activeRegion != null && !activeRegion.isAggregated && ! Double.isNaN(activeRegion.medianCorrelation) && enableWindowHighlighting;
 
         // reset transform to identity, clear previous contents
         gc.setTransform(new Affine(new Translate()));
@@ -86,7 +102,11 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
 
         Color[] ensembleColors = TimeSeriesViewController.ensembleColors;
 
-        for (int ensembleID = 0; ensembleID < aggregators.length; ensembleID++) {
+        // determine which ensemble is draw first (will be overplotted by the second)
+        int[] ensembleDrawingOrder = new int[]{0,1};
+        if(swapEnsembleOrder) ensembleDrawingOrder = new int[]{1,0};
+
+        for (int ensembleID : ensembleDrawingOrder) {
 
             // these boolean properties are bound the draw ensemble check boxes
             if( ! drawEnsemble[ensembleID].get()) continue;
@@ -114,7 +134,7 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
      * It plots the time series values in the two ensembles next to each other (at the same x axis offset) to allow for visual comparison of correlation.
      * Additionally, it visualises the offset of the lag window, to show where the window is originally located in the ensemble.
      *
-     *
+     * The basic principle is to draw an earlier time slice of one ensemble "on top" of the screen area where the highlighted window is located.
      */
     protected void visualizeInputWindows(GraphicsContext gc, Affine dataToScreen, TimeSeriesAverager[] aggregators, AggregatedCorrelationMatrix.MatrixRegionData activeRegion) {
 
@@ -357,7 +377,7 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
         int numSinkBins = histogram[0].length;
 
         for (int prevBinIdx = 0; prevBinIdx < numSourceBins; prevBinIdx++) {
-
+            
             // for a fixed left bin, the left y values of the polygon are constant
             // we're working with screen coordinates so moving upwards means subtracting pixels
             polygonYValues[0] = lastXLowerY[1] - prevBinIdx * binHeightPx;
@@ -430,7 +450,11 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
 //                  gc.setLineWidth(opacity*5);
 //                  gc.strokeLine(polygonXValues[0],polygonYValues[0],polygonXValues[1],polygonYValues[1]);
 
-            gc.setFill(ensembleColor.interpolate(Color.WHITE, 1 - opacity));
+            if (transparencyRendering)
+                gc.setFill(ensembleColor.deriveColor(0, 1, 1, opacity));
+            else
+                gc.setFill(ensembleColor.interpolate(Color.WHITE, 1 - opacity));
+
             gc.fillPolygon(polygonXValues, polygonYValues, 4);
 //            gc.strokeText(""+ histogram[sourceBinIdx][sinkBinIdx], polygonXValues[0],polygonYValues[0]);
 //                  gc.strokePolygon(polygonXValues, polygonYValues, 4);

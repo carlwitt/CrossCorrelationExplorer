@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.lang.*?>
+<?import javafx.geometry.*?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<HBox fx:id="matrixFilterRoot" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="300.0" prefHeight="-1.0" prefWidth="1227.0" style="-fx-background-color: white;" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.MatrixFilterController">
+
+<HBox fx:id="matrixFilterRoot" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="300.0" prefHeight="230.0" prefWidth="1124.0" style="-fx-background-color: white;" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.MatrixFilterController">
   <ScrollPane fitToHeight="false" fitToWidth="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" pannable="false" prefHeight="-1.0" prefViewportHeight="200.0" prefViewportWidth="200.0" prefWidth="-1.0" style="-fx-border-color: rgb(243,243,243);&#10;" HBox.hgrow="ALWAYS">
     <AnchorPane id="Content" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="0.0" prefHeight="-1.0" prefWidth="-1.0" style="">
       <GridPane fx:id="sliderGrid" gridLinesVisible="false" hgap="5.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" prefHeight="-1.0" prefWidth="-1.0" style="" vgap="2.0">
@@ -11,11 +14,10 @@
         <Label text="Standard Deviation" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="1" />
         <Label text="Median" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="2" />
         <Label text="Interquartile Range" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="3" />
-        <Label text="Percentage Significantly Positive Correlated Window Pairs" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="4" />
-        <Label text="Percentage Significantly Negative Correlated Window Pairs" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="5" />
-        <Label text="Percentage Significantly Correlated Window Pairs" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="6" />
+        <Label prefHeight="197.0" prefWidth="231.0" text="Percentage of Significantly Positive Correlated Window Pairs" textAlignment="RIGHT" wrapText="true" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="4" />
+        <Label prefWidth="231.0" text="Percentage Significantly Negative Correlated Window Pairs" textAlignment="RIGHT" wrapText="true" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="5" />
         <columnConstraints>
-          <ColumnConstraints halignment="RIGHT" hgrow="NEVER" maxWidth="370.0" minWidth="60.0" prefWidth="370.0" />
+          <ColumnConstraints halignment="RIGHT" hgrow="NEVER" maxWidth="370.0" minWidth="60.0" prefWidth="-1.0" />
           <ColumnConstraints fillWidth="true" hgrow="NEVER" maxWidth="60.0" minWidth="60.0" prefWidth="60.0" />
           <ColumnConstraints fillWidth="true" hgrow="ALWAYS" maxWidth="1.7976931348623157E308" minWidth="10.0" prefWidth="300.0" />
           <ColumnConstraints hgrow="NEVER" maxWidth="60.0" minWidth="60.0" prefWidth="60.0" />
@@ -26,10 +28,11 @@
           <RowConstraints maxHeight="25.0" minHeight="10.0" prefHeight="25.0" vgrow="SOMETIMES" />
           <RowConstraints maxHeight="25.0" minHeight="10.0" prefHeight="25.0" vgrow="SOMETIMES" />
           <RowConstraints maxHeight="25.0" minHeight="10.0" prefHeight="25.0" vgrow="SOMETIMES" />
-          <RowConstraints maxHeight="25.0" minHeight="10.0" prefHeight="25.0" vgrow="SOMETIMES" />
-          <RowConstraints maxHeight="25.0" minHeight="10.0" prefHeight="25.0" vgrow="SOMETIMES" />
-          <RowConstraints maxHeight="25.0" minHeight="10.0" prefHeight="25.0" vgrow="SOMETIMES" />
+          <RowConstraints fillHeight="false" maxHeight="35.0" minHeight="10.0" prefHeight="35.0" vgrow="SOMETIMES" />
+          <RowConstraints maxHeight="35.0" minHeight="10.0" prefHeight="35.0" vgrow="SOMETIMES" />
+          <RowConstraints maxHeight="35.0" minHeight="10.0" prefHeight="35.0" vgrow="SOMETIMES" />
         </rowConstraints>
+        <Label prefHeight="-1.0" prefWidth="231.0" text="Percentage Significantly Correlated Window Pairs" textAlignment="RIGHT" wrapText="true" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="6" />
       </GridPane>
     </AnchorPane>
   </ScrollPane>

@@ -6,10 +6,10 @@ import javafx.beans.value.ObservableValue;
 /**
  * A static helper method for bidirectinally binding properties of different types to each other.
  * The use is twofold: First, creating bidirectional bindings is possible only between properties of the same type.
- * Usually this is used to couple a controller property (e.g. a scroll bar value) to a model property (e.g. a bin size).
+ * Usually this is used to couple a controller property (e.g. a slider) to a model property (e.g. a level of detail).
  * When updating one property, the other should be updated as well and vice versa. In the properties are not of the same
  * type, an additional conversion logic is needed that can be provided here.
- * The other use is that without further care, an infinite loop is caused by mutual updates. To avoid this,
+ * The other use is that, without further care, an infinite loop is caused by mutual updates. To avoid this,
  * a flag is set before updating the other property. Any update calls from the descendants of the update call in the call
  * tree are suppressed becaues the flag is unset not before returning to the level in the call tree from which the
  * update call was issued.

@@ -235,8 +235,7 @@ public class CorrelationMatrix {
 
         @Override public CorrelationMatrix call() throws Exception {
 
-            int columnSize = metadata.getNumberOfDifferentTimeLags(),
-                valuesPerCell = metadata.setA.size() * metadata.setB.size();
+            int columnSize = metadata.getNumberOfDifferentTimeLags();
 
             DescriptiveStatistics descriptiveStatistics = new DescriptiveStatistics();
 
@@ -318,7 +317,7 @@ public class CorrelationMatrix {
                     } // for each time series in set A
 
                     // summarize the computed distribution (calculate mean, sd, etc) and store the results in the column data structure
-                    column.computeCell(descriptiveStatistics, valuesPerCell, lagIdx);
+                    column.computeCell(descriptiveStatistics, lagIdx);
                     correlationHistogram.setDistribution(lagIdx, descriptiveStatistics.getValues());
                     lagIdx++;
 
@@ -484,15 +483,17 @@ public class CorrelationMatrix {
         /**
          * Computes and sets the statistics for the cell corresponding to a certain time lag index.
          * @param descriptiveStatistics the correlation values (excluding NaNs)
-         * @param numValues the number of correlation values (including NaNs)
          * @param lagIdx the offset of the cell in the column (0 corresponds to the minimum time lag)
          */
-        public void computeCell(DescriptiveStatistics descriptiveStatistics, int numValues, int lagIdx) {
+        public void computeCell(DescriptiveStatistics descriptiveStatistics, int lagIdx) {
 
             data[MEAN][lagIdx] = descriptiveStatistics.getMean();
             data[STD_DEV][lagIdx] = Math.sqrt(descriptiveStatistics.getPopulationVariance());
             data[MEDIAN][lagIdx] = descriptiveStatistics.getPercentile(50);
             data[IQR][lagIdx] = descriptiveStatistics.getPercentile(75) - descriptiveStatistics.getPercentile(25);
+
+            final double[] correlationValues = descriptiveStatistics.getValues();
+            int numValues = correlationValues.length;
 
             // if the window size is too small (less than three) significance can't be tested using the t-distribution.
             if(significanceTester == null){
@@ -502,7 +503,7 @@ public class CorrelationMatrix {
             } else {
                 // test for significance
                 int posSigCount = 0, negSigCount = 0;
-                for (double r : descriptiveStatistics.getValues()) {
+                for (double r : correlationValues) {
                     if(significanceTester.significanceTest(r)){
                         if(r > 0) posSigCount++;
                         else negSigCount++;

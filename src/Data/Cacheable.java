@@ -36,7 +36,7 @@ public abstract class Cacheable<T> {
     /** Makes the cached value valid. */
     public abstract void recompute();
 
-    /** Guarantees that the next call to get() will recompute the result. */
+    /** Guarantees that the next call to get() will recompute the result. Useful if it might not be retrieved in the future, then the computation is not wasted. */
     public void invalidate() {
         invalidated = true;
     }

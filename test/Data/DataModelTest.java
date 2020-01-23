@@ -1,12 +1,15 @@
 package Data;
 
 import Data.Correlation.CorrelationMatrix;
+import Data.IO.FileModel;
 import Data.Windowing.WindowMetadata;
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assert.assertEquals;
@@ -85,6 +88,80 @@ public class DataModelTest {
         matrix.compute();
         System.out.println(String.format("matrix.getSize(): %s", matrix.getSize()));
 
+    }
+
+    @Test public void compute_mean_median_time_series() throws Exception {
+
+        DescriptiveStatistics ds = new DescriptiveStatistics();
+
+        // sanbao heshang time series
+        Experiment experiment = new Experiment("./data/eurovis_talk/sanbao_heshang.nc");
+        DataModel dataModel = experiment.dataModel;
+
+        for (int ensemble_id = 0; ensemble_id < 2; ensemble_id++) {
+
+            final int numberOfTimeSeries = dataModel.getNumberOfTimeSeries(ensemble_id);
+
+            int ts_length = dataModel.get(ensemble_id,1).getSize();
+            double[] mean_ts = new double[ts_length];
+            double[] median_ts = new double[ts_length];
+
+            for (int t = 0; t < ts_length; t++) {
+
+                // clear for each new time step
+                ds.clear();
+
+                // add current time point of each time series to the statistics
+                for(TimeSeries ts : dataModel.getEnsemble(ensemble_id).values()){
+                    ds.addValue(ts.getDataItems().im[t]);
+                }
+
+                mean_ts[t] = ds.getMean();
+                median_ts[t] = ds.getPercentile(50.);
+            }
+
+            final double[] x_values = dataModel.get(ensemble_id, 1).getDataItems().re;
+            FileModel.persist(Arrays.asList(new TimeSeries(0, x_values, mean_ts)), String.format("sanbao_heshang_ensemble%s_%sts_mean.txt",ensemble_id+1, numberOfTimeSeries));
+            FileModel.persist(Arrays.asList(new TimeSeries(0, x_values, median_ts)), String.format("sanbao_heshang_ensemble%s_%sts_median.txt",ensemble_id+1, numberOfTimeSeries));
+
+        }
+
+
+        // ERP complete time series
+        experiment = new Experiment("./data/eurovis_talk/ERP_complete.nc");
+        dataModel = experiment.dataModel;
+
+        for (int ensemble_id = 0; ensemble_id < 2; ensemble_id++) {
+
+            final int numberOfTimeSeries = dataModel.getNumberOfTimeSeries(ensemble_id);
+
+            int ts_length = dataModel.get(ensemble_id,1).getSize();
+            double[] mean_ts = new double[ts_length];
+            double[] median_ts = new double[ts_length];
+
+            for (int t = 0; t < ts_length; t++) {
+
+                // clear for each new time step
+                ds.clear();
+
+                // add current time point of each time series to the statistics
+                for(TimeSeries ts : dataModel.getEnsemble(ensemble_id).values()){
+                    ds.addValue(ts.getDataItems().im[t]);
+                }
+
+                mean_ts[t] = ds.getMean();
+                median_ts[t] = ds.getPercentile(50.);
+            }
+
+            final double[] x_values = dataModel.get(ensemble_id, 1).getDataItems().re;
+            FileModel.persist(Arrays.asList(new TimeSeries(0, x_values, mean_ts)), String.format("ERP_complete_ensemble%s_%sts_mean.txt",ensemble_id+1, numberOfTimeSeries));
+            FileModel.persist(Arrays.asList(new TimeSeries(0, x_values, median_ts)), String.format("ERP_complete_ensemble%s_%sts_median.txt",ensemble_id+1, numberOfTimeSeries));
+
+        }
+
+
+
 
     }
+
 }

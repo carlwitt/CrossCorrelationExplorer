@@ -13,6 +13,7 @@ import javafx.scene.transform.Translate;
  * Used to draw the time series. Better aggregation by averaging each n-th data point if there are more data points to render than pixels available.
  * @author Carl Witt
  */
+@Deprecated
 public class BinnedTimeSeriesChart extends TimeSeriesChart {
 
     public BinnedTimeSeriesChart(){
@@ -80,16 +81,13 @@ public class BinnedTimeSeriesChart extends TimeSeriesChart {
             // draw each series
             for (int tsID = 0; tsID < aggregators[ensembleID].getNumberOfTimeSeries(); tsID++) {
 
-//                gc.beginPath();
                 double[] yValues = aggregators[ensembleID].getYValues(tsID+1);
                 Point2D curPoint, lastPoint = dataToScreen.transform(new Point2D(xValues[0], yValues[0]));
 
-//                gc.moveTo(firstPoint.getX(), firstPoint.getY());
 
                 for (int j = firstDataPointIdx; j <= lastDataPointIdx; j++) {
                     curPoint = dataToScreen.transform(new Point2D(xValues[j], yValues[j]));
                     gc.strokeLine(lastPoint.getX(), lastPoint.getY(), curPoint.getX(), curPoint.getY());
-//                    gc.lineTo(curPoint.getX(),curPoint.getY());
                     lastPoint=curPoint;
                 }
                 gc.stroke();

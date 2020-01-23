@@ -2,18 +2,23 @@
 
 <!--This file doesn't contain much because most of the markup went into the CanvasChart class,
     but it is necessary because the fx:controller attribute can be used only on the root element of a file. -->
-
+<?import java.lang.*?>
+<?import javafx.geometry.*?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.chart.*?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.*?>
 <?import javafx.scene.shape.CubicCurve?>
 <?import javafx.scene.shape.Line?>
 <?import javafx.scene.shape.Rectangle?>
+<?import javafx.scene.text.*?>
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
+
 <AnchorPane fx:id="timeSeriesPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="50.0" prefHeight="326.9999000000025" prefWidth="1022.0" style="-fx-background-color: white;" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="Gui.TimeSeriesViewController">
   <Rectangle arcHeight="5.0" arcWidth="5.0" fill="GAINSBORO" height="1240.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" width="20.0" AnchorPane.bottomAnchor="203.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0" />
   <Text rotate="270.0" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-background-color: gainsboro;" text="Time Series View" AnchorPane.bottomAnchor="261.26" AnchorPane.leftAnchor="-43.0" AnchorPane.topAnchor="50.43" />
@@ -122,4 +127,43 @@
     </tooltip>
   </Button>
   <HBox alignment="TOP_CENTER" prefHeight="-1.0" prefWidth="-1.0" AnchorPane.rightAnchor="5.0" AnchorPane.topAnchor="5.0" />
+  <ToggleButton id="linkWithTimeSeriesViewToggle" fx:id="windowHighlightingToggle" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" rotate="0.0" selected="false" text="" translateX="0.0" translateY="0.0" AnchorPane.bottomAnchor="25.0" AnchorPane.leftAnchor="0.0">
+    <graphic>
+      <ImageView fitHeight="14.0" fitWidth="14.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" rotate="90.0" smooth="false">
+        <Image url="@../img/histogram.png" />
+      </ImageView>
+    </graphic>
+    <toggleGroup>
+      <ToggleGroup />
+    </toggleGroup>
+    <tooltip>
+      <Tooltip text="Enable highlighting of cross-correlation windows. " />
+    </tooltip>
+  </ToggleButton>
+  <ToggleButton id="linkWithTimeSeriesViewToggle" fx:id="transparencyToggle" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" rotate="0.0" selected="false" text="" translateX="0.0" translateY="0.0" AnchorPane.bottomAnchor="60.0" AnchorPane.leftAnchor="0.0">
+    <graphic>
+      <ImageView fitHeight="14.0" fitWidth="14.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" rotate="90.0" smooth="false">
+        <Image url="@../img/glyphicons_154_more_windows.png" />
+      </ImageView>
+    </graphic>
+    <toggleGroup>
+      <ToggleGroup />
+    </toggleGroup>
+    <tooltip>
+      <Tooltip text="Enable highlighting of cross-correlation windows. " />
+    </tooltip>
+  </ToggleButton>
+  <ToggleButton id="linkWithTimeSeriesViewToggle" fx:id="swapEnsembleOrderToggle" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" rotate="0.0" selected="false" text="" translateX="0.0" translateY="0.0" AnchorPane.bottomAnchor="85.0" AnchorPane.leftAnchor="0.0">
+    <graphic>
+      <ImageView fitHeight="14.0" fitWidth="14.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" rotate="90.0" smooth="false">
+        <Image url="@../img/glyphicons_081_refresh.png" />
+      </ImageView>
+    </graphic>
+    <toggleGroup>
+      <ToggleGroup />
+    </toggleGroup>
+    <tooltip>
+      <Tooltip text="Enable highlighting of cross-correlation windows. " />
+    </tooltip>
+  </ToggleButton>
 </AnchorPane>

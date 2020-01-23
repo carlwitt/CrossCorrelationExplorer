@@ -37,6 +37,9 @@ public class TimeSeriesViewController {
     @FXML protected Label binningYAxisResolutionLabel;
     @FXML protected Button increaseResolutionButton;
     @FXML protected Button decreaseResolutionButton;
+    @FXML ToggleButton windowHighlightingToggle;
+    @FXML ToggleButton swapEnsembleOrderToggle;
+    @FXML ToggleButton transparencyToggle;
     @FXML CheckBox ensemble1CheckBox;
     @FXML CheckBox ensemble2CheckBox;
 
@@ -66,8 +69,8 @@ public class TimeSeriesViewController {
 
         // axes configuration
         timeSeriesChart.xAxis.setTickLabelFormatter(new NumberStringConverter(new DecimalFormat("####")));
-        timeSeriesChart.xAxis.setLabel("Year");
-        timeSeriesChart.yAxis.setLabel("Temperature ˚C");
+//        timeSeriesChart.xAxis.setLabel("Year");
+//        timeSeriesChart.yAxis.setLabel("Temperature ˚C");
 
         // ensemble check boxes
         timeSeriesChart.drawEnsemble1Property().bind(ensemble1CheckBox.selectedProperty());
@@ -84,7 +87,8 @@ public class TimeSeriesViewController {
                 double newResolution;
                 try {
                     newResolution = Double.parseDouble(binningYAxisResolutionTextField.getText());
-                    if (Double.isNaN(newResolution) || newResolution <= 0) throw new NumberFormatException("The parsed value is not sensible.");
+                    if (Double.isNaN(newResolution) || newResolution <= 0)
+                        throw new NumberFormatException("The parsed value is not sensible.");
                     timeSeriesChart.setBinSize(newResolution);
                     drawChart();
                 } catch (NumberFormatException e) {
@@ -97,10 +101,10 @@ public class TimeSeriesViewController {
 
         // double/half bin size buttons
         increaseResolutionButton.setOnAction(event -> {
-            timeSeriesChart.setBinSize(timeSeriesChart.getBinSize()/2);
+            timeSeriesChart.setBinSize(timeSeriesChart.getBinSize() / 2);
         });
         decreaseResolutionButton.setOnAction(event -> {
-            timeSeriesChart.setBinSize(timeSeriesChart.getBinSize()*2);
+            timeSeriesChart.setBinSize(timeSeriesChart.getBinSize() * 2);
         });
 
         // line and polygon draw options
@@ -116,6 +120,24 @@ public class TimeSeriesViewController {
         // transfer function toggle
         transferFunction.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
             (timeSeriesChart).useLinearTransfer = newValue == transferLinearToggle;
+            timeSeriesChart.drawContents();
+        });
+
+        // toggle highlighting of cross-correlation input windows
+        windowHighlightingToggle.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            timeSeriesChart.enableWindowHighlighting = newValue;
+            timeSeriesChart.drawContents();
+        });
+
+        // toggle highlighting of cross-correlation input windows
+        swapEnsembleOrderToggle.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            timeSeriesChart.swapEnsembleOrder = newValue;
+            timeSeriesChart.drawContents();
+        });
+
+        // toggle highlighting of cross-correlation input windows
+        transparencyToggle.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            timeSeriesChart.transparencyRendering = newValue;
             timeSeriesChart.drawContents();
         });
 

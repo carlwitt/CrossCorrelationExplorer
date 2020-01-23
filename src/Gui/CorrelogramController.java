@@ -9,6 +9,7 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
+import javafx.scene.control.SplitPane;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.Tooltip;
@@ -50,6 +51,7 @@ public class CorrelogramController {
     @FXML ToggleButton hintonUncertaintyToggle;
     @FXML ToggleButton hintonDrawQuartilesToggle;
     @FXML TabPane visualizationSelector;
+    @FXML SplitPane correlogramLegendSplit;
 
     /** Captions for the tabs that allow switching between the render modes. */
     private static final String[] renderModeLabels = new String[]{
@@ -68,8 +70,7 @@ public class CorrelogramController {
     public void initialize() {
 
         // configure and add correlogram chart to GUI
-        correlogramView.getChildren().add(1, correlogram);
-        VBox.setVgrow(correlogram, Priority.ALWAYS);
+        correlogramLegendSplit.getItems().add(correlogram);
         correlogram.setMinWidth(10);
         correlogram.setPrefWidth(20);
         correlogram.xAxis.setTickLabelFormatter(new NumberStringConverter(new DecimalFormat("####")));
@@ -78,9 +79,9 @@ public class CorrelogramController {
         correlogram.yAxis.setTickLabelFormatter(new NumberStringConverter(new DecimalFormat("#")));
 
         // configure and add correlogram legend chart to GUI
-        correlogramView.getChildren().add(2, legend);
-        VBox.setVgrow(legend, Priority.NEVER);
-        legend.setMinHeight(160);
+        correlogramLegendSplit.getItems().add(legend);
+        correlogramLegendSplit.setDividerPositions(0.85);
+        legend.setPrefHeight(160);
         legend.xAxis.setLabel("μ");//Mean
         legend.yAxis.setLabel("σ");//Standard Deviation
         Tooltip xAxisTip = new Tooltip("Average correlation within all aligned time windows.");

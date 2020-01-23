@@ -19,6 +19,9 @@ import org.controlsfx.control.CheckListView;
 import org.controlsfx.control.IndexedCheckModel;
 import org.controlsfx.dialog.Dialogs;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -169,6 +172,8 @@ public class ComputationController implements Initializable {
         Optional<WindowMetadata> metadataFromGUIElements = createMetadataFromGUIElements();
         if(! metadataFromGUIElements.isPresent()) return;
         WindowMetadata metadata = metadataFromGUIElements.get();
+
+        startMeasuringComputationTime(metadata);
 
         // get result from cache or execute an asynchronous compute service
         CorrelationMatrix result;
@@ -333,6 +338,7 @@ public class ComputationController implements Initializable {
             progressLayer.hide();
             sharedData.experiment.addResult(service.getValue());
             sharedData.setcorrelationMatrix(service.getValue());
+            finishAndReportComputationTime();
         });
 
         // on cancel: hide the progress layer. wire the cancel button to that action.
@@ -489,6 +495,24 @@ public class ComputationController implements Initializable {
         }
     }
 
+    long neededTimeMs;
+    WindowMetadata metadataForTimeMeasurement;
+    private void startMeasuringComputationTime(WindowMetadata metadata){
+        neededTimeMs = System.currentTimeMillis();
+        metadataForTimeMeasurement = metadata;
+    }
 
+    private void finishAndReportComputationTime(){
+        // report needed time and parameters
+        neededTimeMs = System.currentTimeMillis()-neededTimeMs;
+
+        try(BufferedWriter writer = new BufferedWriter(new FileWriter("computationLog.txt",true))){
+            String filename = sharedData.experiment.filename;
+            double neededTimeSeconds = 1. * neededTimeMs / 1e3;
+            writer.write(String.format("experiment: %s\nmetadata: %s\nneeded time: %.4f seconds\n\n", filename, metadataForTimeMeasurement, neededTimeSeconds));
+        } catch (IOException e) {
+            new Alert(Alert.AlertType.ERROR, "Couldn't log performance data.").show();
+        }
+    }
 
 }

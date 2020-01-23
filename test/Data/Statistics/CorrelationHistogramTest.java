@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.DoubleSummaryStatistics;
+import java.util.Random;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
@@ -69,7 +70,8 @@ public class CorrelationHistogramTest {
 
         DescriptiveStatistics descriptiveStatistics = new DescriptiveStatistics(maxSupportedFrequency+1);
 
-        int breakPoint = Short.MAX_VALUE;
+        int breakPoint = Short.MAX_VALUE; // normally 32,000
+
         // for each possible frequency, compute the according short value and observe the resulting error.
         // start at one because frequency 0 is transformed forth and back without loss.
         for (int i = 0; i <= maxSupportedFrequency; i++) {

@@ -64,9 +64,9 @@ public class MainWindowController extends WindowController implements Initializa
         Rectangle2D bounds = primaryScreen.getVisualBounds();
         Stage mainWindowStage = (Stage) mainWindowRoot.getScene().getWindow();
         mainWindowStage.setX(bounds.getMinX());
-        mainWindowStage.setY(bounds.getMinY());
+        mainWindowStage.setY(bounds.getMinY()+98);
         mainWindowStage.setWidth(bounds.getWidth());
-        mainWindowStage.setHeight(bounds.getHeight());
+        mainWindowStage.setHeight(1080);//bounds.getHeight()
 
         mainWindowStage.setOnCloseRequest(event -> checkForUncommitedChanges());
         mainWindowStage.setOnCloseRequest(event -> quit());

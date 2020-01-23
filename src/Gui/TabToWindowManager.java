@@ -30,6 +30,8 @@ class TabToWindowManager {
 
         this.tabToManage = tabToManage;
 
+        tabStage.setAlwaysOnTop(true);
+
         // add expand/collapse button
         imageView.setRotate(315);
         imageView.setFitWidth(8); imageView.setFitHeight(8);
