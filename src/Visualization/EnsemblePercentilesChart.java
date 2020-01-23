@@ -6,7 +6,7 @@ import Data.SharedData;
 import Data.Statistics.EnsemblePercentiles;
 import Data.TimeSeries;
 import Gui.TimeSeriesViewController;
-import com.fastdtw.EnsembleDelayHistogram;
+//import com.fastdtw.EnsembleDelayHistogram;
 import javafx.collections.ObservableList;
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
