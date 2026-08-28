@@ -69,17 +69,30 @@ This produces a self-contained fat jar at
 JRE layout on Zulu builds, so we assemble the app bundle by hand
 instead — it's simpler and more robust.
 
+The repo already ships a pre-built icon at `dist/CrossCorrelationExplorer.icns`
+(see "Regenerating the icon" below if you ever need to recreate it),
+so the script below picks it up automatically — both as the Finder/Dock
+icon and as the Dock icon while the app is actually running (JavaFX
+doesn't set that on its own; it needs the `-Xdock:icon` flag).
+
 ```bash
 APP="dist/Cross Correlation Explorer.app"
+ICON_SRC="img/CrossCorrelationExplorer.icns"
+
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APP/Contents/Java"
 
 cp target/CrossCorrelationExplorer-1.0.jar "$APP/Contents/Java/CrossCorrelationExplorer.jar"
 cp -R "$JAVA_HOME/jre" "$APP/Contents/Java/jre"
+cp "$ICON_SRC" "$APP/Contents/Resources/CrossCorrelationExplorer.icns"
 
 cat > "$APP/Contents/MacOS/CrossCorrelationExplorer" << 'EOF'
 #!/bin/bash
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../Java" && pwd)"
-"$DIR/jre/bin/java" -jar "$DIR/CrossCorrelationExplorer.jar"
+RES="$(cd "$(dirname "${BASH_SOURCE[0]}")/../Resources" && pwd)"
+"$DIR/jre/bin/java" \
+  -Xdock:icon="$RES/CrossCorrelationExplorer.icns" \
+  -Xdock:name="Cross Correlation Explorer" \
+  -jar "$DIR/CrossCorrelationExplorer.jar"
 EOF
 chmod +x "$APP/Contents/MacOS/CrossCorrelationExplorer"
 
@@ -100,6 +113,8 @@ cat > "$APP/Contents/Info.plist" << 'EOF'
     <string>1.0</string>
     <key>CFBundleExecutable</key>
     <string>CrossCorrelationExplorer</string>
+    <key>CFBundleIconFile</key>
+    <string>CrossCorrelationExplorer</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>NSHighResolutionCapable</key>
@@ -108,15 +123,23 @@ cat > "$APP/Contents/Info.plist" << 'EOF'
 </plist>
 EOF
 
+# force Finder to pick up the new icon instead of a cached/generic one
+touch "$APP"
+killall Finder
+
 open "$APP"
 ```
 
 Embedding the JRE makes the bundle self-contained (~150–200 MB) — no
 separate Java install needed on the machine that runs it.
 
-## 6. (Optional) Add an app icon
+## 6. (Optional) Regenerating the icon
 
-1. Provide a 1024×1024 PNG (transparent background, macOS
+Only needed if you want to change the artwork — the compiled `.icns`
+is already checked into `dist/CrossCorrelationExplorer.icns` and
+picked up automatically by step 5.
+
+1. Produce a 1024×1024 PNG (transparent background, macOS
    rounded-square style).
 2. Generate the iconset and compile it to `.icns`:
 
@@ -135,13 +158,10 @@ cp icon_1024.png icon.iconset/icon_512x512@2x.png
 iconutil -c icns icon.iconset -o CrossCorrelationExplorer.icns
 ```
 
-3. Copy it into the bundle and register it:
+3. Replace the checked-in file:
 
 ```bash
-cp CrossCorrelationExplorer.icns "$APP/Contents/Resources/"
-/usr/libexec/PlistBuddy -c "Add :CFBundleIconFile string CrossCorrelationExplorer" "$APP/Contents/Info.plist"
-touch "$APP"
-killall Finder   # forces Finder to refresh its icon cache
+cp CrossCorrelationExplorer.icns dist/CrossCorrelationExplorer.icns
 ```
 
 ## Known gotchas
