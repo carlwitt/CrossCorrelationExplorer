@@ -13,7 +13,6 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.stage.FileChooser;
-import org.controlsfx.dialog.Dialogs;
 
 import java.io.File;
 import java.net.URL;
@@ -125,7 +124,10 @@ public class StartUpWizardController extends WindowController implements Initial
             new Alert(Alert.AlertType.ERROR, "The data has been written with a previous version of the program. Sorry, can't read file.").show();
         }
         catch(Exception e){
-            Dialogs.create().masthead("Sorry for this technical error message.\nIf you'd like to help improving the software, send the details to carl.witt@gfz-potsdam.de.").showException(e);
+            Alert exceptionAlert = new Alert(Alert.AlertType.ERROR);
+            exceptionAlert.setHeaderText("Sorry for this technical error message.\nIf you'd like to help improving the software, send the details to carl.witt@gfz-potsdam.de.");
+            exceptionAlert.setContentText(e.toString());
+            exceptionAlert.showAndWait();
             e.printStackTrace();
         }
         finally { inputPane.setDisable(false); }

@@ -17,7 +17,6 @@ import javafx.scene.text.Text;
 import org.apache.commons.math3.random.RandomDataGenerator;
 import org.controlsfx.control.CheckListView;
 import org.controlsfx.control.IndexedCheckModel;
-import org.controlsfx.dialog.Dialogs;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -428,9 +427,9 @@ public class ComputationController implements Initializable {
         private void randomExtendSample(){
 
             // ask how many items to add
-            Optional<String> response = Dialogs.create()
-                    .title("Add the Following Number of Random Time Series to the Selection")
-                    .showTextInput("200");
+            TextInputDialog dialog = new TextInputDialog("200");
+            dialog.setTitle("Add the Following Number of Random Time Series to the Selection");
+            Optional<String> response = dialog.showAndWait();
 
             // abort if the dialog was not confirmed or the input is not parseable
             if(! response.isPresent() ) return;

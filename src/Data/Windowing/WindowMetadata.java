@@ -5,7 +5,6 @@ import Data.Correlation.CrossCorrelation;
 import Data.Statistics.CorrelationHistogram;
 import Data.TimeSeries;
 import com.google.common.base.Joiner;
-import com.sun.istack.internal.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -59,7 +58,7 @@ public class WindowMetadata {
 
     public final HashMap<String, Object> customParameters = new HashMap<>();
 
-    public WindowMetadata(@NotNull TimeSeries seriesA, @NotNull TimeSeries seriesB, int windowSize, int tauMin, int tauMax, int tauStep, int baseWindowOffset){
+    public WindowMetadata(TimeSeries seriesA, TimeSeries seriesB, int windowSize, int tauMin, int tauMax, int tauStep, int baseWindowOffset){
         this.tauMin = tauMin;
         this.tauMax = tauMax;
         this.tauStep= tauStep;
@@ -75,7 +74,7 @@ public class WindowMetadata {
         lagRangeOverlap = getLagRangeOverlap();
     }
 
-    public WindowMetadata(@NotNull List<TimeSeries> setA, @NotNull List<TimeSeries> setB, int windowSize, int tauMin, int tauMax, int tauStep, int baseWindowOffset) {
+    public WindowMetadata(List<TimeSeries> setA, List<TimeSeries> setB, int windowSize, int tauMin, int tauMax, int tauStep, int baseWindowOffset) {
         this.setA = new ArrayList<>(setA);
         this.setB = new ArrayList<>(setB);
         this.tauMin = tauMin;

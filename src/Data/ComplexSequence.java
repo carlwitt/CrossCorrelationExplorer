@@ -1,6 +1,5 @@
 package Data;
 
-import com.sun.istack.internal.NotNull;
 
 import java.util.Arrays;
 
@@ -30,7 +29,7 @@ public class ComplexSequence {
      * @param right End of window (inclusive)
      * @return A copy of the input data in the specified window
      */
-    public static ComplexSequence create(@NotNull ComplexSequence c, int left, int right) {
+    public static ComplexSequence create(ComplexSequence c, int left, int right) {
         double[] re = c.re == null ? new double[right-left+1] : Arrays.copyOfRange(c.re, left, right+1);
         double[] im = Arrays.copyOfRange(c.im, left, right + 1);
         return new ComplexSequence(re, im);
@@ -38,10 +37,10 @@ public class ComplexSequence {
     /**
      * @param realValues The real parts of the sequence of complex numbers.
      */
-    public static ComplexSequence create(@NotNull double[] realValues) {
+    public static ComplexSequence create(double[] realValues) {
         return new ComplexSequence(realValues, new double[realValues.length]);
     }
-    public static ComplexSequence create(@NotNull double[] realValues, @NotNull double[] imaginaryValues){
+    public static ComplexSequence create(double[] realValues, double[] imaginaryValues){
         if(imaginaryValues != null && realValues.length != imaginaryValues.length)
             System.err.println("Count of real values doesn't match count of imaginary values in ComplexSequence construction.");
         return new ComplexSequence(realValues, imaginaryValues);
@@ -49,7 +48,7 @@ public class ComplexSequence {
     /**
      * Copy constructor, more convenient than Object.clone() since no typecast will be necessary.
      */
-    public static ComplexSequence create(@NotNull ComplexSequence c){
+    public static ComplexSequence create(ComplexSequence c){
         return new ComplexSequence(Arrays.copyOf(c.re, c.length), Arrays.copyOf(c.im, c.length));
     }
     
