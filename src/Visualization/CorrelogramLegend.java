@@ -3,7 +3,6 @@ package Visualization;
 import Data.Correlation.CorrelationMatrix;
 import Data.SharedData;
 import Gui.CorrelogramController;
-import com.sun.javafx.tk.FontLoader;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
@@ -11,6 +10,7 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 import javafx.scene.transform.Affine;
 import javafx.scene.transform.Translate;
 import javafx.util.converter.NumberStringConverter;
@@ -610,7 +610,7 @@ public class CorrelogramLegend extends CanvasChart {
         return new BoundingBox(minX, minY, maxX - minX, maxY - minY);
     }
 
-    private final static FontLoader fontLoader = com.sun.javafx.tk.Toolkit.getToolkit().getFontLoader();
+    private final static Text measurer = new Text();
     /**
      * Computes the width and height of a string. Used to align tick labels.
      * @param string The string to draw.
@@ -618,7 +618,10 @@ public class CorrelogramLegend extends CanvasChart {
      * @return The width (x component) and height (y component) of the string if plotted.
      */
     Point2D renderedTextSize(String string, Font font){
-        return new Point2D(fontLoader.computeStringWidth(string, font),fontLoader.getFontMetrics(font).getLineHeight());
+        measurer.setText(string);
+        measurer.setFont(font);
+        Bounds bounds = measurer.getLayoutBounds();
+        return new Point2D(bounds.getWidth(), bounds.getHeight());
     }
 
     public void setDrawScatterPlot(boolean drawScatterPlot) {
