@@ -271,8 +271,7 @@ abstract class CanvasChart extends AnchorPane {
 
         if(allowPan){
 
-            chartCanvas.getGraphicsContext2D().setFill(new Color(1.,1.,1.,1.));
-            chartCanvas.getGraphicsContext2D().fillRect(0, 0, chartCanvas.getWidth(), chartCanvas.getHeight());
+            // drawContents() below clears the canvas itself, no need to do it here as well
 
             double offsetX = xAxis.fromScreen(dragStartMousePositionSC.getX()) - xAxis.fromScreen(t.getX()),
                    offsetY = yAxis.fromScreen(dragStartMousePositionSC.getY()) - yAxis.fromScreen(t.getY());
@@ -299,8 +298,7 @@ abstract class CanvasChart extends AnchorPane {
     protected void zoomWithMouseWheel(ScrollEvent t) {
 
         if(allowZoom){
-            chartCanvas.getGraphicsContext2D().setFill(new Color(1.,1.,1.,1.));
-            chartCanvas.getGraphicsContext2D().fillRect(0, 0, chartCanvas.getWidth(), chartCanvas.getHeight());
+            // drawContents() below clears the canvas itself, no need to do it here as well
 
             Bounds boundsData = new BoundingBox(xAxis.getLowerBound(), yAxis.getLowerBound(), xAxis.getRange(), yAxis.getRange());
 

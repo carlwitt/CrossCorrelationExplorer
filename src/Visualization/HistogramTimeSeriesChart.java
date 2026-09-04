@@ -271,7 +271,9 @@ public class HistogramTimeSeriesChart extends TimeSeriesChart {
         double[] lastXLowerY = new double[]{ xValues[timeSpan[0]], lowestBinStartsAt[timeSpan[0]+lag] };
         dataToScreen.transform2DPoints(lastXLowerY, 0, lastXLowerY, 0, 1);
 
-        double binHeightPx = dataToScreen.deltaTransform(0, -getBinSize()).getY();
+        // use the aggregator's actually-applied bin size: it may be larger than getBinSize() if the requested
+        // bin size was clamped to keep the number of histogram bins bounded (see TimeSeriesAverager.MAX_BINS_PER_AXIS)
+        double binHeightPx = dataToScreen.deltaTransform(0, -aggregator.lastEffectiveBinSize).getY();
 
         // TODO: This happens when zooming in too fast, although it shouldn't. It's not clear why. This is no good solution to the problem, because the resetView() calls are obviously not what the user wants when zooming in.
         if(binHeightPx <= 0) {
