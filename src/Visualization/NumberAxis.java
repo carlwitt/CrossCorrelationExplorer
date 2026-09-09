@@ -1,7 +1,6 @@
 package Visualization;
 
 import Gui.BidirectionalBinding;
-import com.sun.javafx.tk.FontLoader;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -15,6 +14,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 import javafx.scene.transform.*;
 import javafx.util.converter.NumberStringConverter;
 
@@ -503,7 +503,7 @@ public class NumberAxis extends StackPane {
     }
 
 
-    private static final FontLoader fontLoader = com.sun.javafx.tk.Toolkit.getToolkit().getFontLoader();
+    private static final Text measurer = new Text();
     /**
      * Computes the width and height of string. Used to align tick labels.
      * @param string The string to draw.
@@ -511,7 +511,10 @@ public class NumberAxis extends StackPane {
      * @return The width (x component) and height (y component) of the string if plotted.
      */
     Point2D renderedTextSize(String string, Font font){
-        return new Point2D(fontLoader.computeStringWidth(string, font),fontLoader.getFontMetrics(font).getLineHeight());
+        measurer.setText(string);
+        measurer.setFont(font);
+        javafx.geometry.Bounds bounds = measurer.getLayoutBounds();
+        return new Point2D(bounds.getWidth(), bounds.getHeight());
     }
 
     public void showCurrentMousePosition(MouseEvent e){

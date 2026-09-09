@@ -11,7 +11,6 @@ import javafx.scene.layout.Pane;
 import javafx.stage.FileChooser;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
-import org.controlsfx.dialog.Dialogs;
 
 import java.io.File;
 import java.net.URL;
@@ -171,8 +170,13 @@ public class MainWindowController extends WindowController implements Initializa
     }
 
     public void changeAxisLabels(){
-        String xAxisLabel = Dialogs.create().message("X Axis Unit").showTextInput().orElse("Year");
-        String yAxisLabel = Dialogs.create().message("Y Axis Unit").showTextInput().orElse("Temperature ˚C");
+        TextInputDialog xAxisDialog = new TextInputDialog();
+        xAxisDialog.setHeaderText("X Axis Unit");
+        String xAxisLabel = xAxisDialog.showAndWait().orElse("Year");
+
+        TextInputDialog yAxisDialog = new TextInputDialog();
+        yAxisDialog.setHeaderText("Y Axis Unit");
+        String yAxisLabel = yAxisDialog.showAndWait().orElse("Temperature ˚C");
 
         timeSeriesViewController.timeSeriesChart.xAxis.setLabel(xAxisLabel);
         timeSeriesViewController.timeSeriesChart.yAxis.setLabel(yAxisLabel);

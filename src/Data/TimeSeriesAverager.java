@@ -28,6 +28,10 @@ public class TimeSeriesAverager {
     /** The bin size defines the range (in data coordinates) that a single bin covers (on the y axis), e.g. 0.1 ˚C. */
     public double binSize = 0.05;
 
+    /** The bin size actually used for the most recently computed {@link #histograms}. May be larger than
+     * {@link #binSize} if the requested bin size was clamped by {@link #MAX_BINS_PER_AXIS}. */
+    public double lastEffectiveBinSize = binSize;
+
     /**
      * Contains the "slope" distribution between two data point indices.
      * The first dimension refers to the interval index,
@@ -55,6 +59,11 @@ public class TimeSeriesAverager {
     /** Reusable auxiliary data structure for sorting the histogram bins. */
     List<Integer> indices = new ArrayList<>();
 
+    /** Upper bound on the number of bins per axis of a single time step's histogram. Without this cap, repeatedly
+     * shrinking {@link #binSize} (e.g. via the "increase resolution" button) relative to the data's value range
+     * would allocate and iterate over quadratically larger histograms each time, eventually hanging the UI. */
+    private static final int MAX_BINS_PER_AXIS = 300;
+
     /** For a data structure description, refer to the return parameter of {@link #compute(java.util.List, int, double)}. */
     private final Cacheable<double[][]> aggregatedData = new Cacheable<double[][]>() {
 
@@ -66,15 +75,20 @@ public class TimeSeriesAverager {
         int[] cachedForIds = new int[0];
 
         @Override public boolean isValid() {
-            return getGroupSize() == cachedForGroupSize
-                    && Math.abs(binSize - cachedForBinSize) <= 2*Double.MIN_VALUE
-                    && Arrays.equals(cachedForIds, timeSeries.stream().sorted().mapToInt(TimeSeries::getId).toArray());
+            if(getGroupSize() != cachedForGroupSize) return false;
+            if(Math.abs(binSize - cachedForBinSize) > 2*Double.MIN_VALUE) return false;
+            if(timeSeries.size() != cachedForIds.length) return false;
+            // avoid boxed Integer sorting (Stream.sorted()) on this hot path, which runs on every redraw
+            int[] currentIds = timeSeries.stream().mapToInt(TimeSeries::getId).toArray();
+            Arrays.sort(currentIds);
+            return Arrays.equals(cachedForIds, currentIds);
         }
 
         @Override public void recompute() {
             int size = getGroupSize();
             set(TimeSeriesAverager.this.compute(timeSeries, size, binSize));
-            cachedForIds = timeSeries.stream().sorted().mapToInt(TimeSeries::getId).toArray();
+            cachedForIds = timeSeries.stream().mapToInt(TimeSeries::getId).toArray();
+            Arrays.sort(cachedForIds);
             cachedForGroupSize = size;
             cachedForBinSize = binSize;
         }
@@ -141,17 +155,31 @@ public class TimeSeriesAverager {
 
         // calculate histograms of the binned data
         // each bin has the same size. The k-th bin covers values in range [k * binSize, (k+1) * binSize[
+        // clamp the effective bin size so that no histogram exceeds MAX_BINS_PER_AXIS bins per axis, regardless of
+        // how small the requested binSize is relative to the data's value range (see MAX_BINS_PER_AXIS).
+        double globalMin = Double.POSITIVE_INFINITY, globalMax = Double.NEGATIVE_INFINITY;
+        for (int i = 0; i < numberOfDataPoints; i++) {
+            if (Double.isFinite(minValues[i])) globalMin = Math.min(globalMin, minValues[i]);
+            if (Double.isFinite(maxValues[i])) globalMax = Math.max(globalMax, maxValues[i]);
+        }
+        double globalRange = globalMax - globalMin;
+        double effectiveBinSize = binSize;
+        if (Double.isFinite(globalRange) && globalRange > 0) {
+            effectiveBinSize = Math.max(binSize, globalRange / MAX_BINS_PER_AXIS);
+        }
+        lastEffectiveBinSize = effectiveBinSize;
+
         for (int histogramIdx = 0; histogramIdx < numberOfDataPoints-1; histogramIdx++) {
 
             // compute the number of source bins for the first histogram
-            int lowestSourceBinIdx = (int) Math.floor(minValues[histogramIdx] / binSize);
-            int highestSourceBinIdx = (int) Math.floor(maxValues[histogramIdx] / binSize);
+            int lowestSourceBinIdx = (int) Math.floor(minValues[histogramIdx] / effectiveBinSize);
+            int highestSourceBinIdx = (int) Math.floor(maxValues[histogramIdx] / effectiveBinSize);
             int numSourceBins = Math.max(1, highestSourceBinIdx - lowestSourceBinIdx + 1); // if the min value is exactly the max value and exactly on a bin bound, allocate a bin anyway
-            lowestBinStartsAt[histogramIdx] = lowestSourceBinIdx * binSize;
+            lowestBinStartsAt[histogramIdx] = lowestSourceBinIdx * effectiveBinSize;
 
             // compute the number of sink bins
-            int lowestSinkBinIdx = (int) Math.floor(minValues[histogramIdx + 1] / binSize);
-            int highestSinkBinIdx = (int) Math.floor(maxValues[histogramIdx + 1] / binSize);
+            int lowestSinkBinIdx = (int) Math.floor(minValues[histogramIdx + 1] / effectiveBinSize);
+            int highestSinkBinIdx = (int) Math.floor(maxValues[histogramIdx + 1] / effectiveBinSize);
             int numSinkBins = Math.max(1, highestSinkBinIdx - lowestSinkBinIdx + 1); // if the min value is exactly the max value and exactly on a bin bound, allocate a bin anyway
 
             histograms[histogramIdx] = new short[numSourceBins][numSinkBins];
@@ -164,8 +192,8 @@ public class TimeSeriesAverager {
                 // if the time series value is NaN at one of the data points, the segment cannot contribute to the histogram in a sensible way.
                 if(Double.isNaN(sourceY) || Double.isNaN(sinkY)) continue;
 
-                int sourceBinIdx = (int) Math.floor(sourceY / binSize);
-                int sinkBinIdx = (int) Math.floor(sinkY / binSize);
+                int sourceBinIdx = (int) Math.floor(sourceY / effectiveBinSize);
+                int sinkBinIdx = (int) Math.floor(sinkY / effectiveBinSize);
 
                 // the source and sink bin indices can not become too large, because of the half-open definition of the bins
 
@@ -187,7 +215,7 @@ public class TimeSeriesAverager {
                             histogramIdx,
                             minValues[histogramIdx], maxValues[histogramIdx],
                             minValues[histogramIdx+1], maxValues[histogramIdx+1],
-                            binSize);
+                            effectiveBinSize);
 
                 histograms[histogramIdx][sourceBinIdx - lowestSourceBinIdx][sinkBinIdx - lowestSinkBinIdx]++;
             }
@@ -201,8 +229,8 @@ public class TimeSeriesAverager {
         }
 
         // compute the lowest bin bound for the last data point index
-        int lowestSourceBinIdx = (int) Math.floor(minValues[numberOfDataPoints-2] / binSize);
-        lowestBinStartsAt[numberOfDataPoints-1] = lowestSourceBinIdx * binSize;
+        int lowestSourceBinIdx = (int) Math.floor(minValues[numberOfDataPoints-2] / effectiveBinSize);
+        lowestBinStartsAt[numberOfDataPoints-1] = lowestSourceBinIdx * effectiveBinSize;
 
         return newAggregatedData;
 

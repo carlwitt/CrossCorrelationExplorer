@@ -4,3 +4,4 @@ compiled/
 target/
 *.iml
 computationLog.txt
+dist/Cross Correlation Explorer.app

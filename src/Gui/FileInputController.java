@@ -10,7 +10,6 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.stage.FileChooser;
-import org.controlsfx.dialog.Dialogs;
 
 import java.net.URL;
 import java.util.*;
@@ -188,10 +187,9 @@ public class FileInputController implements Initializable {
     }
     // loads a random number of available time series
     public void loadRandom(ActionEvent e){
-        Optional<String> response = Dialogs.create()
-                .title("Number of random time series")
-                .showTextInput("200");
-        if(! response.isPresent()) return;
+        TextInputDialog dialog = new TextInputDialog("200");
+        dialog.setTitle("Number of random time series");
+        Optional<String> response = dialog.showAndWait();        if(! response.isPresent()) return;
         int number = Integer.parseInt(response.get());
         
         availableList.getSelectionModel().clearSelection();

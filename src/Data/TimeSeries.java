@@ -1,6 +1,5 @@
 package Data;
 
-import com.sun.istack.internal.NotNull;
 
 /**
  * Represents a series of (x, y) pairs.
@@ -27,7 +26,7 @@ public class TimeSeries implements Comparable<TimeSeries> {
      * @param id
      * @param values The x and y values, specified in the real and imaginary parts of a complex sequence.
      */
-    public TimeSeries(int id, @NotNull ComplexSequence values){
+    public TimeSeries(int id, ComplexSequence values){
         this.id = id;
         this.values = values;
     }

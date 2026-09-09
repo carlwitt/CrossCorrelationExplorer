@@ -3,9 +3,13 @@ CrossCorrelationExplorer
 
 Software for exploring windowed cross correlation between ensembles of time series.
 
-Contains both algorithms for computing cross correlation matrices and a GUI to visualize and persist the results.
+Contains both algorithms for computing cross correlation matrices and a JavaFX desktop GUI to visualize and persist the results.
 
 I developed some of the concepts behind and the code in this repository at [GeoForschungsZentrum Potsdam](www.gfz-potsdam.de), which lead to [1].
+
+# Building
+
+See [BUILD-macOS.md](BUILD-macOS.md) for step-by-step instructions to build and package the app on macOS.
 
 # References
 
