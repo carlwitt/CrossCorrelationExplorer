@@ -122,26 +122,26 @@
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
-            <version>17.0.2</version>
-            <classifier>mac</classifier>
+            <version>17.0.8</version>
+            <classifier>mac-aarch64</classifier>
         </dependency>
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-fxml</artifactId>
-            <version>17.0.2</version>
-            <classifier>mac</classifier>
+            <version>17.0.8</version>
+            <classifier>mac-aarch64</classifier>
         </dependency>
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-web</artifactId>
-            <version>17.0.2</version>
-            <classifier>mac</classifier>
+            <version>17.0.8</version>
+            <classifier>mac-aarch64</classifier>
         </dependency>
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-swing</artifactId>
-            <version>17.0.2</version>
-            <classifier>mac</classifier>
+            <version>17.0.8</version>
+            <classifier>mac-aarch64</classifier>
         </dependency>
 <!--        <dependency>-->
 <!--            <groupId>mysql</groupId>-->
